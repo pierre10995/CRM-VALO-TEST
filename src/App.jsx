@@ -531,13 +531,46 @@ function CandidatsPage({ contacts, search, setSearch, onAdd, onEdit, onDelete, o
 function FicheCandidat({ contact: c, onClose, onEdit, onDelete, candidatures, missions, loadAll }) {
   const [files, setFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
+  const [evaluations, setEvaluations] = useState([]);
+  const [evalLoading, setEvalLoading] = useState(false);
+  const [evalError, setEvalError] = useState("");
+  const [evalMissionId, setEvalMissionId] = useState("");
 
   const loadFiles = async () => {
     const data = await api.get(`/api/files/contact/${c.id}`);
     setFiles(data);
   };
 
-  useEffect(() => { loadFiles(); }, [c.id]);
+  const loadEvaluations = async () => {
+    const data = await api.get(`/api/evaluations/candidate/${c.id}`);
+    setEvaluations(data);
+  };
+
+  useEffect(() => { loadFiles(); loadEvaluations(); }, [c.id]);
+
+  const generateEvaluation = async () => {
+    if (!evalMissionId) return;
+    setEvalLoading(true);
+    setEvalError("");
+    try {
+      const res = await api.post("/api/evaluations/generate", { candidateId: c.id, missionId: Number(evalMissionId) });
+      if (res.ok) {
+        await loadEvaluations();
+        setEvalMissionId("");
+      } else {
+        const err = await res.json();
+        setEvalError(err.error || "Erreur lors de l'évaluation");
+      }
+    } catch (err) {
+      setEvalError("Erreur réseau");
+    }
+    setEvalLoading(false);
+  };
+
+  const deleteEvaluation = async (id) => {
+    await api.del(`/api/evaluations/${id}`);
+    await loadEvaluations();
+  };
 
   const handleUpload = async (fileType) => {
     const input = document.createElement("input");
@@ -687,6 +720,77 @@ function FicheCandidat({ contact: c, onClose, onEdit, onDelete, candidatures, mi
             <span className="tag" style={{ background: cd.stage === "Placé" ? "#d1fae5" : cd.stage === "Refusé" ? "#fee2e2" : "#dbeafe", color: cd.stage === "Placé" ? "#059669" : cd.stage === "Refusé" ? "#dc2626" : "#2563eb" }}>{cd.stage}</span>
           </div>
         ))}
+      </div>
+
+      {/* Évaluation CV vs Poste */}
+      <div style={{ marginBottom: 20 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a", marginBottom: 10 }}>Évaluation CV vs Poste</div>
+
+        {/* Formulaire de lancement */}
+        <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+          <select className="input" style={{ flex: 1, fontSize: 13 }} value={evalMissionId} onChange={e => setEvalMissionId(e.target.value)}>
+            <option value="">-- Choisir un poste à évaluer --</option>
+            {missions.filter(m => m.status === "Ouverte" || m.status === "En cours").map(m => (
+              <option key={m.id} value={m.id}>{m.title} — {m.company}</option>
+            ))}
+          </select>
+          <button className="btn btn-primary" style={{ padding: "8px 16px", fontSize: 12, whiteSpace: "nowrap" }} onClick={generateEvaluation} disabled={evalLoading || !evalMissionId}>
+            {evalLoading ? "Analyse en cours..." : "Évaluer"}
+          </button>
+        </div>
+        {evalError && <div style={{ padding: "8px 12px", background: "#fee2e2", borderRadius: 8, fontSize: 12, color: "#dc2626", marginBottom: 10 }}>{evalError}</div>}
+
+        {/* Liste des évaluations existantes */}
+        {evaluations.length === 0 && <p style={{ fontSize: 12, color: "#94a3b8" }}>Aucune évaluation</p>}
+        {evaluations.map(ev => {
+          let positives = [], negatives = [], clarifs = [];
+          try { positives = JSON.parse(ev.positives); } catch {}
+          try { negatives = JSON.parse(ev.negatives); } catch {}
+          try { clarifs = JSON.parse(ev.clarifications); } catch {}
+          const scoreColor = ev.score >= 70 ? "#059669" : ev.score >= 40 ? "#d97706" : "#dc2626";
+          const scoreBg = ev.score >= 70 ? "#ecfdf5" : ev.score >= 40 ? "#fffbeb" : "#fef2f2";
+
+          return (
+            <div key={ev.id} style={{ background: "#f8fafc", borderRadius: 12, padding: 16, marginBottom: 10, border: `1.5px solid ${scoreBg}` }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+                <div>
+                  <div style={{ fontSize: 13.5, fontWeight: 700, color: "#0f172a" }}>{ev.missionTitle}</div>
+                  <div style={{ fontSize: 12, color: "#64748b" }}>{ev.missionCompany} — {new Date(ev.createdAt).toLocaleDateString("fr-CA")}</div>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ width: 52, height: 52, borderRadius: "50%", background: scoreBg, border: `3px solid ${scoreColor}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, fontWeight: 800, color: scoreColor }}>{ev.score}</div>
+                  <button className="btn btn-danger" style={{ padding: "4px 8px", fontSize: 10 }} onClick={() => deleteEvaluation(ev.id)}>X</button>
+                </div>
+              </div>
+
+              {ev.summary && <div style={{ fontSize: 12.5, color: "#374151", marginBottom: 12, lineHeight: 1.5, fontStyle: "italic" }}>{ev.summary}</div>}
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "#059669", marginBottom: 6 }}>POINTS POSITIFS</div>
+                  {positives.map((p, i) => (
+                    <div key={i} style={{ fontSize: 12, color: "#374151", marginBottom: 4, paddingLeft: 10, borderLeft: "2px solid #a7f3d0" }}>{p}</div>
+                  ))}
+                  {positives.length === 0 && <div style={{ fontSize: 11, color: "#94a3b8" }}>—</div>}
+                </div>
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "#dc2626", marginBottom: 6 }}>POINTS NÉGATIFS</div>
+                  {negatives.map((n, i) => (
+                    <div key={i} style={{ fontSize: 12, color: "#374151", marginBottom: 4, paddingLeft: 10, borderLeft: "2px solid #fecaca" }}>{n}</div>
+                  ))}
+                  {negatives.length === 0 && <div style={{ fontSize: 11, color: "#94a3b8" }}>—</div>}
+                </div>
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "#d97706", marginBottom: 6 }}>À ÉCLAIRCIR</div>
+                  {clarifs.map((cl, i) => (
+                    <div key={i} style={{ fontSize: 12, color: "#374151", marginBottom: 4, paddingLeft: 10, borderLeft: "2px solid #fde68a" }}>{cl}</div>
+                  ))}
+                  {clarifs.length === 0 && <div style={{ fontSize: 11, color: "#94a3b8" }}>—</div>}
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {/* Actions */}
