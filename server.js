@@ -10,7 +10,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: "20mb" }));
 
 // ─── PostgreSQL ──────────────────────────────────────────────────────────────
 const pool = new pg.Pool({
@@ -108,6 +108,18 @@ async function initDB() {
         description TEXT DEFAULT '',
         due_date TIMESTAMP,
         completed BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS files (
+        id SERIAL PRIMARY KEY,
+        contact_id INTEGER REFERENCES contacts(id) ON DELETE CASCADE,
+        file_type VARCHAR(30) NOT NULL,
+        file_name VARCHAR(200) NOT NULL,
+        mime_type VARCHAR(100) DEFAULT 'application/pdf',
+        file_data TEXT NOT NULL,
         created_at TIMESTAMP DEFAULT NOW()
       );
     `);
@@ -420,6 +432,51 @@ app.get("/api/users", async (req, res) => {
   try {
     const { rows } = await pool.query("SELECT id, login, full_name FROM users ORDER BY id");
     res.json(rows.map(r => ({ id: r.id, login: r.login, fullName: r.full_name })));
+  } catch (err) { res.status(500).json({ error: "Erreur serveur" }); }
+});
+
+// ─── Files (CV, comptes-rendus) ─────────────────────────────────────────────
+app.post("/api/files", async (req, res) => {
+  try {
+    const { contactId, fileType, fileName, mimeType, fileData } = req.body;
+    if (!contactId || !fileType || !fileName || !fileData) {
+      return res.status(400).json({ error: "Champs requis manquants" });
+    }
+    const { rows } = await pool.query(
+      `INSERT INTO files (contact_id, file_type, file_name, mime_type, file_data)
+       VALUES ($1,$2,$3,$4,$5) RETURNING id, contact_id, file_type, file_name, mime_type, created_at`,
+      [contactId, fileType, fileName, mimeType || "application/pdf", fileData]
+    );
+    res.status(201).json(rows[0]);
+  } catch (err) { console.error(err); res.status(500).json({ error: "Erreur serveur" }); }
+});
+
+app.get("/api/files/contact/:contactId", async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      "SELECT id, contact_id, file_type, file_name, mime_type, created_at FROM files WHERE contact_id=$1 ORDER BY created_at DESC",
+      [req.params.contactId]
+    );
+    res.json(rows);
+  } catch (err) { res.status(500).json({ error: "Erreur serveur" }); }
+});
+
+app.get("/api/files/:id", async (req, res) => {
+  try {
+    const { rows } = await pool.query("SELECT * FROM files WHERE id=$1", [req.params.id]);
+    if (rows.length === 0) return res.status(404).json({ error: "Fichier non trouvé" });
+    const file = rows[0];
+    const buffer = Buffer.from(file.file_data, "base64");
+    res.setHeader("Content-Type", file.mime_type);
+    res.setHeader("Content-Disposition", `attachment; filename="${file.file_name}"`);
+    res.send(buffer);
+  } catch (err) { res.status(500).json({ error: "Erreur serveur" }); }
+});
+
+app.delete("/api/files/:id", async (req, res) => {
+  try {
+    await pool.query("DELETE FROM files WHERE id=$1", [req.params.id]);
+    res.json({ ok: true });
   } catch (err) { res.status(500).json({ error: "Erreur serveur" }); }
 });
 
