@@ -12,7 +12,7 @@ const SECTORS = ["Tech", "Finance", "Santé", "Retail", "Industrie", "Services",
 const STAGES = ["Soumis", "Présélectionné", "Entretien", "Finaliste", "Placé", "Refusé"];
 const ACTIVITY_TYPES = ["Appel", "Email", "Réunion", "Note"];
 const CONTRACT_TYPES = ["CDI", "CDD", "Contrat", "Freelance", "Stage"];
-const MISSION_STATUSES = ["Ouverte", "En cours", "Pourvue", "Fermée"];
+const MISSION_STATUSES = ["Ouverte", "En cours", "Gagné", "Pourvue", "Fermée"];
 const PRIORITIES = ["Basse", "Normale", "Haute", "Urgente"];
 
 const fmtCAD = (n) => Number(n || 0).toLocaleString("fr-CA") + " $ CAD";
@@ -59,6 +59,7 @@ export default function CRM() {
   const [activities, setActivities] = useState([]);
   const [users, setUsers] = useState([]);
   const [stats, setStats] = useState(null);
+  const [fiscalYears, setFiscalYears] = useState([]);
 
   // UI state
   const [modal, setModal] = useState(null);
@@ -71,15 +72,16 @@ export default function CRM() {
   const clients = contacts.filter(c => c.status === "Client" || c.status === "Prospect");
 
   const loadAll = async () => {
-    const [c, m, cd, a, u, s] = await Promise.all([
+    const [c, m, cd, a, u, s, fy] = await Promise.all([
       api.get("/api/contacts"),
       api.get("/api/missions"),
       api.get("/api/candidatures"),
       api.get("/api/activities"),
       api.get("/api/users"),
       api.get("/api/stats"),
+      api.get("/api/fiscal-years"),
     ]);
-    setContacts(c); setMissions(m); setCandidatures(cd); setActivities(a); setUsers(u); setStats(s);
+    setContacts(c); setMissions(m); setCandidatures(cd); setActivities(a); setUsers(u); setStats(s); setFiscalYears(fy);
   };
 
   useEffect(() => {
@@ -225,7 +227,7 @@ export default function CRM() {
         {activeTab === "pipeline" && <PipelinePage candidatures={candidatures} candidates={candidates} missions={missions} onEdit={cd => { setModal("candidature"); setForm({ ...cd }); }} onAdd={() => { setModal("candidature"); setForm({ stage: "Soumis", rating: 0 }); }} onDelete={deleteCandidature} />}
         {activeTab === "activites" && <ActivitesPage activities={activities} contacts={contacts} missions={missions} users={users} currentUser={currentUser} onAdd={() => { setModal("activity"); setForm({ type: "Appel" }); }} onToggle={toggleActivity} onDelete={deleteActivity} />}
         {activeTab === "evaluation" && <EvaluationPage candidates={candidates} missions={missions} loadAll={loadAll} />}
-        {activeTab === "revenue" && <RevenuePage contacts={contacts} missions={missions} candidatures={candidatures} users={users} />}
+        {activeTab === "revenue" && <RevenuePage contacts={contacts} missions={missions} candidatures={candidatures} users={users} fiscalYears={fiscalYears} loadAll={loadAll} />}
       </main>
 
       {/* Modals */}
@@ -241,7 +243,7 @@ export default function CRM() {
       )}
       {modal === "mission" && (
         <ModalWrapper onClose={() => setModal(null)} title={form.id ? "Modifier le poste" : "Nouveau poste"}>
-          <MissionForm form={form} setForm={setForm} onSave={saveMission} onCancel={() => setModal(null)} contacts={contacts} users={users} />
+          <MissionForm form={form} setForm={setForm} onSave={saveMission} onCancel={() => setModal(null)} contacts={contacts} users={users} fiscalYears={fiscalYears} />
         </ModalWrapper>
       )}
       {modal === "candidature" && (
@@ -770,7 +772,7 @@ function FicheCandidat({ contact: c, onClose, onEdit, onDelete, candidatures, mi
 // ─── Missions Page ──────────────────────────────────────────────────────────
 function MissionsPage({ missions, contacts, users, candidatures, onAdd, onEdit, onDelete }) {
   const [detailMission, setDetailMission] = useState(null);
-  const statusColors = { "Ouverte": { bg: "#dbeafe", color: "#2563eb" }, "En cours": { bg: "#fef3c7", color: "#d97706" }, "Pourvue": { bg: "#d1fae5", color: "#059669" }, "Fermée": { bg: "#f1f5f9", color: "#64748b" } };
+  const statusColors = { "Ouverte": { bg: "#dbeafe", color: "#2563eb" }, "En cours": { bg: "#fef3c7", color: "#d97706" }, "Gagné": { bg: "#d1fae5", color: "#059669" }, "Pourvue": { bg: "#d1fae5", color: "#059669" }, "Fermée": { bg: "#f1f5f9", color: "#64748b" } };
   const priorityColors = { "Basse": "#94a3b8", "Normale": "#3b82f6", "Haute": "#f59e0b", "Urgente": "#dc2626" };
 
   return (
@@ -1192,95 +1194,75 @@ function ActivitesPage({ activities, contacts, missions, users, currentUser, onA
 
 
 // ─── Revenue Page ───────────────────────────────────────────────────────────
-function RevenuePage({ contacts, missions, candidatures, users }) {
+function RevenuePage({ contacts, missions, candidatures, users, fiscalYears: propFiscalYears, loadAll }) {
   const [activeOnglet, setActiveOnglet] = useState("total");
-  const [fiscalYears, setFiscalYears] = useState([]);
+  const [fiscalYears, setFiscalYears] = useState(propFiscalYears || []);
   const [selectedYear, setSelectedYear] = useState("all");
   const [showAddYear, setShowAddYear] = useState(false);
   const [newYear, setNewYear] = useState({ label: "", startDate: "", endDate: "", target: 0 });
 
-  useEffect(() => {
-    api.get("/api/fiscal-years").then(setFiscalYears);
-  }, []);
+  useEffect(() => { setFiscalYears(propFiscalYears || []); }, [propFiscalYears]);
 
   const addFiscalYear = async () => {
     if (!newYear.label || !newYear.startDate || !newYear.endDate) return;
     const res = await api.post("/api/fiscal-years", newYear);
     if (res.ok) {
-      const fy = await res.json();
-      setFiscalYears(prev => [...prev, fy].sort((a, b) => a.startDate.localeCompare(b.startDate)));
       setNewYear({ label: "", startDate: "", endDate: "", target: 0 });
       setShowAddYear(false);
+      if (loadAll) await loadAll();
     }
   };
 
   const deleteFiscalYear = async (id) => {
     await api.del(`/api/fiscal-years/${id}`);
-    setFiscalYears(prev => prev.filter(fy => fy.id !== id));
     if (selectedYear === String(id)) setSelectedYear("all");
+    if (loadAll) await loadAll();
   };
 
-  const placements = candidatures.filter(cd => cd.stage === "Placé");
-  const placedMissionIds = new Set(placements.map(cd => cd.missionId));
-  const placedMissions = missions.filter(m => placedMissionIds.has(m.id));
+  // Missions "Gagné" = CA réalisé (report dynamique vers le CA)
+  const wonMissions = missions.filter(m => m.status === "Gagné");
 
-  // Filter by fiscal year
-  const filterByYear = (missionList, fy) => {
-    if (!fy) return missionList;
-    const start = new Date(fy.startDate);
-    const end = new Date(fy.endDate);
-    return missionList.filter(m => {
-      const d = new Date(m.createdAt);
-      return d >= start && d <= end;
-    });
+  // Filter by fiscal year (basé sur fiscal_year_id de la mission)
+  const filterByYear = (missionList, fyId) => {
+    if (!fyId) return missionList;
+    return missionList.filter(m => String(m.fiscalYearId) === String(fyId));
   };
 
   const activeFY = selectedYear !== "all" ? fiscalYears.find(fy => String(fy.id) === selectedYear) : null;
-  const filteredPlacedMissions = filterByYear(placedMissions, activeFY);
-  const filteredPlacements = placements.filter(p => filteredPlacedMissions.some(m => m.id === p.missionId));
+  const filteredWonMissions = activeFY ? filterByYear(wonMissions, activeFY.id) : wonMissions;
 
-  const caTotal = filteredPlacedMissions.reduce((s, m) => s + (m.commission || 0), 0);
+  const caTotal = filteredWonMissions.reduce((s, m) => s + (m.commission || 0), 0);
 
   // CA par utilisateur
   const caByUser = users.map(u => {
-    const userPlacedMissions = filteredPlacedMissions.filter(m => m.assignedTo === u.id);
-    const userPlacements = filteredPlacements.filter(p => userPlacedMissions.some(m => m.id === p.missionId));
-    const userCA = userPlacedMissions.reduce((s, m) => s + (m.commission || 0), 0);
-    return { ...u, placedMissions: userPlacedMissions, placements: userPlacements, ca: userCA };
+    const userWonMissions = filteredWonMissions.filter(m => m.assignedTo === u.id);
+    const userCA = userWonMissions.reduce((s, m) => s + (m.commission || 0), 0);
+    return { ...u, wonMissions: userWonMissions, ca: userCA };
   });
 
-  const getPlacementDetails = (filteredM) => {
-    return filteredM.map(m => {
-      const mPlacements = placements.filter(p => p.missionId === m.id);
-      return { ...m, placedCandidates: mPlacements.map(p => p.candidateName).filter(Boolean) };
-    }).sort((a, b) => (b.commission || 0) - (a.commission || 0));
-  };
-
-  const maxCommission = Math.max(...filteredPlacedMissions.map(m => m.commission || 0), 1);
+  const maxCommission = Math.max(...filteredWonMissions.map(m => m.commission || 0), 1);
 
   const onglets = [
     { id: "total", label: "Total" },
     ...users.map(u => ({ id: `user-${u.id}`, label: u.fullName })),
   ];
 
-  let currentCA, currentPlacements, currentMissions, currentLabel;
+  let currentCA, currentMissions, currentLabel;
   if (activeOnglet === "total") {
     currentCA = caTotal;
-    currentPlacements = filteredPlacements.length;
-    currentMissions = getPlacementDetails(filteredPlacedMissions);
+    currentMissions = [...filteredWonMissions].sort((a, b) => (b.commission || 0) - (a.commission || 0));
     currentLabel = "Global";
   } else {
     const userId = Number(activeOnglet.replace("user-", ""));
     const userData = caByUser.find(u => u.id === userId);
     currentCA = userData?.ca || 0;
-    currentPlacements = userData?.placements.length || 0;
-    currentMissions = getPlacementDetails(userData?.placedMissions || []);
+    currentMissions = [...(userData?.wonMissions || [])].sort((a, b) => (b.commission || 0) - (a.commission || 0));
     currentLabel = userData?.fullName || "";
   }
 
-  // Chart data: CA per fiscal year
+  // Chart data: CA per fiscal year (basé sur missions Gagné)
   const chartData = fiscalYears.map(fy => {
-    const fyMissions = filterByYear(placedMissions, fy);
+    const fyMissions = filterByYear(wonMissions, fy.id);
     const ca = fyMissions.reduce((s, m) => s + (m.commission || 0), 0);
     return { label: fy.label, ca, target: fy.target };
   });
@@ -1435,12 +1417,12 @@ function RevenuePage({ contacts, missions, candidatures, users }) {
           <p style={{ fontSize: 28, fontWeight: 800, color: "#059669", marginTop: 6 }}>{fmtCAD(currentCA)}</p>
         </div>
         <div className="card" style={{ background: "#eff6ff" }}>
-          <p style={{ fontSize: 11.5, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase" }}>Placements</p>
-          <p style={{ fontSize: 28, fontWeight: 800, color: "#2563eb", marginTop: 6 }}>{currentPlacements}</p>
+          <p style={{ fontSize: 11.5, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase" }}>Postes gagnés</p>
+          <p style={{ fontSize: 28, fontWeight: 800, color: "#2563eb", marginTop: 6 }}>{currentMissions.length}</p>
         </div>
         <div className="card" style={{ background: "#f5f3ff" }}>
-          <p style={{ fontSize: 11.5, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase" }}>Postes pourvus</p>
-          <p style={{ fontSize: 28, fontWeight: 800, color: "#8b5cf6", marginTop: 6 }}>{filteredPlacedMissions.length}</p>
+          <p style={{ fontSize: 11.5, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase" }}>Postes ouverts</p>
+          <p style={{ fontSize: 28, fontWeight: 800, color: "#8b5cf6", marginTop: 6 }}>{missions.filter(m => m.status === "Ouverte" || m.status === "En cours").length}</p>
         </div>
         {activeFY && (
           <div className="card" style={{ background: currentCA >= activeFY.target ? "#ecfdf5" : "#fffbeb" }}>
@@ -1460,7 +1442,7 @@ function RevenuePage({ contacts, missions, candidatures, users }) {
                 <div style={{ width: 44, height: 44, background: "linear-gradient(135deg, #dbeafe, #bfdbfe)", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, fontWeight: 700, color: "#1d4ed8" }}>{u.fullName[0]}</div>
                 <div>
                   <div style={{ fontSize: 15, fontWeight: 700, color: "#0f172a" }}>{u.fullName}</div>
-                  <div style={{ fontSize: 12, color: "#64748b" }}>{u.placements.length} placement{u.placements.length > 1 ? "s" : ""} - {u.placedMissions.length} poste{u.placedMissions.length > 1 ? "s" : ""} pourvu{u.placedMissions.length > 1 ? "s" : ""}</div>
+                  <div style={{ fontSize: 12, color: "#64748b" }}>{u.wonMissions.length} poste{u.wonMissions.length > 1 ? "s" : ""} gagné{u.wonMissions.length > 1 ? "s" : ""}</div>
                 </div>
               </div>
               <div style={{ fontSize: 26, fontWeight: 800, color: "#059669" }}>{fmtCAD(u.ca)}</div>
@@ -1470,13 +1452,13 @@ function RevenuePage({ contacts, missions, candidatures, users }) {
         </div>
       )}
 
-      {/* Liste des postes pourvus */}
+      {/* Liste des postes gagnés */}
       <div className="card">
         <h3 style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", marginBottom: 18 }}>
-          {activeOnglet === "total" ? "Postes pourvus" : `Postes pourvus — ${currentLabel}`}
+          {activeOnglet === "total" ? "Postes gagnés" : `Postes gagnés — ${currentLabel}`}
           {activeFY && ` (${activeFY.label})`}
         </h3>
-        {currentMissions.length === 0 && <p style={{ color: "#94a3b8", fontSize: 13 }}>Aucun poste pourvu</p>}
+        {currentMissions.length === 0 && <p style={{ color: "#94a3b8", fontSize: 13 }}>Aucun poste gagné</p>}
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           {currentMissions.map(m => (
             <div key={m.id}>
@@ -1484,11 +1466,6 @@ function RevenuePage({ contacts, missions, candidatures, users }) {
                 <div>
                   <div style={{ fontSize: 14, fontWeight: 600, color: "#0f172a" }}>{m.title}</div>
                   <div style={{ fontSize: 12.5, color: "#64748b" }}>{m.company} — {m.location || "—"}</div>
-                  {m.placedCandidates.length > 0 && (
-                    <div style={{ fontSize: 12, color: "#059669", marginTop: 2 }}>
-                      Candidat{m.placedCandidates.length > 1 ? "s" : ""} placé{m.placedCandidates.length > 1 ? "s" : ""} : {m.placedCandidates.join(", ")}
-                    </div>
-                  )}
                 </div>
                 <div style={{ fontSize: 16, fontWeight: 800, color: "#059669", whiteSpace: "nowrap" }}>{fmtCAD(m.commission)}</div>
               </div>
@@ -1565,7 +1542,7 @@ function CandidatForm({ form, setForm, onSave, onCancel }) {
   );
 }
 
-function MissionForm({ form, setForm, onSave, onCancel, contacts, users }) {
+function MissionForm({ form, setForm, onSave, onCancel, contacts, users, fiscalYears }) {
   const f = (k, v) => setForm(p => ({ ...p, [k]: v }));
   const clientContacts = contacts.filter(c => c.status === "Client" || c.status === "Prospect");
   return (
@@ -1575,7 +1552,7 @@ function MissionForm({ form, setForm, onSave, onCancel, contacts, users }) {
         <Field label="Entreprise *"><input className="input" value={form.company || ""} onChange={e => f("company", e.target.value)} placeholder="Nom entreprise" /></Field>
         <Field label="Lieu"><input className="input" value={form.location || ""} onChange={e => f("location", e.target.value)} placeholder="Montréal" /></Field>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 12 }}>
         <Field label="Type de contrat">
           <select className="input" value={form.contractType || "CDI"} onChange={e => f("contractType", e.target.value)}>{CONTRACT_TYPES.map(t => <option key={t}>{t}</option>)}</select>
         </Field>
@@ -1584,6 +1561,12 @@ function MissionForm({ form, setForm, onSave, onCancel, contacts, users }) {
         </Field>
         <Field label="Priorité">
           <select className="input" value={form.priority || "Normale"} onChange={e => f("priority", e.target.value)}>{PRIORITIES.map(p => <option key={p}>{p}</option>)}</select>
+        </Field>
+        <Field label="Année fiscale">
+          <select className="input" value={form.fiscalYearId || ""} onChange={e => f("fiscalYearId", e.target.value || null)}>
+            <option value="">-- Aucune --</option>
+            {(fiscalYears || []).map(fy => <option key={fy.id} value={fy.id}>{fy.label}</option>)}
+          </select>
         </Field>
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
