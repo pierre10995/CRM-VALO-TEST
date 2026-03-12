@@ -9,7 +9,7 @@ const api = {
 };
 
 const SECTORS = ["Tech", "Finance", "Santé", "Retail", "Industrie", "Services", "Médias", "Éducation", "Autre"];
-const STAGES = ["Soumis", "Présélectionné", "Entretien", "Finaliste", "Placé", "Refusé"];
+const STAGES = ["Présélectionné", "Soumis", "Entretien", "Finaliste", "Placé", "Refusé"];
 const ACTIVITY_TYPES = ["Appel", "Email", "Réunion", "Note"];
 const CONTRACT_TYPES = ["CDI", "CDD", "Contrat", "Freelance", "Stage"];
 const MISSION_STATUSES = ["Ouverte", "En cours", "Gagné", "Pourvue", "Fermée"];
@@ -224,7 +224,7 @@ export default function CRM() {
         {activeTab === "clients" && <ClientsPage contacts={clients} search={search} setSearch={setSearch} filterStatus={filterStatus} setFilterStatus={setFilterStatus} onAdd={() => { setModal("client"); setForm({ status: "Prospect", sector: "Tech", revenue: 0 }); }} onEdit={c => { setModal("client"); setForm({ ...c }); }} onDelete={deleteContact} onDetail={id => setDetailId(id)} detailId={detailId} setDetailId={setDetailId} />}
         {activeTab === "candidats" && <CandidatsPage contacts={candidates} search={search} setSearch={setSearch} onAdd={() => { setModal("candidat"); setForm({ status: "Candidat", sector: "Tech", salaryExpectation: 0 }); }} onEdit={c => { setModal("candidat"); setForm({ ...c }); }} onDelete={deleteContact} onDetail={id => setDetailId(id)} detailId={detailId} setDetailId={setDetailId} candidatures={candidatures} missions={missions} loadAll={loadAll} />}
         {activeTab === "missions" && <MissionsPage missions={missions} contacts={contacts} users={users} candidatures={candidatures} onAdd={() => { setModal("mission"); setForm({ status: "Ouverte", priority: "Normale", contractType: "CDI" }); }} onEdit={m => { setModal("mission"); setForm({ ...m }); }} onDelete={deleteMission} />}
-        {activeTab === "pipeline" && <PipelinePage candidatures={candidatures} candidates={candidates} missions={missions} onEdit={cd => { setModal("candidature"); setForm({ ...cd }); }} onAdd={() => { setModal("candidature"); setForm({ stage: "Soumis", rating: 0 }); }} onDelete={deleteCandidature} />}
+        {activeTab === "pipeline" && <PipelinePage candidatures={candidatures} candidates={candidates} missions={missions} onEdit={cd => { setModal("candidature"); setForm({ ...cd }); }} onAdd={() => { setModal("candidature"); setForm({ stage: "Présélectionné", rating: 0 }); }} onDelete={deleteCandidature} />}
         {activeTab === "activites" && <ActivitesPage activities={activities} contacts={contacts} missions={missions} users={users} currentUser={currentUser} onAdd={() => { setModal("activity"); setForm({ type: "Appel" }); }} onToggle={toggleActivity} onDelete={deleteActivity} />}
         {activeTab === "evaluation" && <EvaluationPage candidates={candidates} missions={missions} loadAll={loadAll} />}
         {activeTab === "revenue" && <RevenuePage contacts={contacts} missions={missions} candidatures={candidatures} users={users} fiscalYears={fiscalYears} loadAll={loadAll} />}
@@ -1105,8 +1105,8 @@ function EvaluationPage({ candidates, missions, loadAll }) {
 // ─── Pipeline Page ──────────────────────────────────────────────────────────
 function PipelinePage({ candidatures, candidates, missions, onEdit, onAdd, onDelete }) {
   const stageConfig = [
-    { key: "Soumis", color: "#94a3b8", bg: "#f8fafc", border: "#e2e8f0" },
     { key: "Présélectionné", color: "#3b82f6", bg: "#eff6ff", border: "#bfdbfe" },
+    { key: "Soumis", color: "#94a3b8", bg: "#f8fafc", border: "#e2e8f0" },
     { key: "Entretien", color: "#f59e0b", bg: "#fffbeb", border: "#fde68a" },
     { key: "Finaliste", color: "#8b5cf6", bg: "#f5f3ff", border: "#ddd6fe" },
     { key: "Placé", color: "#10b981", bg: "#ecfdf5", border: "#a7f3d0" },
