@@ -18,11 +18,11 @@ const STATUS_CONFIG = {
 const SECTORS = ["Tech", "Finance", "Santé", "Retail", "Industrie", "Services", "Médias", "Éducation", "Autre"];
 
 const INITIAL_CONTACTS = [
-  { id: 1, name: "Sophie Martin", company: "TechCorp", email: "s.martin@techcorp.fr", phone: "06 12 34 56 78", status: "Client", sector: "Tech", revenue: 24000, notes: "Partenaire stratégique depuis 2023", createdAt: "2024-01-15" },
-  { id: 2, name: "Julien Bernard", company: "FinanceHub", email: "j.bernard@financehub.fr", phone: "06 98 76 54 32", status: "Prospect", sector: "Finance", revenue: 0, notes: "Intéressé par nos services RH", createdAt: "2024-03-10" },
-  { id: 3, name: "Emma Durand", company: "HealthFirst", email: "e.durand@healthfirst.fr", phone: "07 11 22 33 44", status: "Candidat", sector: "Santé", revenue: 0, notes: "Profil senior, disponible en mars", createdAt: "2024-04-20" },
-  { id: 4, name: "Thomas Petit", company: "RetailGroup", email: "t.petit@retailgroup.fr", phone: "06 55 44 33 22", status: "Client", sector: "Retail", revenue: 38000, notes: "Contrat annuel renouvelé", createdAt: "2024-02-01" },
-  { id: 5, name: "Camille Moreau", company: "IndusPro", email: "c.moreau@induspro.fr", phone: "07 66 77 88 99", status: "Prospect", sector: "Industrie", revenue: 0, notes: "RDV prévu le 20 avril", createdAt: "2024-05-05" },
+  { id: 1, name: "Sophie Martin", company: "TechCorp", email: "s.martin@techcorp.ca", phone: "(514) 555-1234", status: "Client", sector: "Tech", revenue: 24000, notes: "Partenaire stratégique depuis 2023", createdAt: "2024-01-15" },
+  { id: 2, name: "Julien Bernard", company: "FinanceHub", email: "j.bernard@financehub.ca", phone: "(438) 555-9876", status: "Prospect", sector: "Finance", revenue: 0, notes: "Intéressé par nos services RH", createdAt: "2024-03-10" },
+  { id: 3, name: "Emma Durand", company: "HealthFirst", email: "e.durand@healthfirst.ca", phone: "(418) 555-1122", status: "Candidat", sector: "Santé", revenue: 0, notes: "Profil senior, disponible en mars", createdAt: "2024-04-20" },
+  { id: 4, name: "Thomas Petit", company: "RetailGroup", email: "t.petit@retailgroup.ca", phone: "(613) 555-4433", status: "Client", sector: "Retail", revenue: 38000, notes: "Contrat annuel renouvelé", createdAt: "2024-02-01" },
+  { id: 5, name: "Camille Moreau", company: "IndusPro", email: "c.moreau@induspro.ca", phone: "(819) 555-6677", status: "Prospect", sector: "Industrie", revenue: 0, notes: "RDV prévu le 20 avril", createdAt: "2024-05-05" },
 ];
 
 // ─── Mini Sparkline ─────────────────────────────────────────────────────────────
@@ -45,7 +45,7 @@ function RevenueChart({ contacts }) {
   const monthlyData = Array.from({ length: 6 }, (_, i) => {
     const month = new Date(); month.setMonth(month.getMonth() - (5 - i));
     return {
-      label: month.toLocaleString("fr", { month: "short" }),
+      label: month.toLocaleString("fr-CA", { month: "short" }),
       value: Math.round(clients.reduce((s, c) => s + c.revenue / 12, 0) * (0.8 + (i * 0.07)))
     };
   });
@@ -158,7 +158,7 @@ export default function CRM() {
               <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
             </div>
             <div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>AgencyCRM</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>VALO Recrutement</div>
               <div style={{ fontSize: 10.5, color: "#94a3b8" }}>v2.0 · 2026</div>
             </div>
           </div>
@@ -231,7 +231,7 @@ function LoginScreen({ login, setLogin, password, setPassword, showPwd, setShowP
           <div style={{ width: 60, height: 60, background: "linear-gradient(135deg, #1d4ed8, #3b82f6)", borderRadius: 18, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px", boxShadow: "0 8px 24px rgba(37,99,235,0.35)", animation: "float 4s ease-in-out infinite" }}>
             <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
           </div>
-          <h1 style={{ fontSize: 24, fontWeight: 800, color: "#0f172a" }}>AgencyCRM</h1>
+          <h1 style={{ fontSize: 24, fontWeight: 800, color: "#0f172a" }}>VALO Recrutement</h1>
           <p style={{ fontSize: 13.5, color: "#64748b", marginTop: 6 }}>Connectez-vous à votre espace</p>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -276,7 +276,7 @@ function Dashboard({ stats, contacts, onAdd }) {
           { label: "Candidats", value: stats.candidates, color: "#f59e0b", bg: "#fffbeb" },
           { label: "Prospects", value: stats.prospects, color: "#3b82f6", bg: "#eff6ff" },
           { label: "Clients", value: stats.clients, color: "#10b981", bg: "#ecfdf5" },
-          { label: "CA Total", value: `${stats.revenue.toLocaleString("fr")} €`, color: "#8b5cf6", bg: "#f5f3ff" },
+          { label: "CA Total", value: `${stats.revenue.toLocaleString("fr-CA")} $ CAD`, color: "#8b5cf6", bg: "#f5f3ff" },
         ].map((kpi, i) => (
           <div key={i} className="card">
             <p style={{ fontSize: 11.5, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.06em" }}>{kpi.label}</p>
@@ -300,7 +300,7 @@ function Dashboard({ stats, contacts, onAdd }) {
                   <div style={{ fontSize: 13, fontWeight: 600, color: "#0f172a" }}>{c.name}</div>
                   <div style={{ fontSize: 11.5, color: "#64748b" }}>{c.company}</div>
                 </div>
-                <div style={{ fontSize: 13.5, fontWeight: 700, color: "#0f172a" }}>{c.revenue.toLocaleString("fr")} €</div>
+                <div style={{ fontSize: 13.5, fontWeight: 700, color: "#0f172a" }}>{c.revenue.toLocaleString("fr-CA")} $ CAD</div>
               </div>
             ))}
           </div>
@@ -334,7 +334,7 @@ function Contacts({ contacts, search, setSearch, filterStatus, setFilterStatus, 
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
             <tr style={{ borderBottom: "1px solid #f1f5f9" }}>
-              {["Contact", "Entreprise", "Secteur", "Statut", "CA (€)", "Actions"].map(h => (
+              {["Contact", "Entreprise", "Secteur", "Statut", "CA ($ CAD)", "Actions"].map(h => (
                 <th key={h} style={{ padding: "14px 20px", textAlign: "left", fontSize: 11.5, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.06em" }}>{h}</th>
               ))}
             </tr>
@@ -357,7 +357,7 @@ function Contacts({ contacts, search, setSearch, filterStatus, setFilterStatus, 
                   <td style={{ padding: "14px 20px", fontSize: 13.5, color: "#374151", fontWeight: 500 }}>{c.company}</td>
                   <td style={{ padding: "14px 20px" }}><span style={{ fontSize: 12, color: "#64748b", background: "#f1f5f9", padding: "3px 9px", borderRadius: 6, fontWeight: 500 }}>{c.sector}</span></td>
                   <td style={{ padding: "14px 20px" }}><span className="tag" style={{ background: sc.bg, color: sc.color }}>{sc.label}</span></td>
-                  <td style={{ padding: "14px 20px", fontSize: 13.5, fontWeight: 700, color: c.revenue > 0 ? "#0f172a" : "#cbd5e1" }}>{c.revenue > 0 ? `${c.revenue.toLocaleString("fr")} €` : "—"}</td>
+                  <td style={{ padding: "14px 20px", fontSize: 13.5, fontWeight: 700, color: c.revenue > 0 ? "#0f172a" : "#cbd5e1" }}>{c.revenue > 0 ? `${c.revenue.toLocaleString("fr-CA")} $ CAD` : "—"}</td>
                   <td style={{ padding: "14px 20px" }} onClick={e => e.stopPropagation()}>
                     <div style={{ display: "flex", gap: 6 }}>
                       <button className="btn btn-ghost" style={{ padding: "6px 10px" }} onClick={() => onEdit(c)}>✏️</button>
@@ -407,7 +407,7 @@ function Pipeline({ contacts, onEdit }) {
                         <div style={{ fontSize: 11.5, color: "#64748b" }}>{c.company}</div>
                       </div>
                     </div>
-                    {c.revenue > 0 && <div style={{ fontSize: 12, fontWeight: 700, color: col.color, marginTop: 4 }}>{c.revenue.toLocaleString("fr")} €</div>}
+                    {c.revenue > 0 && <div style={{ fontSize: 12, fontWeight: 700, color: col.color, marginTop: 4 }}>{c.revenue.toLocaleString("fr-CA")} $ CAD</div>}
                     {c.notes && <div style={{ fontSize: 11.5, color: "#64748b", marginTop: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.notes}</div>}
                   </div>
                 ))}
@@ -435,8 +435,8 @@ function Revenue({ contacts }) {
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 24 }}>
         {[
-          { label: "CA Total", value: `${total.toLocaleString("fr")} €`, color: "#2563eb" },
-          { label: "CA Moyen / Client", value: clients.length > 0 ? `${Math.round(total / clients.length).toLocaleString("fr")} €` : "—", color: "#10b981" },
+          { label: "CA Total", value: `${total.toLocaleString("fr-CA")} $ CAD`, color: "#2563eb" },
+          { label: "CA Moyen / Client", value: clients.length > 0 ? `${Math.round(total / clients.length).toLocaleString("fr-CA")} $ CAD` : "—", color: "#10b981" },
           { label: "Meilleur secteur", value: bySechor[0]?.sector || "—", color: "#8b5cf6" },
         ].map((s, i) => (
           <div key={i} className="card">
@@ -454,7 +454,7 @@ function Revenue({ contacts }) {
               <div key={c.id}>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
                   <span style={{ fontSize: 13.5, fontWeight: 600, color: "#0f172a" }}>{c.name} <span style={{ color: "#94a3b8", fontWeight: 400 }}>· {c.company}</span></span>
-                  <span style={{ fontSize: 13.5, fontWeight: 700 }}>{(c.revenue || 0).toLocaleString("fr")} €</span>
+                  <span style={{ fontSize: 13.5, fontWeight: 700 }}>{(c.revenue || 0).toLocaleString("fr-CA")} $ CAD</span>
                 </div>
                 <div style={{ height: 7, background: "#f1f5f9", borderRadius: 4 }}>
                   <div style={{ width: `${((c.revenue || 0) / maxRev) * 100}%`, height: "100%", background: "linear-gradient(90deg, #2563eb, #60a5fa)", borderRadius: 4 }} />
@@ -473,7 +473,7 @@ function Revenue({ contacts }) {
                 <div key={s.sector} style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <div style={{ width: 10, height: 10, borderRadius: 3, background: colors[i % colors.length] }} />
                   <div style={{ flex: 1, fontSize: 13.5, color: "#374151" }}>{s.sector}</div>
-                  <div style={{ fontSize: 13.5, fontWeight: 700 }}>{s.total.toLocaleString("fr")} €</div>
+                  <div style={{ fontSize: 13.5, fontWeight: 700 }}>{s.total.toLocaleString("fr-CA")} $ CAD</div>
                 </div>
               );
             })}
@@ -494,8 +494,8 @@ function FormContact({ form, setForm, onSave, onCancel }) {
         <div><label style={{ fontSize: 12.5, fontWeight: 600, color: "#374151", display: "block", marginBottom: 6 }}>Entreprise *</label><input className="input" value={form.company || ""} onChange={e => f("company", e.target.value)} placeholder="Nom entreprise" /></div>
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-        <div><label style={{ fontSize: 12.5, fontWeight: 600, color: "#374151", display: "block", marginBottom: 6 }}>Email</label><input className="input" type="email" value={form.email || ""} onChange={e => f("email", e.target.value)} placeholder="email@exemple.fr" /></div>
-        <div><label style={{ fontSize: 12.5, fontWeight: 600, color: "#374151", display: "block", marginBottom: 6 }}>Téléphone</label><input className="input" value={form.phone || ""} onChange={e => f("phone", e.target.value)} placeholder="06 XX XX XX XX" /></div>
+        <div><label style={{ fontSize: 12.5, fontWeight: 600, color: "#374151", display: "block", marginBottom: 6 }}>Email</label><input className="input" type="email" value={form.email || ""} onChange={e => f("email", e.target.value)} placeholder="email@exemple.ca" /></div>
+        <div><label style={{ fontSize: 12.5, fontWeight: 600, color: "#374151", display: "block", marginBottom: 6 }}>Téléphone</label><input className="input" value={form.phone || ""} onChange={e => f("phone", e.target.value)} placeholder="(514) 555-0000" /></div>
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
         <div><label style={{ fontSize: 12.5, fontWeight: 600, color: "#374151", display: "block", marginBottom: 6 }}>Statut</label>
@@ -508,7 +508,7 @@ function FormContact({ form, setForm, onSave, onCancel }) {
             {SECTORS.map(s => <option key={s}>{s}</option>)}
           </select>
         </div>
-        <div><label style={{ fontSize: 12.5, fontWeight: 600, color: "#374151", display: "block", marginBottom: 6 }}>CA annuel (€)</label><input className="input" type="number" value={form.revenue || ""} onChange={e => f("revenue", e.target.value)} placeholder="0" /></div>
+        <div><label style={{ fontSize: 12.5, fontWeight: 600, color: "#374151", display: "block", marginBottom: 6 }}>CA annuel ($ CAD)</label><input className="input" type="number" value={form.revenue || ""} onChange={e => f("revenue", e.target.value)} placeholder="0" /></div>
       </div>
       <div><label style={{ fontSize: 12.5, fontWeight: 600, color: "#374151", display: "block", marginBottom: 6 }}>Notes</label><textarea className="input" style={{ resize: "vertical", minHeight: 72 }} value={form.notes || ""} onChange={e => f("notes", e.target.value)} placeholder="Informations complémentaires..." /></div>
       <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
@@ -539,7 +539,7 @@ function ContactDetail({ contact: c, onClose, onEdit, onDelete }) {
         {c.email && <div style={{ fontSize: 13.5, color: "#374151" }}>📧 {c.email}</div>}
         {c.phone && <div style={{ fontSize: 13.5, color: "#374151" }}>📞 {c.phone}</div>}
         <div style={{ fontSize: 13.5, color: "#374151" }}>🏷 {c.sector}</div>
-        {c.revenue > 0 && <div style={{ fontSize: 13.5, fontWeight: 700, color: "#0f172a" }}>💰 {c.revenue.toLocaleString("fr")} € / an</div>}
+        {c.revenue > 0 && <div style={{ fontSize: 13.5, fontWeight: 700, color: "#0f172a" }}>💰 {c.revenue.toLocaleString("fr-CA")} $ CAD / an</div>}
         {c.notes && <div style={{ background: "#f8fafc", borderRadius: 10, padding: "10px 12px", marginTop: 4 }}><p style={{ fontSize: 12, fontWeight: 600, color: "#94a3b8", marginBottom: 4 }}>NOTES</p><p style={{ fontSize: 13, color: "#374151", lineHeight: 1.5 }}>{c.notes}</p></div>}
         <p style={{ fontSize: 11.5, color: "#cbd5e1" }}>Ajouté le {new Date(c.createdAt).toLocaleDateString("fr-FR")}</p>
       </div>
