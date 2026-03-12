@@ -174,6 +174,7 @@ export default function CRM() {
     { id: "missions", label: "Postes Ouverts", icon: "M21 13.255A23.931 23.931 0 0 1 12 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2m-5 4h18a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2v-6a2 2 0 0 1 2-2z" },
     { id: "pipeline", label: "Pipeline", icon: "M9 17V7m0 10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2m0 10a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 7a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2m0 10V7" },
     { id: "activites", label: "Activités", icon: "M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2" },
+    { id: "evaluation", label: "Évaluation IA", icon: "M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0 1 12 2.944a11.955 11.955 0 0 1-8.618 3.04A12.02 12.02 0 0 0 3 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" },
     { id: "revenue", label: "Chiffre d'affaires", icon: "M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" },
   ];
 
@@ -223,6 +224,7 @@ export default function CRM() {
         {activeTab === "missions" && <MissionsPage missions={missions} contacts={contacts} users={users} candidatures={candidatures} onAdd={() => { setModal("mission"); setForm({ status: "Ouverte", priority: "Normale", contractType: "CDI" }); }} onEdit={m => { setModal("mission"); setForm({ ...m }); }} onDelete={deleteMission} />}
         {activeTab === "pipeline" && <PipelinePage candidatures={candidatures} candidates={candidates} missions={missions} onEdit={cd => { setModal("candidature"); setForm({ ...cd }); }} onAdd={() => { setModal("candidature"); setForm({ stage: "Soumis", rating: 0 }); }} onDelete={deleteCandidature} />}
         {activeTab === "activites" && <ActivitesPage activities={activities} contacts={contacts} missions={missions} users={users} currentUser={currentUser} onAdd={() => { setModal("activity"); setForm({ type: "Appel" }); }} onToggle={toggleActivity} onDelete={deleteActivity} />}
+        {activeTab === "evaluation" && <EvaluationPage candidates={candidates} missions={missions} loadAll={loadAll} />}
         {activeTab === "revenue" && <RevenuePage contacts={contacts} missions={missions} candidatures={candidatures} users={users} />}
       </main>
 
@@ -532,9 +534,6 @@ function FicheCandidat({ contact: c, onClose, onEdit, onDelete, candidatures, mi
   const [files, setFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [evaluations, setEvaluations] = useState([]);
-  const [evalLoading, setEvalLoading] = useState(false);
-  const [evalError, setEvalError] = useState("");
-  const [evalMissionId, setEvalMissionId] = useState("");
 
   const loadFiles = async () => {
     const data = await api.get(`/api/files/contact/${c.id}`);
@@ -547,25 +546,6 @@ function FicheCandidat({ contact: c, onClose, onEdit, onDelete, candidatures, mi
   };
 
   useEffect(() => { loadFiles(); loadEvaluations(); }, [c.id]);
-
-  const generateEvaluation = async () => {
-    if (!evalMissionId) return;
-    setEvalLoading(true);
-    setEvalError("");
-    try {
-      const res = await api.post("/api/evaluations/generate", { candidateId: c.id, missionId: Number(evalMissionId) });
-      if (res.ok) {
-        await loadEvaluations();
-        setEvalMissionId("");
-      } else {
-        const err = await res.json();
-        setEvalError(err.error || "Erreur lors de l'évaluation");
-      }
-    } catch (err) {
-      setEvalError("Erreur réseau");
-    }
-    setEvalLoading(false);
-  };
 
   const deleteEvaluation = async (id) => {
     await api.del(`/api/evaluations/${id}`);
@@ -722,26 +702,10 @@ function FicheCandidat({ contact: c, onClose, onEdit, onDelete, candidatures, mi
         ))}
       </div>
 
-      {/* Évaluation CV vs Poste */}
+      {/* Résultats d'évaluation */}
       <div style={{ marginBottom: 20 }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a", marginBottom: 10 }}>Évaluation CV vs Poste</div>
-
-        {/* Formulaire de lancement */}
-        <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-          <select className="input" style={{ flex: 1, fontSize: 13 }} value={evalMissionId} onChange={e => setEvalMissionId(e.target.value)}>
-            <option value="">-- Choisir un poste à évaluer --</option>
-            {missions.filter(m => m.status === "Ouverte" || m.status === "En cours").map(m => (
-              <option key={m.id} value={m.id}>{m.title} — {m.company}</option>
-            ))}
-          </select>
-          <button className="btn btn-primary" style={{ padding: "8px 16px", fontSize: 12, whiteSpace: "nowrap" }} onClick={generateEvaluation} disabled={evalLoading || !evalMissionId}>
-            {evalLoading ? "Analyse en cours..." : "Évaluer"}
-          </button>
-        </div>
-        {evalError && <div style={{ padding: "8px 12px", background: "#fee2e2", borderRadius: 8, fontSize: 12, color: "#dc2626", marginBottom: 10 }}>{evalError}</div>}
-
-        {/* Liste des évaluations existantes */}
-        {evaluations.length === 0 && <p style={{ fontSize: 12, color: "#94a3b8" }}>Aucune évaluation</p>}
+        <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a", marginBottom: 10 }}>Résultats d'évaluation</div>
+        {evaluations.length === 0 && <p style={{ fontSize: 12, color: "#94a3b8" }}>Aucune évaluation — Lancez une évaluation depuis l'onglet "Évaluation IA"</p>}
         {evaluations.map(ev => {
           let positives = [], negatives = [], clarifs = [];
           try { positives = JSON.parse(ev.positives); } catch {}
@@ -857,30 +821,280 @@ function MissionsPage({ missions, contacts, users, candidatures, onAdd, onEdit, 
 
       {detailMission && (
         <div className="modal-bg" onClick={e => e.target === e.currentTarget && setDetailMission(null)}>
-          <div className="card" style={{ width: 560, maxHeight: "85vh", overflowY: "auto", padding: 28 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
-              <h2 style={{ fontSize: 17, fontWeight: 700, color: "#0f172a" }}>{detailMission.title}</h2>
-              <button className="btn btn-ghost" style={{ padding: "6px 8px" }} onClick={() => setDetailMission(null)}>X</button>
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: 13.5, color: "#374151" }}>
-              <div>Entreprise: <strong>{detailMission.company}</strong></div>
-              <div>Lieu: {detailMission.location || "—"}</div>
-              <div>Type: {detailMission.contractType}</div>
-              <div>Salaire: {detailMission.salaryMin > 0 ? `${fmtCAD(detailMission.salaryMin)} - ${fmtCAD(detailMission.salaryMax)}` : "—"}</div>
-              <div>Commission: {detailMission.commission > 0 ? fmtCAD(detailMission.commission) : "—"}</div>
-              {detailMission.description && <div style={{ background: "#f8fafc", borderRadius: 10, padding: 12, marginTop: 8 }}><div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", marginBottom: 4 }}>DESCRIPTION</div>{detailMission.description}</div>}
-              {detailMission.requirements && <div style={{ background: "#f8fafc", borderRadius: 10, padding: 12 }}><div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", marginBottom: 4 }}>PRE-REQUIS</div>{detailMission.requirements}</div>}
-            </div>
-            <div style={{ marginTop: 16, fontSize: 13, fontWeight: 700, color: "#0f172a" }}>Candidatures ({candidatures.filter(cd => cd.missionId === detailMission.id).length})</div>
-            {candidatures.filter(cd => cd.missionId === detailMission.id).map(cd => (
-              <div key={cd.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "#f8fafc", borderRadius: 8, marginTop: 6 }}>
-                <span style={{ fontSize: 13, color: "#0f172a", flex: 1 }}>{cd.candidateName}</span>
-                <span className="tag" style={{ background: cd.stage === "Placé" ? "#d1fae5" : "#dbeafe", color: cd.stage === "Placé" ? "#059669" : "#2563eb" }}>{cd.stage}</span>
-              </div>
-            ))}
-          </div>
+          <FicheMission mission={detailMission} onClose={() => setDetailMission(null)} onEdit={() => { onEdit(detailMission); setDetailMission(null); }} onDelete={() => { onDelete(detailMission.id); setDetailMission(null); }} candidatures={candidatures} />
         </div>
       )}
+    </div>
+  );
+}
+
+
+// ─── Fiche Mission (Detail with files) ───────────────────────────────────────
+function FicheMission({ mission: m, onClose, onEdit, onDelete, candidatures }) {
+  const [files, setFiles] = useState([]);
+  const [uploading, setUploading] = useState(false);
+
+  const loadFiles = async () => {
+    const data = await api.get(`/api/files/mission/${m.id}`);
+    setFiles(data);
+  };
+
+  useEffect(() => { loadFiles(); }, [m.id]);
+
+  const handleUpload = async () => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".pdf";
+    input.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      setUploading(true);
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const base64 = reader.result.split(",")[1];
+        await api.post("/api/files", {
+          missionId: m.id,
+          fileType: "offre",
+          fileName: file.name,
+          mimeType: file.type || "application/pdf",
+          fileData: base64,
+        });
+        await loadFiles();
+        setUploading(false);
+      };
+      reader.readAsDataURL(file);
+    };
+    input.click();
+  };
+
+  const deleteFile = async (id) => {
+    await api.del(`/api/files/${id}`);
+    await loadFiles();
+  };
+
+  const downloadFile = (id) => {
+    window.open(`/api/files/${id}`, "_blank");
+  };
+
+  const mCandidatures = candidatures.filter(cd => cd.missionId === m.id);
+
+  return (
+    <div className="card" style={{ width: 580, maxHeight: "90vh", overflowY: "auto", padding: 28 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 20 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ width: 50, height: 50, background: "linear-gradient(135deg, #dbeafe, #93c5fd)", borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, fontWeight: 800, color: "#2563eb" }}>{m.title[0]}</div>
+          <div>
+            <h2 style={{ fontSize: 18, fontWeight: 700, color: "#0f172a" }}>{m.title}</h2>
+            <p style={{ fontSize: 13, color: "#64748b" }}>{m.company} — {m.location || "N/A"}</p>
+          </div>
+        </div>
+        <button className="btn btn-ghost" style={{ padding: "6px 8px" }} onClick={onClose}>X</button>
+      </div>
+
+      {/* Info section */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
+        <div style={{ background: "#f8fafc", borderRadius: 10, padding: 12 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", marginBottom: 4 }}>TYPE DE CONTRAT</div>
+          <div style={{ fontSize: 13, color: "#0f172a" }}>{m.contractType}</div>
+        </div>
+        <div style={{ background: "#f8fafc", borderRadius: 10, padding: 12 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", marginBottom: 4 }}>SALAIRE</div>
+          <div style={{ fontSize: 13, color: "#0f172a", fontWeight: 600 }}>{m.salaryMin > 0 ? `${fmtCAD(m.salaryMin)} - ${fmtCAD(m.salaryMax)}` : "—"}</div>
+        </div>
+        <div style={{ background: "#f8fafc", borderRadius: 10, padding: 12 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", marginBottom: 4 }}>COMMISSION</div>
+          <div style={{ fontSize: 13, color: "#0f172a", fontWeight: 600 }}>{m.commission > 0 ? fmtCAD(m.commission) : "—"}</div>
+        </div>
+        <div style={{ background: "#f8fafc", borderRadius: 10, padding: 12 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", marginBottom: 4 }}>STATUT</div>
+          <div style={{ fontSize: 13, color: "#0f172a" }}>{m.status}</div>
+        </div>
+      </div>
+
+      {m.description && (
+        <div style={{ background: "#f8fafc", borderRadius: 10, padding: 12, marginBottom: 12 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", marginBottom: 4 }}>DESCRIPTION</div>
+          <div style={{ fontSize: 13, color: "#374151", lineHeight: 1.5 }}>{m.description}</div>
+        </div>
+      )}
+      {m.requirements && (
+        <div style={{ background: "#f8fafc", borderRadius: 10, padding: 12, marginBottom: 20 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", marginBottom: 4 }}>PRE-REQUIS</div>
+          <div style={{ fontSize: 13, color: "#374151", lineHeight: 1.5 }}>{m.requirements}</div>
+        </div>
+      )}
+
+      {/* Document de l'offre (PDF) */}
+      <div style={{ marginBottom: 20 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>Document de l'offre (PDF)</div>
+          <button className="btn btn-primary" style={{ padding: "6px 14px", fontSize: 12 }} onClick={handleUpload} disabled={uploading}>
+            {uploading ? "Envoi..." : "+ Importer PDF"}
+          </button>
+        </div>
+        {files.length === 0 && <p style={{ fontSize: 12, color: "#94a3b8" }}>Aucun document importé</p>}
+        {files.map(f => (
+          <div key={f.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "#f8fafc", borderRadius: 8, marginBottom: 6 }}>
+            <span style={{ fontSize: 13, color: "#0f172a", flex: 1 }}>{f.file_name}</span>
+            <span style={{ fontSize: 11, color: "#94a3b8" }}>{new Date(f.created_at).toLocaleDateString("fr-CA")}</span>
+            <button className="btn btn-ghost" style={{ padding: "4px 10px", fontSize: 11 }} onClick={() => downloadFile(f.id)}>Télécharger</button>
+            <button className="btn btn-danger" style={{ padding: "4px 10px", fontSize: 11 }} onClick={() => deleteFile(f.id)}>Suppr.</button>
+          </div>
+        ))}
+        <p style={{ fontSize: 11, color: "#94a3b8", marginTop: 6, fontStyle: "italic" }}>Ce document sera utilisé par l'IA lors de l'évaluation des candidats.</p>
+      </div>
+
+      {/* Candidatures */}
+      <div style={{ marginBottom: 20 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a", marginBottom: 10 }}>Candidatures ({mCandidatures.length})</div>
+        {mCandidatures.length === 0 && <p style={{ fontSize: 12, color: "#94a3b8" }}>Aucune candidature</p>}
+        {mCandidatures.map(cd => (
+          <div key={cd.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "#f8fafc", borderRadius: 8, marginBottom: 6 }}>
+            <span style={{ fontSize: 13, color: "#0f172a", flex: 1 }}>{cd.candidateName}</span>
+            <span className="tag" style={{ background: cd.stage === "Placé" ? "#d1fae5" : cd.stage === "Refusé" ? "#fee2e2" : "#dbeafe", color: cd.stage === "Placé" ? "#059669" : cd.stage === "Refusé" ? "#dc2626" : "#2563eb" }}>{cd.stage}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Actions */}
+      <div style={{ display: "flex", gap: 10 }}>
+        <button className="btn btn-ghost" style={{ flex: 1, justifyContent: "center" }} onClick={onEdit}>Modifier</button>
+        <button className="btn btn-danger" style={{ flex: 1, justifyContent: "center" }} onClick={onDelete}>Supprimer</button>
+      </div>
+    </div>
+  );
+}
+
+
+// ─── Évaluation Page ────────────────────────────────────────────────────────
+function EvaluationPage({ candidates, missions, loadAll }) {
+  const [candidateId, setCandidateId] = useState("");
+  const [missionId, setMissionId] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [evaluations, setEvaluations] = useState([]);
+
+  const loadEvaluations = async () => {
+    const data = await api.get("/api/evaluations");
+    setEvaluations(data);
+  };
+
+  useEffect(() => { loadEvaluations(); }, []);
+
+  const generate = async () => {
+    if (!candidateId || !missionId) return;
+    setLoading(true);
+    setError("");
+    try {
+      const res = await api.post("/api/evaluations/generate", { candidateId: Number(candidateId), missionId: Number(missionId) });
+      if (res.ok) {
+        await loadEvaluations();
+        setCandidateId("");
+        setMissionId("");
+      } else {
+        const err = await res.json();
+        setError(err.error || "Erreur lors de l'évaluation");
+      }
+    } catch (err) {
+      setError("Erreur réseau");
+    }
+    setLoading(false);
+  };
+
+  const deleteEvaluation = async (id) => {
+    await api.del(`/api/evaluations/${id}`);
+    await loadEvaluations();
+  };
+
+  return (
+    <div>
+      <div style={{ marginBottom: 24 }}>
+        <h1 style={{ fontSize: 26, fontWeight: 800, color: "#0f172a" }}>Évaluation IA</h1>
+        <p style={{ fontSize: 13.5, color: "#64748b", marginTop: 3 }}>Évaluez la compatibilité entre un candidat et un poste</p>
+      </div>
+
+      {/* Formulaire de lancement */}
+      <div className="card" style={{ marginBottom: 24 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", marginBottom: 16 }}>Lancer une évaluation</div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: 12, alignItems: "end" }}>
+          <div>
+            <label style={{ fontSize: 12, fontWeight: 600, color: "#64748b", marginBottom: 6, display: "block" }}>Candidat</label>
+            <select className="input" value={candidateId} onChange={e => setCandidateId(e.target.value)}>
+              <option value="">-- Choisir un candidat --</option>
+              {candidates.map(c => (
+                <option key={c.id} value={c.id}>{c.name}{c.skills ? ` (${c.skills.split(",").slice(0, 2).join(", ")})` : ""}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label style={{ fontSize: 12, fontWeight: 600, color: "#64748b", marginBottom: 6, display: "block" }}>Poste</label>
+            <select className="input" value={missionId} onChange={e => setMissionId(e.target.value)}>
+              <option value="">-- Choisir un poste --</option>
+              {missions.filter(m => m.status === "Ouverte" || m.status === "En cours").map(m => (
+                <option key={m.id} value={m.id}>{m.title} — {m.company}</option>
+              ))}
+            </select>
+          </div>
+          <button className="btn btn-primary" style={{ padding: "10px 24px", fontSize: 13 }} onClick={generate} disabled={loading || !candidateId || !missionId}>
+            {loading ? "Analyse en cours..." : "Évaluer"}
+          </button>
+        </div>
+        {error && <div style={{ padding: "8px 12px", background: "#fee2e2", borderRadius: 8, fontSize: 12, color: "#dc2626", marginTop: 12 }}>{error}</div>}
+      </div>
+
+      {/* Historique des évaluations */}
+      <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", marginBottom: 12 }}>Historique ({evaluations.length})</div>
+      {evaluations.length === 0 && <div className="card" style={{ textAlign: "center", color: "#94a3b8" }}>Aucune évaluation</div>}
+      {evaluations.map(ev => {
+        let positives = [], negatives = [], clarifs = [];
+        try { positives = JSON.parse(ev.positives); } catch {}
+        try { negatives = JSON.parse(ev.negatives); } catch {}
+        try { clarifs = JSON.parse(ev.clarifications); } catch {}
+        const scoreColor = ev.score >= 70 ? "#059669" : ev.score >= 40 ? "#d97706" : "#dc2626";
+        const scoreBg = ev.score >= 70 ? "#ecfdf5" : ev.score >= 40 ? "#fffbeb" : "#fef2f2";
+
+        return (
+          <div key={ev.id} className="card" style={{ marginBottom: 12, border: `1.5px solid ${scoreBg}` }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                <div style={{ width: 56, height: 56, borderRadius: "50%", background: scoreBg, border: `3px solid ${scoreColor}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, fontWeight: 800, color: scoreColor }}>{ev.score}</div>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>{ev.candidateName}</div>
+                  <div style={{ fontSize: 13, color: "#64748b" }}>{ev.missionTitle} — {ev.missionCompany}</div>
+                  <div style={{ fontSize: 11, color: "#94a3b8" }}>{new Date(ev.createdAt).toLocaleDateString("fr-CA")}</div>
+                </div>
+              </div>
+              <button className="btn btn-danger" style={{ padding: "6px 10px", fontSize: 11 }} onClick={() => deleteEvaluation(ev.id)}>Suppr.</button>
+            </div>
+
+            {ev.summary && <div style={{ fontSize: 13, color: "#374151", marginBottom: 14, lineHeight: 1.6, fontStyle: "italic", background: "#f8fafc", borderRadius: 8, padding: 12 }}>{ev.summary}</div>}
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: "#059669", marginBottom: 6 }}>POINTS POSITIFS</div>
+                {positives.map((p, i) => (
+                  <div key={i} style={{ fontSize: 12, color: "#374151", marginBottom: 4, paddingLeft: 10, borderLeft: "2px solid #a7f3d0" }}>{p}</div>
+                ))}
+                {positives.length === 0 && <div style={{ fontSize: 11, color: "#94a3b8" }}>—</div>}
+              </div>
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: "#dc2626", marginBottom: 6 }}>POINTS NÉGATIFS</div>
+                {negatives.map((n, i) => (
+                  <div key={i} style={{ fontSize: 12, color: "#374151", marginBottom: 4, paddingLeft: 10, borderLeft: "2px solid #fecaca" }}>{n}</div>
+                ))}
+                {negatives.length === 0 && <div style={{ fontSize: 11, color: "#94a3b8" }}>—</div>}
+              </div>
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: "#d97706", marginBottom: 6 }}>À ÉCLAIRCIR</div>
+                {clarifs.map((cl, i) => (
+                  <div key={i} style={{ fontSize: 12, color: "#374151", marginBottom: 4, paddingLeft: 10, borderLeft: "2px solid #fde68a" }}>{cl}</div>
+                ))}
+                {clarifs.length === 0 && <div style={{ fontSize: 11, color: "#94a3b8" }}>—</div>}
+              </div>
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
