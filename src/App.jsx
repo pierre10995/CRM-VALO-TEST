@@ -171,7 +171,7 @@ export default function CRM() {
     { id: "dashboard", label: "Dashboard", icon: "M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" },
     { id: "clients", label: "Clients", icon: "M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5m-4 0h4" },
     { id: "candidats", label: "Candidats", icon: "M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2 M23 21v-2a4 4 0 0 0-3-3.87 M16 3.13a4 4 0 0 1 0 7.75" },
-    { id: "missions", label: "Missions", icon: "M21 13.255A23.931 23.931 0 0 1 12 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2m-5 4h18a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2v-6a2 2 0 0 1 2-2z" },
+    { id: "missions", label: "Postes Ouverts", icon: "M21 13.255A23.931 23.931 0 0 1 12 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2m-5 4h18a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2v-6a2 2 0 0 1 2-2z" },
     { id: "pipeline", label: "Pipeline", icon: "M9 17V7m0 10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2m0 10a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 7a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2m0 10V7" },
     { id: "activites", label: "Activités", icon: "M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2" },
     { id: "revenue", label: "Chiffre d'affaires", icon: "M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" },
@@ -238,7 +238,7 @@ export default function CRM() {
         </ModalWrapper>
       )}
       {modal === "mission" && (
-        <ModalWrapper onClose={() => setModal(null)} title={form.id ? "Modifier la mission" : "Nouvelle mission"}>
+        <ModalWrapper onClose={() => setModal(null)} title={form.id ? "Modifier le poste" : "Nouveau poste"}>
           <MissionForm form={form} setForm={setForm} onSave={saveMission} onCancel={() => setModal(null)} contacts={contacts} users={users} />
         </ModalWrapper>
       )}
@@ -708,10 +708,10 @@ function MissionsPage({ missions, contacts, users, candidatures, onAdd, onEdit, 
     <div>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
         <div>
-          <h1 style={{ fontSize: 26, fontWeight: 800, color: "#0f172a" }}>Missions</h1>
+          <h1 style={{ fontSize: 26, fontWeight: 800, color: "#0f172a" }}>Postes Ouverts</h1>
           <p style={{ fontSize: 13.5, color: "#64748b", marginTop: 3 }}>{missions.length} mission{missions.length > 1 ? "s" : ""}</p>
         </div>
-        <button className="btn btn-primary" onClick={onAdd}>+ Nouvelle mission</button>
+        <button className="btn btn-primary" onClick={onAdd}>+ Nouveau poste</button>
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}>
         {missions.map(m => {
