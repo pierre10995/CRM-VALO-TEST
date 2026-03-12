@@ -144,6 +144,27 @@ async function initDB() {
       );
     `);
 
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS fiscal_years (
+        id SERIAL PRIMARY KEY,
+        label VARCHAR(20) NOT NULL UNIQUE,
+        start_date DATE NOT NULL,
+        end_date DATE NOT NULL,
+        target NUMERIC DEFAULT 0
+      );
+    `);
+
+    // Seed fiscal years
+    const { rows: existingYears } = await client.query("SELECT COUNT(*) FROM fiscal_years");
+    if (parseInt(existingYears[0].count) === 0) {
+      await client.query(`
+        INSERT INTO fiscal_years (label, start_date, end_date, target) VALUES
+        ('2024-2025', '2024-04-01', '2025-03-31', 100000),
+        ('2025-2026', '2025-04-01', '2026-03-31', 150000),
+        ('2026-2027', '2026-04-01', '2027-03-31', 200000)
+      `);
+    }
+
     // Seed users
     const { rows: existingUsers } = await client.query("SELECT COUNT(*) FROM users");
     if (parseInt(existingUsers[0].count) === 0) {
@@ -698,6 +719,32 @@ Réponds UNIQUEMENT en JSON valide avec cette structure exacte (pas de markdown,
     console.error("Evaluation error:", err);
     res.status(500).json({ error: err.message || "Erreur lors de l'évaluation" });
   }
+});
+
+// ─── Fiscal Years ───────────────────────────────────────────────────────────
+app.get("/api/fiscal-years", async (req, res) => {
+  try {
+    const { rows } = await pool.query("SELECT * FROM fiscal_years ORDER BY start_date ASC");
+    res.json(rows.map(r => ({ id: r.id, label: r.label, startDate: r.start_date, endDate: r.end_date, target: Number(r.target) })));
+  } catch (err) { res.status(500).json({ error: "Erreur serveur" }); }
+});
+
+app.post("/api/fiscal-years", async (req, res) => {
+  const { label, startDate, endDate, target } = req.body;
+  if (!label || !startDate || !endDate) return res.status(400).json({ error: "Champs requis" });
+  try {
+    const { rows } = await pool.query(
+      "INSERT INTO fiscal_years (label, start_date, end_date, target) VALUES ($1,$2,$3,$4) RETURNING *",
+      [label, startDate, endDate, Number(target) || 0]
+    );
+    const r = rows[0];
+    res.json({ id: r.id, label: r.label, startDate: r.start_date, endDate: r.end_date, target: Number(r.target) });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.delete("/api/fiscal-years/:id", async (req, res) => {
+  try { await pool.query("DELETE FROM fiscal_years WHERE id=$1", [req.params.id]); res.json({ ok: true }); }
+  catch (err) { res.status(500).json({ error: "Erreur serveur" }); }
 });
 
 // ─── Serve frontend ──────────────────────────────────────────────────────────

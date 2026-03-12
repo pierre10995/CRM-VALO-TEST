@@ -1194,43 +1194,80 @@ function ActivitesPage({ activities, contacts, missions, users, currentUser, onA
 // ─── Revenue Page ───────────────────────────────────────────────────────────
 function RevenuePage({ contacts, missions, candidatures, users }) {
   const [activeOnglet, setActiveOnglet] = useState("total");
+  const [fiscalYears, setFiscalYears] = useState([]);
+  const [selectedYear, setSelectedYear] = useState("all");
+  const [showAddYear, setShowAddYear] = useState(false);
+  const [newYear, setNewYear] = useState({ label: "", startDate: "", endDate: "", target: 0 });
+
+  useEffect(() => {
+    api.get("/api/fiscal-years").then(setFiscalYears);
+  }, []);
+
+  const addFiscalYear = async () => {
+    if (!newYear.label || !newYear.startDate || !newYear.endDate) return;
+    const res = await api.post("/api/fiscal-years", newYear);
+    if (res.ok) {
+      const fy = await res.json();
+      setFiscalYears(prev => [...prev, fy].sort((a, b) => a.startDate.localeCompare(b.startDate)));
+      setNewYear({ label: "", startDate: "", endDate: "", target: 0 });
+      setShowAddYear(false);
+    }
+  };
+
+  const deleteFiscalYear = async (id) => {
+    await api.del(`/api/fiscal-years/${id}`);
+    setFiscalYears(prev => prev.filter(fy => fy.id !== id));
+    if (selectedYear === String(id)) setSelectedYear("all");
+  };
 
   const placements = candidatures.filter(cd => cd.stage === "Placé");
   const placedMissionIds = new Set(placements.map(cd => cd.missionId));
   const placedMissions = missions.filter(m => placedMissionIds.has(m.id));
 
-  // CA global = commissions des missions avec au moins un placement
-  const caTotal = placedMissions.reduce((s, m) => s + (m.commission || 0), 0);
+  // Filter by fiscal year
+  const filterByYear = (missionList, fy) => {
+    if (!fy) return missionList;
+    const start = new Date(fy.startDate);
+    const end = new Date(fy.endDate);
+    return missionList.filter(m => {
+      const d = new Date(m.createdAt);
+      return d >= start && d <= end;
+    });
+  };
+
+  const activeFY = selectedYear !== "all" ? fiscalYears.find(fy => String(fy.id) === selectedYear) : null;
+  const filteredPlacedMissions = filterByYear(placedMissions, activeFY);
+  const filteredPlacements = placements.filter(p => filteredPlacedMissions.some(m => m.id === p.missionId));
+
+  const caTotal = filteredPlacedMissions.reduce((s, m) => s + (m.commission || 0), 0);
 
   // CA par utilisateur
   const caByUser = users.map(u => {
-    const userPlacedMissions = placedMissions.filter(m => m.assignedTo === u.id);
-    const userPlacements = placements.filter(p => userPlacedMissions.some(m => m.id === p.missionId));
+    const userPlacedMissions = filteredPlacedMissions.filter(m => m.assignedTo === u.id);
+    const userPlacements = filteredPlacements.filter(p => userPlacedMissions.some(m => m.id === p.missionId));
     const userCA = userPlacedMissions.reduce((s, m) => s + (m.commission || 0), 0);
     return { ...u, placedMissions: userPlacedMissions, placements: userPlacements, ca: userCA };
   });
 
-  // Détails des placements enrichis (mission + candidat)
-  const getPlacementDetails = (filteredMissions) => {
-    return filteredMissions.map(m => {
+  const getPlacementDetails = (filteredM) => {
+    return filteredM.map(m => {
       const mPlacements = placements.filter(p => p.missionId === m.id);
       return { ...m, placedCandidates: mPlacements.map(p => p.candidateName).filter(Boolean) };
     }).sort((a, b) => (b.commission || 0) - (a.commission || 0));
   };
 
-  const maxCommission = Math.max(...placedMissions.map(m => m.commission || 0), 1);
+  const maxCommission = Math.max(...filteredPlacedMissions.map(m => m.commission || 0), 1);
 
   const onglets = [
     { id: "total", label: "Total" },
     ...users.map(u => ({ id: `user-${u.id}`, label: u.fullName })),
   ];
 
-  // Données selon l'onglet actif
   let currentCA, currentPlacements, currentMissions, currentLabel;
   if (activeOnglet === "total") {
     currentCA = caTotal;
-    currentPlacements = placements.length;
-    currentMissions = getPlacementDetails(placedMissions);
+    currentPlacements = filteredPlacements.length;
+    currentMissions = getPlacementDetails(filteredPlacedMissions);
     currentLabel = "Global";
   } else {
     const userId = Number(activeOnglet.replace("user-", ""));
@@ -1241,14 +1278,143 @@ function RevenuePage({ contacts, missions, candidatures, users }) {
     currentLabel = userData?.fullName || "";
   }
 
+  // Chart data: CA per fiscal year
+  const chartData = fiscalYears.map(fy => {
+    const fyMissions = filterByYear(placedMissions, fy);
+    const ca = fyMissions.reduce((s, m) => s + (m.commission || 0), 0);
+    return { label: fy.label, ca, target: fy.target };
+  });
+  const chartMax = Math.max(...chartData.map(d => Math.max(d.ca, d.target)), 1);
+
   return (
     <div>
-      <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 26, fontWeight: 800, color: "#0f172a" }}>Chiffre d'affaires</h1>
-        <p style={{ fontSize: 13.5, color: "#64748b", marginTop: 3 }}>CA basé sur les postes pourvus (candidats placés)</p>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
+        <div>
+          <h1 style={{ fontSize: 26, fontWeight: 800, color: "#0f172a" }}>Chiffre d'affaires</h1>
+          <p style={{ fontSize: 13.5, color: "#64748b", marginTop: 3 }}>CA basé sur les postes pourvus (candidats placés)</p>
+        </div>
       </div>
 
-      {/* Onglets */}
+      {/* Graphique d'évolution */}
+      {chartData.length > 0 && (
+        <div className="card" style={{ marginBottom: 24 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", marginBottom: 16 }}>Évolution du chiffre d'affaires</div>
+          <svg viewBox={`0 0 ${Math.max(chartData.length * 160, 400)} 220`} style={{ width: "100%", height: 220 }}>
+            {/* Grid lines */}
+            {[0, 0.25, 0.5, 0.75, 1].map((p, i) => (
+              <g key={i}>
+                <line x1="60" y1={180 - p * 160} x2={60 + chartData.length * 140} y2={180 - p * 160} stroke="#f1f5f9" strokeWidth="1" />
+                <text x="55" y={184 - p * 160} textAnchor="end" fontSize="10" fill="#94a3b8">{fmtCAD(chartMax * p).replace(" $ CAD", "")}</text>
+              </g>
+            ))}
+            {/* Bars */}
+            {chartData.map((d, i) => {
+              const x = 80 + i * 140;
+              const barH = (d.ca / chartMax) * 160;
+              const targetH = (d.target / chartMax) * 160;
+              return (
+                <g key={d.label}>
+                  {/* Target bar (background) */}
+                  <rect x={x} y={180 - targetH} width="40" height={targetH} rx="4" fill="#e2e8f0" opacity="0.5" />
+                  {/* CA bar */}
+                  <rect x={x} y={180 - barH} width="40" height={barH} rx="4" fill={d.ca >= d.target ? "url(#greenGrad)" : "url(#blueGrad)"} />
+                  {/* CA value */}
+                  <text x={x + 20} y={175 - barH} textAnchor="middle" fontSize="11" fontWeight="700" fill={d.ca >= d.target ? "#059669" : "#2563eb"}>{fmtCAD(d.ca).replace(" $ CAD", "")}</text>
+                  {/* Label */}
+                  <text x={x + 20} y={198} textAnchor="middle" fontSize="11" fontWeight="600" fill="#374151">{d.label}</text>
+                  {/* Target label */}
+                  <text x={x + 20} y={212} textAnchor="middle" fontSize="9" fill="#94a3b8">Obj: {fmtCAD(d.target).replace(" $ CAD", "")}</text>
+                </g>
+              );
+            })}
+            {/* Line connecting CA values */}
+            {chartData.length > 1 && (
+              <polyline fill="none" stroke="#2563eb" strokeWidth="2" strokeLinejoin="round" strokeDasharray="6,3"
+                points={chartData.map((d, i) => `${80 + i * 140 + 20},${180 - (d.ca / chartMax) * 160}`).join(" ")} />
+            )}
+            {/* Dots on line */}
+            {chartData.map((d, i) => (
+              <circle key={i} cx={80 + i * 140 + 20} cy={180 - (d.ca / chartMax) * 160} r="4" fill="#2563eb" stroke="white" strokeWidth="2" />
+            ))}
+            <defs>
+              <linearGradient id="blueGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#3b82f6" />
+                <stop offset="100%" stopColor="#93c5fd" />
+              </linearGradient>
+              <linearGradient id="greenGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#059669" />
+                <stop offset="100%" stopColor="#6ee7b7" />
+              </linearGradient>
+            </defs>
+          </svg>
+          <div style={{ display: "flex", gap: 20, justifyContent: "center", marginTop: 8 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "#64748b" }}>
+              <div style={{ width: 12, height: 12, borderRadius: 2, background: "linear-gradient(#3b82f6, #93c5fd)" }} /> CA réalisé
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "#64748b" }}>
+              <div style={{ width: 12, height: 12, borderRadius: 2, background: "#e2e8f0" }} /> Objectif
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Sélecteur d'année + gestion */}
+      <div className="card" style={{ marginBottom: 24 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>Années fiscales</div>
+          <button className="btn btn-primary" style={{ padding: "6px 14px", fontSize: 12 }} onClick={() => setShowAddYear(!showAddYear)}>
+            {showAddYear ? "Annuler" : "+ Ajouter une année"}
+          </button>
+        </div>
+
+        {showAddYear && (
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr auto", gap: 10, marginBottom: 14, padding: 14, background: "#f8fafc", borderRadius: 10 }}>
+            <div>
+              <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", marginBottom: 4, display: "block" }}>Libellé</label>
+              <input className="input" placeholder="2027-2028" value={newYear.label} onChange={e => setNewYear(p => ({ ...p, label: e.target.value }))} />
+            </div>
+            <div>
+              <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", marginBottom: 4, display: "block" }}>Début</label>
+              <input className="input" type="date" value={newYear.startDate} onChange={e => setNewYear(p => ({ ...p, startDate: e.target.value }))} />
+            </div>
+            <div>
+              <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", marginBottom: 4, display: "block" }}>Fin</label>
+              <input className="input" type="date" value={newYear.endDate} onChange={e => setNewYear(p => ({ ...p, endDate: e.target.value }))} />
+            </div>
+            <div>
+              <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", marginBottom: 4, display: "block" }}>Objectif ($)</label>
+              <input className="input" type="number" value={newYear.target || ""} onChange={e => setNewYear(p => ({ ...p, target: e.target.value }))} />
+            </div>
+            <button className="btn btn-success" style={{ alignSelf: "end", padding: "10px 16px" }} onClick={addFiscalYear}>Ajouter</button>
+          </div>
+        )}
+
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button onClick={() => setSelectedYear("all")} className="btn" style={{
+            padding: "8px 16px",
+            background: selectedYear === "all" ? "linear-gradient(135deg, #2563eb, #3b82f6)" : "white",
+            color: selectedYear === "all" ? "white" : "#64748b",
+            border: selectedYear === "all" ? "none" : "1.5px solid #e2e8f0",
+            boxShadow: selectedYear === "all" ? "0 4px 12px rgba(37,99,235,0.3)" : "none",
+            fontSize: 13,
+          }}>Toutes les années</button>
+          {fiscalYears.map(fy => (
+            <div key={fy.id} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+              <button onClick={() => setSelectedYear(String(fy.id))} className="btn" style={{
+                padding: "8px 16px",
+                background: selectedYear === String(fy.id) ? "linear-gradient(135deg, #2563eb, #3b82f6)" : "white",
+                color: selectedYear === String(fy.id) ? "white" : "#64748b",
+                border: selectedYear === String(fy.id) ? "none" : "1.5px solid #e2e8f0",
+                boxShadow: selectedYear === String(fy.id) ? "0 4px 12px rgba(37,99,235,0.3)" : "none",
+                fontSize: 13,
+              }}>{fy.label}</button>
+              <button className="btn btn-danger" style={{ padding: "4px 8px", fontSize: 10 }} onClick={() => deleteFiscalYear(fy.id)}>X</button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Onglets utilisateurs */}
       <div style={{ display: "flex", gap: 8, marginBottom: 24 }}>
         {onglets.map(o => (
           <button key={o.id} onClick={() => setActiveOnglet(o.id)} className="btn" style={{
@@ -1262,8 +1428,8 @@ function RevenuePage({ contacts, missions, candidatures, users }) {
         ))}
       </div>
 
-      {/* KPIs pour l'onglet actif */}
-      <div style={{ display: "grid", gridTemplateColumns: activeOnglet === "total" ? "repeat(3, 1fr)" : "repeat(2, 1fr)", gap: 16, marginBottom: 24 }}>
+      {/* KPIs */}
+      <div style={{ display: "grid", gridTemplateColumns: activeFY ? "repeat(4, 1fr)" : "repeat(3, 1fr)", gap: 16, marginBottom: 24 }}>
         <div className="card" style={{ background: "#ecfdf5" }}>
           <p style={{ fontSize: 11.5, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase" }}>CA {currentLabel}</p>
           <p style={{ fontSize: 28, fontWeight: 800, color: "#059669", marginTop: 6 }}>{fmtCAD(currentCA)}</p>
@@ -1272,15 +1438,20 @@ function RevenuePage({ contacts, missions, candidatures, users }) {
           <p style={{ fontSize: 11.5, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase" }}>Placements</p>
           <p style={{ fontSize: 28, fontWeight: 800, color: "#2563eb", marginTop: 6 }}>{currentPlacements}</p>
         </div>
-        {activeOnglet === "total" && (
-          <div className="card" style={{ background: "#f5f3ff" }}>
-            <p style={{ fontSize: 11.5, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase" }}>Postes pourvus</p>
-            <p style={{ fontSize: 28, fontWeight: 800, color: "#8b5cf6", marginTop: 6 }}>{placedMissions.length}</p>
+        <div className="card" style={{ background: "#f5f3ff" }}>
+          <p style={{ fontSize: 11.5, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase" }}>Postes pourvus</p>
+          <p style={{ fontSize: 28, fontWeight: 800, color: "#8b5cf6", marginTop: 6 }}>{filteredPlacedMissions.length}</p>
+        </div>
+        {activeFY && (
+          <div className="card" style={{ background: currentCA >= activeFY.target ? "#ecfdf5" : "#fffbeb" }}>
+            <p style={{ fontSize: 11.5, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase" }}>Objectif {activeFY.label}</p>
+            <p style={{ fontSize: 28, fontWeight: 800, color: currentCA >= activeFY.target ? "#059669" : "#d97706", marginTop: 6 }}>{activeFY.target > 0 ? Math.round((currentCA / activeFY.target) * 100) : 0}%</p>
+            <p style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>{fmtCAD(currentCA)} / {fmtCAD(activeFY.target)}</p>
           </div>
         )}
       </div>
 
-      {/* Résumé par utilisateur (uniquement onglet Total) */}
+      {/* Résumé par utilisateur (onglet Total) */}
       {activeOnglet === "total" && (
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 24 }}>
           {caByUser.map(u => (
@@ -1303,6 +1474,7 @@ function RevenuePage({ contacts, missions, candidatures, users }) {
       <div className="card">
         <h3 style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", marginBottom: 18 }}>
           {activeOnglet === "total" ? "Postes pourvus" : `Postes pourvus — ${currentLabel}`}
+          {activeFY && ` (${activeFY.label})`}
         </h3>
         {currentMissions.length === 0 && <p style={{ color: "#94a3b8", fontSize: 13 }}>Aucun poste pourvu</p>}
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
