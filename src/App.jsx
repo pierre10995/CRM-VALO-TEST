@@ -307,9 +307,6 @@ function LoginScreen({ form, setForm, showPwd, setShowPwd, error, onLogin }) {
             Se connecter
           </button>
         </div>
-        <div style={{ marginTop: 20, padding: 14, background: "#f8fafc", borderRadius: 12, textAlign: "center" }}>
-          <p style={{ fontSize: 11.5, color: "#64748b" }}><strong>oceane</strong> / oceane2026 - <strong>pierre</strong> / pierre2026</p>
-        </div>
       </div>
     </div>
   );
