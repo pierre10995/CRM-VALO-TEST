@@ -171,7 +171,7 @@ export default function CRM() {
     { id: "dashboard", label: "Dashboard", icon: "M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" },
     { id: "clients", label: "Clients", icon: "M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5m-4 0h4" },
     { id: "candidats", label: "Candidats", icon: "M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2 M23 21v-2a4 4 0 0 0-3-3.87 M16 3.13a4 4 0 0 1 0 7.75" },
-    { id: "missions", label: "Missions", icon: "M21 13.255A23.931 23.931 0 0 1 12 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2m-5 4h18a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2v-6a2 2 0 0 1 2-2z" },
+    { id: "missions", label: "Postes Ouverts", icon: "M21 13.255A23.931 23.931 0 0 1 12 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2m-5 4h18a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2v-6a2 2 0 0 1 2-2z" },
     { id: "pipeline", label: "Pipeline", icon: "M9 17V7m0 10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2m0 10a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 7a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2m0 10V7" },
     { id: "activites", label: "Activités", icon: "M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2" },
     { id: "revenue", label: "Chiffre d'affaires", icon: "M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" },
@@ -238,7 +238,7 @@ export default function CRM() {
         </ModalWrapper>
       )}
       {modal === "mission" && (
-        <ModalWrapper onClose={() => setModal(null)} title={form.id ? "Modifier la mission" : "Nouvelle mission"}>
+        <ModalWrapper onClose={() => setModal(null)} title={form.id ? "Modifier le poste" : "Nouveau poste"}>
           <MissionForm form={form} setForm={setForm} onSave={saveMission} onCancel={() => setModal(null)} contacts={contacts} users={users} />
         </ModalWrapper>
       )}
@@ -318,7 +318,8 @@ function DashboardPage({ stats, activities, contacts, missions, candidatures }) 
   const missionsOuvertes = missions.filter(m => m.status === "Ouverte" || m.status === "En cours").length;
   const placements = candidatures.filter(cd => cd.stage === "Placé").length;
   const totalRevenue = contacts.filter(c => c.status === "Client").reduce((s, c) => s + (c.revenue || 0), 0);
-  const totalCommissions = missions.reduce((s, m) => s + (m.commission || 0), 0);
+  const placedMissionIds = new Set(candidatures.filter(cd => cd.stage === "Placé").map(cd => cd.missionId));
+  const totalCommissions = missions.filter(m => placedMissionIds.has(m.id)).reduce((s, m) => s + (m.commission || 0), 0);
   const recentActivities = activities.slice(0, 8);
 
   const kpis = [
@@ -326,8 +327,8 @@ function DashboardPage({ stats, activities, contacts, missions, candidatures }) 
     { label: "Candidats", value: totalCandidats, color: "#f59e0b", bg: "#fffbeb" },
     { label: "Missions actives", value: missionsOuvertes, color: "#3b82f6", bg: "#eff6ff" },
     { label: "Placements", value: placements, color: "#8b5cf6", bg: "#f5f3ff" },
-    { label: "CA Total", value: fmtCAD(totalRevenue), color: "#059669", bg: "#ecfdf5" },
-    { label: "Commissions", value: fmtCAD(totalCommissions), color: "#dc2626", bg: "#fef2f2" },
+    { label: "CA Total (placements)", value: fmtCAD(totalCommissions), color: "#059669", bg: "#ecfdf5" },
+    { label: "CA Clients", value: fmtCAD(totalRevenue), color: "#dc2626", bg: "#fef2f2" },
   ];
 
   return (
@@ -530,13 +531,46 @@ function CandidatsPage({ contacts, search, setSearch, onAdd, onEdit, onDelete, o
 function FicheCandidat({ contact: c, onClose, onEdit, onDelete, candidatures, missions, loadAll }) {
   const [files, setFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
+  const [evaluations, setEvaluations] = useState([]);
+  const [evalLoading, setEvalLoading] = useState(false);
+  const [evalError, setEvalError] = useState("");
+  const [evalMissionId, setEvalMissionId] = useState("");
 
   const loadFiles = async () => {
     const data = await api.get(`/api/files/contact/${c.id}`);
     setFiles(data);
   };
 
-  useEffect(() => { loadFiles(); }, [c.id]);
+  const loadEvaluations = async () => {
+    const data = await api.get(`/api/evaluations/candidate/${c.id}`);
+    setEvaluations(data);
+  };
+
+  useEffect(() => { loadFiles(); loadEvaluations(); }, [c.id]);
+
+  const generateEvaluation = async () => {
+    if (!evalMissionId) return;
+    setEvalLoading(true);
+    setEvalError("");
+    try {
+      const res = await api.post("/api/evaluations/generate", { candidateId: c.id, missionId: Number(evalMissionId) });
+      if (res.ok) {
+        await loadEvaluations();
+        setEvalMissionId("");
+      } else {
+        const err = await res.json();
+        setEvalError(err.error || "Erreur lors de l'évaluation");
+      }
+    } catch (err) {
+      setEvalError("Erreur réseau");
+    }
+    setEvalLoading(false);
+  };
+
+  const deleteEvaluation = async (id) => {
+    await api.del(`/api/evaluations/${id}`);
+    await loadEvaluations();
+  };
 
   const handleUpload = async (fileType) => {
     const input = document.createElement("input");
@@ -688,6 +722,77 @@ function FicheCandidat({ contact: c, onClose, onEdit, onDelete, candidatures, mi
         ))}
       </div>
 
+      {/* Évaluation CV vs Poste */}
+      <div style={{ marginBottom: 20 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a", marginBottom: 10 }}>Évaluation CV vs Poste</div>
+
+        {/* Formulaire de lancement */}
+        <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+          <select className="input" style={{ flex: 1, fontSize: 13 }} value={evalMissionId} onChange={e => setEvalMissionId(e.target.value)}>
+            <option value="">-- Choisir un poste à évaluer --</option>
+            {missions.filter(m => m.status === "Ouverte" || m.status === "En cours").map(m => (
+              <option key={m.id} value={m.id}>{m.title} — {m.company}</option>
+            ))}
+          </select>
+          <button className="btn btn-primary" style={{ padding: "8px 16px", fontSize: 12, whiteSpace: "nowrap" }} onClick={generateEvaluation} disabled={evalLoading || !evalMissionId}>
+            {evalLoading ? "Analyse en cours..." : "Évaluer"}
+          </button>
+        </div>
+        {evalError && <div style={{ padding: "8px 12px", background: "#fee2e2", borderRadius: 8, fontSize: 12, color: "#dc2626", marginBottom: 10 }}>{evalError}</div>}
+
+        {/* Liste des évaluations existantes */}
+        {evaluations.length === 0 && <p style={{ fontSize: 12, color: "#94a3b8" }}>Aucune évaluation</p>}
+        {evaluations.map(ev => {
+          let positives = [], negatives = [], clarifs = [];
+          try { positives = JSON.parse(ev.positives); } catch {}
+          try { negatives = JSON.parse(ev.negatives); } catch {}
+          try { clarifs = JSON.parse(ev.clarifications); } catch {}
+          const scoreColor = ev.score >= 70 ? "#059669" : ev.score >= 40 ? "#d97706" : "#dc2626";
+          const scoreBg = ev.score >= 70 ? "#ecfdf5" : ev.score >= 40 ? "#fffbeb" : "#fef2f2";
+
+          return (
+            <div key={ev.id} style={{ background: "#f8fafc", borderRadius: 12, padding: 16, marginBottom: 10, border: `1.5px solid ${scoreBg}` }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+                <div>
+                  <div style={{ fontSize: 13.5, fontWeight: 700, color: "#0f172a" }}>{ev.missionTitle}</div>
+                  <div style={{ fontSize: 12, color: "#64748b" }}>{ev.missionCompany} — {new Date(ev.createdAt).toLocaleDateString("fr-CA")}</div>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ width: 52, height: 52, borderRadius: "50%", background: scoreBg, border: `3px solid ${scoreColor}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, fontWeight: 800, color: scoreColor }}>{ev.score}</div>
+                  <button className="btn btn-danger" style={{ padding: "4px 8px", fontSize: 10 }} onClick={() => deleteEvaluation(ev.id)}>X</button>
+                </div>
+              </div>
+
+              {ev.summary && <div style={{ fontSize: 12.5, color: "#374151", marginBottom: 12, lineHeight: 1.5, fontStyle: "italic" }}>{ev.summary}</div>}
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "#059669", marginBottom: 6 }}>POINTS POSITIFS</div>
+                  {positives.map((p, i) => (
+                    <div key={i} style={{ fontSize: 12, color: "#374151", marginBottom: 4, paddingLeft: 10, borderLeft: "2px solid #a7f3d0" }}>{p}</div>
+                  ))}
+                  {positives.length === 0 && <div style={{ fontSize: 11, color: "#94a3b8" }}>—</div>}
+                </div>
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "#dc2626", marginBottom: 6 }}>POINTS NÉGATIFS</div>
+                  {negatives.map((n, i) => (
+                    <div key={i} style={{ fontSize: 12, color: "#374151", marginBottom: 4, paddingLeft: 10, borderLeft: "2px solid #fecaca" }}>{n}</div>
+                  ))}
+                  {negatives.length === 0 && <div style={{ fontSize: 11, color: "#94a3b8" }}>—</div>}
+                </div>
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "#d97706", marginBottom: 6 }}>À ÉCLAIRCIR</div>
+                  {clarifs.map((cl, i) => (
+                    <div key={i} style={{ fontSize: 12, color: "#374151", marginBottom: 4, paddingLeft: 10, borderLeft: "2px solid #fde68a" }}>{cl}</div>
+                  ))}
+                  {clarifs.length === 0 && <div style={{ fontSize: 11, color: "#94a3b8" }}>—</div>}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
       {/* Actions */}
       <div style={{ display: "flex", gap: 10 }}>
         <button className="btn btn-ghost" style={{ flex: 1, justifyContent: "center" }} onClick={onEdit}>Modifier</button>
@@ -708,10 +813,10 @@ function MissionsPage({ missions, contacts, users, candidatures, onAdd, onEdit, 
     <div>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
         <div>
-          <h1 style={{ fontSize: 26, fontWeight: 800, color: "#0f172a" }}>Missions</h1>
+          <h1 style={{ fontSize: 26, fontWeight: 800, color: "#0f172a" }}>Postes Ouverts</h1>
           <p style={{ fontSize: 13.5, color: "#64748b", marginTop: 3 }}>{missions.length} mission{missions.length > 1 ? "s" : ""}</p>
         </div>
-        <button className="btn btn-primary" onClick={onAdd}>+ Nouvelle mission</button>
+        <button className="btn btn-primary" onClick={onAdd}>+ Nouveau poste</button>
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}>
         {missions.map(m => {
@@ -874,74 +979,135 @@ function ActivitesPage({ activities, contacts, missions, users, currentUser, onA
 
 // ─── Revenue Page ───────────────────────────────────────────────────────────
 function RevenuePage({ contacts, missions, candidatures, users }) {
-  const clientContacts = contacts.filter(c => c.status === "Client");
-  const totalRevenue = clientContacts.reduce((s, c) => s + (c.revenue || 0), 0);
-  const totalCommissions = missions.reduce((s, m) => s + (m.commission || 0), 0);
-  const placements = candidatures.filter(cd => cd.stage === "Placé");
+  const [activeOnglet, setActiveOnglet] = useState("total");
 
-  // CA par utilisateur (based on missions assigned_to with placed candidatures)
+  const placements = candidatures.filter(cd => cd.stage === "Placé");
+  const placedMissionIds = new Set(placements.map(cd => cd.missionId));
+  const placedMissions = missions.filter(m => placedMissionIds.has(m.id));
+
+  // CA global = commissions des missions avec au moins un placement
+  const caTotal = placedMissions.reduce((s, m) => s + (m.commission || 0), 0);
+
+  // CA par utilisateur
   const caByUser = users.map(u => {
-    const userMissions = missions.filter(m => m.assignedTo === u.id);
-    const userPlacements = placements.filter(p => userMissions.some(m => m.id === p.missionId));
-    const userCommissions = userMissions.filter(m => placements.some(p => p.missionId === m.id)).reduce((s, m) => s + (m.commission || 0), 0);
-    return { ...u, placements: userPlacements.length, commissions: userCommissions };
+    const userPlacedMissions = placedMissions.filter(m => m.assignedTo === u.id);
+    const userPlacements = placements.filter(p => userPlacedMissions.some(m => m.id === p.missionId));
+    const userCA = userPlacedMissions.reduce((s, m) => s + (m.commission || 0), 0);
+    return { ...u, placedMissions: userPlacedMissions, placements: userPlacements, ca: userCA };
   });
 
-  const maxRev = Math.max(...clientContacts.map(c => c.revenue || 0), 1);
+  // Détails des placements enrichis (mission + candidat)
+  const getPlacementDetails = (filteredMissions) => {
+    return filteredMissions.map(m => {
+      const mPlacements = placements.filter(p => p.missionId === m.id);
+      return { ...m, placedCandidates: mPlacements.map(p => p.candidateName).filter(Boolean) };
+    }).sort((a, b) => (b.commission || 0) - (a.commission || 0));
+  };
+
+  const maxCommission = Math.max(...placedMissions.map(m => m.commission || 0), 1);
+
+  const onglets = [
+    { id: "total", label: "Total" },
+    ...users.map(u => ({ id: `user-${u.id}`, label: u.fullName })),
+  ];
+
+  // Données selon l'onglet actif
+  let currentCA, currentPlacements, currentMissions, currentLabel;
+  if (activeOnglet === "total") {
+    currentCA = caTotal;
+    currentPlacements = placements.length;
+    currentMissions = getPlacementDetails(placedMissions);
+    currentLabel = "Global";
+  } else {
+    const userId = Number(activeOnglet.replace("user-", ""));
+    const userData = caByUser.find(u => u.id === userId);
+    currentCA = userData?.ca || 0;
+    currentPlacements = userData?.placements.length || 0;
+    currentMissions = getPlacementDetails(userData?.placedMissions || []);
+    currentLabel = userData?.fullName || "";
+  }
 
   return (
     <div>
       <div style={{ marginBottom: 24 }}>
         <h1 style={{ fontSize: 26, fontWeight: 800, color: "#0f172a" }}>Chiffre d'affaires</h1>
-        <p style={{ fontSize: 13.5, color: "#64748b", marginTop: 3 }}>Suivi du CA par client, utilisateur et global</p>
+        <p style={{ fontSize: 13.5, color: "#64748b", marginTop: 3 }}>CA basé sur les postes pourvus (candidats placés)</p>
       </div>
 
-      {/* KPIs */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 24 }}>
-        <div className="card" style={{ background: "#ecfdf5" }}>
-          <p style={{ fontSize: 11.5, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase" }}>CA Total</p>
-          <p style={{ fontSize: 28, fontWeight: 800, color: "#059669", marginTop: 6 }}>{fmtCAD(totalRevenue)}</p>
-        </div>
-        <div className="card" style={{ background: "#f5f3ff" }}>
-          <p style={{ fontSize: 11.5, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase" }}>Commissions totales</p>
-          <p style={{ fontSize: 28, fontWeight: 800, color: "#8b5cf6", marginTop: 6 }}>{fmtCAD(totalCommissions)}</p>
-        </div>
-        <div className="card" style={{ background: "#eff6ff" }}>
-          <p style={{ fontSize: 11.5, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase" }}>Placements</p>
-          <p style={{ fontSize: 28, fontWeight: 800, color: "#2563eb", marginTop: 6 }}>{placements.length}</p>
-        </div>
-      </div>
-
-      {/* CA par utilisateur */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 24 }}>
-        {caByUser.map(u => (
-          <div key={u.id} className="card">
-            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-              <div style={{ width: 40, height: 40, background: "linear-gradient(135deg, #dbeafe, #bfdbfe)", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 700, color: "#1d4ed8" }}>{u.fullName[0]}</div>
-              <div>
-                <div style={{ fontSize: 15, fontWeight: 700, color: "#0f172a" }}>{u.fullName}</div>
-                <div style={{ fontSize: 12, color: "#64748b" }}>{u.placements} placement{u.placements > 1 ? "s" : ""}</div>
-              </div>
-            </div>
-            <div style={{ fontSize: 24, fontWeight: 800, color: "#059669" }}>{fmtCAD(u.commissions)}</div>
-            <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 2 }}>en commissions</div>
-          </div>
+      {/* Onglets */}
+      <div style={{ display: "flex", gap: 8, marginBottom: 24 }}>
+        {onglets.map(o => (
+          <button key={o.id} onClick={() => setActiveOnglet(o.id)} className="btn" style={{
+            padding: "10px 20px",
+            background: activeOnglet === o.id ? "linear-gradient(135deg, #2563eb, #3b82f6)" : "white",
+            color: activeOnglet === o.id ? "white" : "#64748b",
+            border: activeOnglet === o.id ? "none" : "1.5px solid #e2e8f0",
+            boxShadow: activeOnglet === o.id ? "0 4px 12px rgba(37,99,235,0.3)" : "none",
+            fontSize: 13.5,
+          }}>{o.label}</button>
         ))}
       </div>
 
-      {/* Détail par client */}
+      {/* KPIs pour l'onglet actif */}
+      <div style={{ display: "grid", gridTemplateColumns: activeOnglet === "total" ? "repeat(3, 1fr)" : "repeat(2, 1fr)", gap: 16, marginBottom: 24 }}>
+        <div className="card" style={{ background: "#ecfdf5" }}>
+          <p style={{ fontSize: 11.5, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase" }}>CA {currentLabel}</p>
+          <p style={{ fontSize: 28, fontWeight: 800, color: "#059669", marginTop: 6 }}>{fmtCAD(currentCA)}</p>
+        </div>
+        <div className="card" style={{ background: "#eff6ff" }}>
+          <p style={{ fontSize: 11.5, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase" }}>Placements</p>
+          <p style={{ fontSize: 28, fontWeight: 800, color: "#2563eb", marginTop: 6 }}>{currentPlacements}</p>
+        </div>
+        {activeOnglet === "total" && (
+          <div className="card" style={{ background: "#f5f3ff" }}>
+            <p style={{ fontSize: 11.5, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase" }}>Postes pourvus</p>
+            <p style={{ fontSize: 28, fontWeight: 800, color: "#8b5cf6", marginTop: 6 }}>{placedMissions.length}</p>
+          </div>
+        )}
+      </div>
+
+      {/* Résumé par utilisateur (uniquement onglet Total) */}
+      {activeOnglet === "total" && (
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 24 }}>
+          {caByUser.map(u => (
+            <div key={u.id} className="card" style={{ cursor: "pointer", border: "1.5px solid transparent", transition: "border 0.2s" }} onClick={() => setActiveOnglet(`user-${u.id}`)}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+                <div style={{ width: 44, height: 44, background: "linear-gradient(135deg, #dbeafe, #bfdbfe)", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, fontWeight: 700, color: "#1d4ed8" }}>{u.fullName[0]}</div>
+                <div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: "#0f172a" }}>{u.fullName}</div>
+                  <div style={{ fontSize: 12, color: "#64748b" }}>{u.placements.length} placement{u.placements.length > 1 ? "s" : ""} - {u.placedMissions.length} poste{u.placedMissions.length > 1 ? "s" : ""} pourvu{u.placedMissions.length > 1 ? "s" : ""}</div>
+                </div>
+              </div>
+              <div style={{ fontSize: 26, fontWeight: 800, color: "#059669" }}>{fmtCAD(u.ca)}</div>
+              <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 4 }}>Voir le détail →</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Liste des postes pourvus */}
       <div className="card">
-        <h3 style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", marginBottom: 18 }}>Détail par client</h3>
-        {clientContacts.length === 0 && <p style={{ color: "#94a3b8", fontSize: 13 }}>Aucun client</p>}
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {clientContacts.sort((a, b) => (b.revenue || 0) - (a.revenue || 0)).map(c => (
-            <div key={c.id}>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
-                <span style={{ fontSize: 13.5, fontWeight: 600, color: "#0f172a" }}>{c.name} <span style={{ color: "#94a3b8", fontWeight: 400 }}>{c.company}</span></span>
-                <span style={{ fontSize: 13.5, fontWeight: 700 }}>{fmtCAD(c.revenue)}</span>
+        <h3 style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", marginBottom: 18 }}>
+          {activeOnglet === "total" ? "Postes pourvus" : `Postes pourvus — ${currentLabel}`}
+        </h3>
+        {currentMissions.length === 0 && <p style={{ color: "#94a3b8", fontSize: 13 }}>Aucun poste pourvu</p>}
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          {currentMissions.map(m => (
+            <div key={m.id}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: "#0f172a" }}>{m.title}</div>
+                  <div style={{ fontSize: 12.5, color: "#64748b" }}>{m.company} — {m.location || "—"}</div>
+                  {m.placedCandidates.length > 0 && (
+                    <div style={{ fontSize: 12, color: "#059669", marginTop: 2 }}>
+                      Candidat{m.placedCandidates.length > 1 ? "s" : ""} placé{m.placedCandidates.length > 1 ? "s" : ""} : {m.placedCandidates.join(", ")}
+                    </div>
+                  )}
+                </div>
+                <div style={{ fontSize: 16, fontWeight: 800, color: "#059669", whiteSpace: "nowrap" }}>{fmtCAD(m.commission)}</div>
               </div>
               <div style={{ height: 7, background: "#f1f5f9", borderRadius: 4 }}>
-                <div style={{ width: `${((c.revenue || 0) / maxRev) * 100}%`, height: "100%", background: "linear-gradient(90deg, #2563eb, #60a5fa)", borderRadius: 4 }} />
+                <div style={{ width: `${((m.commission || 0) / maxCommission) * 100}%`, height: "100%", background: "linear-gradient(90deg, #059669, #34d399)", borderRadius: 4 }} />
               </div>
             </div>
           ))}
