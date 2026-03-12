@@ -5,7 +5,7 @@ import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
 import Anthropic from "@anthropic-ai/sdk";
-import pdf from "pdf-parse/lib/pdf-parse.js";
+import { PDFParse } from "pdf-parse";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -555,8 +555,9 @@ app.post("/api/evaluations/generate", async (req, res) => {
     if (cvFiles.length > 0) {
       try {
         const buffer = Buffer.from(cvFiles[0].file_data, "base64");
-        const pdfData = await pdf(buffer);
-        cvText = pdfData.text || "";
+        const parser = new PDFParse({ data: buffer });
+        const pdfData = await parser.getText();
+        cvText = pdfData.pages.map(p => p.text).join("\n") || "";
       } catch (pdfErr) {
         console.error("PDF parse error:", pdfErr.message);
         cvText = "(Impossible d'extraire le texte du CV PDF)";
