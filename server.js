@@ -62,6 +62,17 @@ async function initDB() {
     `);
 
     await client.query(`
+      CREATE TABLE IF NOT EXISTS password_resets (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        code VARCHAR(6) NOT NULL,
+        expires_at TIMESTAMP NOT NULL,
+        used BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+    `);
+
+    await client.query(`
       CREATE TABLE IF NOT EXISTS contacts (
         id SERIAL PRIMARY KEY,
         name VARCHAR(100) NOT NULL,
@@ -262,7 +273,7 @@ function fmtContact(r) {
 // ─── Auth ────────────────────────────────────────────────────────────────────
 // Protect all /api/ routes except /api/login
 app.use("/api", (req, res, next) => {
-  if (req.path === "/login") return next();
+  if (req.path === "/login" || req.path === "/forgot-password" || req.path === "/reset-password") return next();
   authMiddleware(req, res, next);
 });
 
@@ -275,6 +286,50 @@ app.post("/api/login", loginLimiter, async (req, res) => {
     if (!bcrypt.compareSync(password, user.password)) return res.status(401).json({ error: "Identifiant ou mot de passe incorrect." });
     const token = jwt.sign({ id: user.id, login: user.login }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
     res.json({ id: user.id, login: user.login, fullName: user.full_name, token });
+  } catch (err) {
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
+// ─── Forgot / Reset Password ─────────────────────────────────────────────────
+app.post("/api/forgot-password", loginLimiter, async (req, res) => {
+  const { login } = req.body;
+  if (!login) return res.status(400).json({ error: "Identifiant requis" });
+  try {
+    const { rows } = await pool.query("SELECT * FROM users WHERE login = $1", [login]);
+    // Always return success to avoid revealing if user exists
+    if (rows.length === 0) return res.json({ ok: true });
+    const user = rows[0];
+    const code = String(Math.floor(100000 + Math.random() * 900000)); // 6-digit code
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 min
+    // Invalidate previous codes
+    await pool.query("UPDATE password_resets SET used = TRUE WHERE user_id = $1 AND used = FALSE", [user.id]);
+    await pool.query("INSERT INTO password_resets (user_id, code, expires_at) VALUES ($1, $2, $3)", [user.id, code, expiresAt]);
+    console.log(`[RESET PASSWORD] Code pour ${user.login} (${user.full_name}): ${code} — Expire dans 15 min`);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
+app.post("/api/reset-password", loginLimiter, async (req, res) => {
+  const { login, code, newPassword } = req.body;
+  if (!login || !code || !newPassword) return res.status(400).json({ error: "Tous les champs sont requis" });
+  if (newPassword.length < 6) return res.status(400).json({ error: "Le mot de passe doit contenir au moins 6 caractères" });
+  try {
+    const { rows: userRows } = await pool.query("SELECT * FROM users WHERE login = $1", [login]);
+    if (userRows.length === 0) return res.status(400).json({ error: "Code invalide ou expiré" });
+    const user = userRows[0];
+    const { rows: resetRows } = await pool.query(
+      "SELECT * FROM password_resets WHERE user_id = $1 AND code = $2 AND used = FALSE AND expires_at > NOW() ORDER BY created_at DESC LIMIT 1",
+      [user.id, code]
+    );
+    if (resetRows.length === 0) return res.status(400).json({ error: "Code invalide ou expiré" });
+    const hash = bcrypt.hashSync(newPassword, 10);
+    await pool.query("UPDATE users SET password = $1 WHERE id = $2", [hash, user.id]);
+    await pool.query("UPDATE password_resets SET used = TRUE WHERE id = $1", [resetRows[0].id]);
+    console.log(`[RESET PASSWORD] Mot de passe réinitialisé pour ${user.login}`);
+    res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: "Erreur serveur" });
   }
