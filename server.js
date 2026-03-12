@@ -6,13 +6,42 @@ import path from "path";
 import { fileURLToPath } from "url";
 import Anthropic from "@anthropic-ai/sdk";
 import pdf from "pdf-parse/lib/pdf-parse.js";
+import jwt from "jsonwebtoken";
+import rateLimit from "express-rate-limit";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = process.env.PORT || 3000;
+const JWT_SECRET = process.env.JWT_SECRET || "valo-crm-secret-change-me-in-production";
+const JWT_EXPIRES_IN = "8h";
 
 app.use(cors());
 app.use(express.json({ limit: "20mb" }));
+
+// ─── Rate limiting on login ─────────────────────────────────────────────────
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // max 10 attempts per window
+  message: { error: "Trop de tentatives de connexion. Réessayez dans 15 minutes." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// ─── JWT Auth Middleware ─────────────────────────────────────────────────────
+function authMiddleware(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ error: "Non autorisé" });
+  }
+  try {
+    const token = authHeader.split(" ")[1];
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch (err) {
+    return res.status(401).json({ error: "Session expirée, veuillez vous reconnecter" });
+  }
+}
 
 // ─── PostgreSQL ──────────────────────────────────────────────────────────────
 const pool = new pg.Pool({
@@ -59,10 +88,21 @@ async function initDB() {
       ["skills", "TEXT DEFAULT ''"],
       ["salary_expectation", "NUMERIC DEFAULT 0"],
       ["availability", "VARCHAR(50) DEFAULT ''"],
+      ["validation_status", "VARCHAR(30) DEFAULT ''"],
     ];
     for (const [col, type] of newCols) {
       await client.query(`ALTER TABLE contacts ADD COLUMN IF NOT EXISTS ${col} ${type}`);
     }
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS fiscal_years (
+        id SERIAL PRIMARY KEY,
+        label VARCHAR(20) NOT NULL UNIQUE,
+        start_date DATE NOT NULL,
+        end_date DATE NOT NULL,
+        target NUMERIC DEFAULT 0
+      );
+    `);
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS missions (
@@ -81,9 +121,12 @@ async function initDB() {
         assigned_to INTEGER REFERENCES users(id) ON DELETE SET NULL,
         commission NUMERIC DEFAULT 0,
         created_at DATE DEFAULT CURRENT_DATE,
-        deadline DATE
+        deadline DATE,
+        fiscal_year_id INTEGER REFERENCES fiscal_years(id) ON DELETE SET NULL
       );
     `);
+
+    await client.query(`ALTER TABLE missions ADD COLUMN IF NOT EXISTS fiscal_year_id INTEGER REFERENCES fiscal_years(id) ON DELETE SET NULL`);
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS candidatures (
@@ -144,11 +187,24 @@ async function initDB() {
       );
     `);
 
+    // Seed fiscal years
+    const { rows: existingYears } = await client.query("SELECT COUNT(*) FROM fiscal_years");
+    if (parseInt(existingYears[0].count) === 0) {
+      await client.query(`
+        INSERT INTO fiscal_years (label, start_date, end_date, target) VALUES
+        ('2024-2025', '2024-04-01', '2025-03-31', 100000),
+        ('2025-2026', '2025-04-01', '2026-03-31', 150000),
+        ('2026-2027', '2026-04-01', '2027-03-31', 200000)
+      `);
+    }
+
     // Seed users
     const { rows: existingUsers } = await client.query("SELECT COUNT(*) FROM users");
     if (parseInt(existingUsers[0].count) === 0) {
-      const hash1 = bcrypt.hashSync("oceane2026", 10);
-      const hash2 = bcrypt.hashSync("pierre2026", 10);
+      const pwd1 = process.env.SEED_PWD_OCEANE || "oceane2026";
+      const pwd2 = process.env.SEED_PWD_PIERRE || "pierre2026";
+      const hash1 = bcrypt.hashSync(pwd1, 10);
+      const hash2 = bcrypt.hashSync(pwd2, 10);
       await client.query(
         "INSERT INTO users (login, password, full_name) VALUES ($1, $2, $3), ($4, $5, $6)",
         ["oceane", hash1, "Océane Le Goff", "pierre", hash2, "Pierre Scelles"]
@@ -198,19 +254,27 @@ function fmtContact(r) {
     status: r.status, sector: r.sector, revenue: Number(r.revenue), notes: r.notes,
     city: r.city || "", linkedin: r.linkedin || "", skills: r.skills || "",
     salaryExpectation: Number(r.salary_expectation) || 0, availability: r.availability || "",
+    validationStatus: r.validation_status || "",
     createdAt: r.created_at,
   };
 }
 
 // ─── Auth ────────────────────────────────────────────────────────────────────
-app.post("/api/login", async (req, res) => {
+// Protect all /api/ routes except /api/login
+app.use("/api", (req, res, next) => {
+  if (req.path === "/login") return next();
+  authMiddleware(req, res, next);
+});
+
+app.post("/api/login", loginLimiter, async (req, res) => {
   const { login, password } = req.body;
   try {
     const { rows } = await pool.query("SELECT * FROM users WHERE login = $1", [login]);
     if (rows.length === 0) return res.status(401).json({ error: "Identifiant ou mot de passe incorrect." });
     const user = rows[0];
     if (!bcrypt.compareSync(password, user.password)) return res.status(401).json({ error: "Identifiant ou mot de passe incorrect." });
-    res.json({ id: user.id, login: user.login, fullName: user.full_name });
+    const token = jwt.sign({ id: user.id, login: user.login }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+    res.json({ id: user.id, login: user.login, fullName: user.full_name, token });
   } catch (err) {
     res.status(500).json({ error: "Erreur serveur" });
   }
@@ -225,25 +289,25 @@ app.get("/api/contacts", async (req, res) => {
 });
 
 app.post("/api/contacts", async (req, res) => {
-  const { name, company, email, phone, status, sector, revenue, notes, city, linkedin, skills, salaryExpectation, availability } = req.body;
+  const { name, company, email, phone, status, sector, revenue, notes, city, linkedin, skills, salaryExpectation, availability, validationStatus } = req.body;
   if (!name) return res.status(400).json({ error: "Nom requis" });
   try {
     const { rows } = await pool.query(
-      `INSERT INTO contacts (name, company, email, phone, status, sector, revenue, notes, city, linkedin, skills, salary_expectation, availability)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING *`,
-      [name, company || "", email || "", phone || "", status || "Candidat", sector || "Tech", Number(revenue) || 0, notes || "", city || "", linkedin || "", skills || "", Number(salaryExpectation) || 0, availability || ""]
+      `INSERT INTO contacts (name, company, email, phone, status, sector, revenue, notes, city, linkedin, skills, salary_expectation, availability, validation_status)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING *`,
+      [name, company || "", email || "", phone || "", status || "Candidat", sector || "Tech", Number(revenue) || 0, notes || "", city || "", linkedin || "", skills || "", Number(salaryExpectation) || 0, availability || "", validationStatus || ""]
     );
     res.json(fmtContact(rows[0]));
   } catch (err) { res.status(500).json({ error: "Erreur serveur" }); }
 });
 
 app.put("/api/contacts/:id", async (req, res) => {
-  const { name, company, email, phone, status, sector, revenue, notes, city, linkedin, skills, salaryExpectation, availability } = req.body;
+  const { name, company, email, phone, status, sector, revenue, notes, city, linkedin, skills, salaryExpectation, availability, validationStatus } = req.body;
   if (!name) return res.status(400).json({ error: "Nom requis" });
   try {
     const { rows } = await pool.query(
-      `UPDATE contacts SET name=$1, company=$2, email=$3, phone=$4, status=$5, sector=$6, revenue=$7, notes=$8, city=$9, linkedin=$10, skills=$11, salary_expectation=$12, availability=$13 WHERE id=$14 RETURNING *`,
-      [name, company || "", email || "", phone || "", status || "Candidat", sector || "Tech", Number(revenue) || 0, notes || "", city || "", linkedin || "", skills || "", Number(salaryExpectation) || 0, availability || "", req.params.id]
+      `UPDATE contacts SET name=$1, company=$2, email=$3, phone=$4, status=$5, sector=$6, revenue=$7, notes=$8, city=$9, linkedin=$10, skills=$11, salary_expectation=$12, availability=$13, validation_status=$14 WHERE id=$15 RETURNING *`,
+      [name, company || "", email || "", phone || "", status || "Candidat", sector || "Tech", Number(revenue) || 0, notes || "", city || "", linkedin || "", skills || "", Number(salaryExpectation) || 0, availability || "", validationStatus || "", req.params.id]
     );
     if (rows.length === 0) return res.status(404).json({ error: "Contact non trouvé" });
     res.json(fmtContact(rows[0]));
@@ -265,19 +329,22 @@ function fmtMission(r) {
     status: r.status, priority: r.priority || "Normale",
     assignedTo: r.assigned_to, commission: Number(r.commission) || 0,
     createdAt: r.created_at, deadline: r.deadline,
+    fiscalYearId: r.fiscal_year_id || null,
     clientName: r.client_name || "", assignedName: r.assigned_name || "",
     candidatureCount: parseInt(r.candidature_count) || 0,
+    fiscalYearLabel: r.fiscal_year_label || "",
   };
 }
 
 app.get("/api/missions", async (req, res) => {
   try {
     const { rows } = await pool.query(`
-      SELECT m.*, c.name as client_name, u.full_name as assigned_name,
+      SELECT m.*, c.name as client_name, u.full_name as assigned_name, fy.label as fiscal_year_label,
         (SELECT COUNT(*) FROM candidatures WHERE mission_id = m.id) as candidature_count
       FROM missions m
       LEFT JOIN contacts c ON m.client_contact_id = c.id
       LEFT JOIN users u ON m.assigned_to = u.id
+      LEFT JOIN fiscal_years fy ON m.fiscal_year_id = fy.id
       ORDER BY m.created_at DESC
     `);
     res.json(rows.map(fmtMission));
@@ -285,25 +352,25 @@ app.get("/api/missions", async (req, res) => {
 });
 
 app.post("/api/missions", async (req, res) => {
-  const { title, clientContactId, company, location, contractType, salaryMin, salaryMax, description, requirements, status, priority, assignedTo, commission, deadline } = req.body;
+  const { title, clientContactId, company, location, contractType, salaryMin, salaryMax, description, requirements, status, priority, assignedTo, commission, deadline, fiscalYearId } = req.body;
   if (!title || !company) return res.status(400).json({ error: "Titre et entreprise requis" });
   try {
     const { rows } = await pool.query(
-      `INSERT INTO missions (title, client_contact_id, company, location, contract_type, salary_min, salary_max, description, requirements, status, priority, assigned_to, commission, deadline)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING *`,
-      [title, clientContactId || null, company, location || "", contractType || "CDI", Number(salaryMin) || 0, Number(salaryMax) || 0, description || "", requirements || "", status || "Ouverte", priority || "Normale", assignedTo || null, Number(commission) || 0, deadline || null]
+      `INSERT INTO missions (title, client_contact_id, company, location, contract_type, salary_min, salary_max, description, requirements, status, priority, assigned_to, commission, deadline, fiscal_year_id)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) RETURNING *`,
+      [title, clientContactId || null, company, location || "", contractType || "CDI", Number(salaryMin) || 0, Number(salaryMax) || 0, description || "", requirements || "", status || "Ouverte", priority || "Normale", assignedTo || null, Number(commission) || 0, deadline || null, fiscalYearId || null]
     );
     res.json(fmtMission(rows[0]));
   } catch (err) { res.status(500).json({ error: "Erreur serveur" }); }
 });
 
 app.put("/api/missions/:id", async (req, res) => {
-  const { title, clientContactId, company, location, contractType, salaryMin, salaryMax, description, requirements, status, priority, assignedTo, commission, deadline } = req.body;
+  const { title, clientContactId, company, location, contractType, salaryMin, salaryMax, description, requirements, status, priority, assignedTo, commission, deadline, fiscalYearId } = req.body;
   if (!title || !company) return res.status(400).json({ error: "Titre et entreprise requis" });
   try {
     const { rows } = await pool.query(
-      `UPDATE missions SET title=$1, client_contact_id=$2, company=$3, location=$4, contract_type=$5, salary_min=$6, salary_max=$7, description=$8, requirements=$9, status=$10, priority=$11, assigned_to=$12, commission=$13, deadline=$14 WHERE id=$15 RETURNING *`,
-      [title, clientContactId || null, company, location || "", contractType || "CDI", Number(salaryMin) || 0, Number(salaryMax) || 0, description || "", requirements || "", status || "Ouverte", priority || "Normale", assignedTo || null, Number(commission) || 0, deadline || null, req.params.id]
+      `UPDATE missions SET title=$1, client_contact_id=$2, company=$3, location=$4, contract_type=$5, salary_min=$6, salary_max=$7, description=$8, requirements=$9, status=$10, priority=$11, assigned_to=$12, commission=$13, deadline=$14, fiscal_year_id=$15 WHERE id=$16 RETURNING *`,
+      [title, clientContactId || null, company, location || "", contractType || "CDI", Number(salaryMin) || 0, Number(salaryMax) || 0, description || "", requirements || "", status || "Ouverte", priority || "Normale", assignedTo || null, Number(commission) || 0, deadline || null, fiscalYearId || null, req.params.id]
     );
     if (rows.length === 0) return res.status(404).json({ error: "Mission non trouvée" });
     res.json(fmtMission(rows[0]));
@@ -698,6 +765,32 @@ Réponds UNIQUEMENT en JSON valide avec cette structure exacte (pas de markdown,
     console.error("Evaluation error:", err);
     res.status(500).json({ error: err.message || "Erreur lors de l'évaluation" });
   }
+});
+
+// ─── Fiscal Years ───────────────────────────────────────────────────────────
+app.get("/api/fiscal-years", async (req, res) => {
+  try {
+    const { rows } = await pool.query("SELECT * FROM fiscal_years ORDER BY start_date ASC");
+    res.json(rows.map(r => ({ id: r.id, label: r.label, startDate: r.start_date, endDate: r.end_date, target: Number(r.target) })));
+  } catch (err) { res.status(500).json({ error: "Erreur serveur" }); }
+});
+
+app.post("/api/fiscal-years", async (req, res) => {
+  const { label, startDate, endDate, target } = req.body;
+  if (!label || !startDate || !endDate) return res.status(400).json({ error: "Champs requis" });
+  try {
+    const { rows } = await pool.query(
+      "INSERT INTO fiscal_years (label, start_date, end_date, target) VALUES ($1,$2,$3,$4) RETURNING *",
+      [label, startDate, endDate, Number(target) || 0]
+    );
+    const r = rows[0];
+    res.json({ id: r.id, label: r.label, startDate: r.start_date, endDate: r.end_date, target: Number(r.target) });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.delete("/api/fiscal-years/:id", async (req, res) => {
+  try { await pool.query("DELETE FROM fiscal_years WHERE id=$1", [req.params.id]); res.json({ ok: true }); }
+  catch (err) { res.status(500).json({ error: "Erreur serveur" }); }
 });
 
 // ─── Serve frontend ──────────────────────────────────────────────────────────
