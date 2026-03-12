@@ -1,13 +1,12 @@
 import { useState, useEffect } from "react";
 
-// ─── Storage helpers (localStorage pour Railway) ───────────────────────────────
-const store = {
-  get: (k) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : null; } catch { return null; } },
-  set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
-  remove: (k) => { try { localStorage.removeItem(k); } catch {} },
+// ─── API helpers ─────────────────────────────────────────────────────────────
+const api = {
+  get: async (url) => { const r = await fetch(url); return r.json(); },
+  post: async (url, data) => { const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) }); return r; },
+  put: async (url, data) => { const r = await fetch(url, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) }); return r; },
+  del: async (url) => { const r = await fetch(url, { method: "DELETE" }); return r; },
 };
-
-const CREDENTIALS = { login: "admin", password: "agency2026" };
 
 const STATUS_CONFIG = {
   Candidat: { color: "#f59e0b", bg: "#fef3c7", label: "Candidat" },
@@ -16,14 +15,6 @@ const STATUS_CONFIG = {
 };
 
 const SECTORS = ["Tech", "Finance", "Santé", "Retail", "Industrie", "Services", "Médias", "Éducation", "Autre"];
-
-const INITIAL_CONTACTS = [
-  { id: 1, name: "Sophie Martin", company: "TechCorp", email: "s.martin@techcorp.ca", phone: "(514) 555-1234", status: "Client", sector: "Tech", revenue: 24000, notes: "Partenaire stratégique depuis 2023", createdAt: "2024-01-15" },
-  { id: 2, name: "Julien Bernard", company: "FinanceHub", email: "j.bernard@financehub.ca", phone: "(438) 555-9876", status: "Prospect", sector: "Finance", revenue: 0, notes: "Intéressé par nos services RH", createdAt: "2024-03-10" },
-  { id: 3, name: "Emma Durand", company: "HealthFirst", email: "e.durand@healthfirst.ca", phone: "(418) 555-1122", status: "Candidat", sector: "Santé", revenue: 0, notes: "Profil senior, disponible en mars", createdAt: "2024-04-20" },
-  { id: 4, name: "Thomas Petit", company: "RetailGroup", email: "t.petit@retailgroup.ca", phone: "(613) 555-4433", status: "Client", sector: "Retail", revenue: 38000, notes: "Contrat annuel renouvelé", createdAt: "2024-02-01" },
-  { id: 5, name: "Camille Moreau", company: "IndusPro", email: "c.moreau@induspro.ca", phone: "(819) 555-6677", status: "Prospect", sector: "Industrie", revenue: 0, notes: "RDV prévu le 20 avril", createdAt: "2024-05-05" },
-];
 
 // ─── Mini Sparkline ─────────────────────────────────────────────────────────────
 function Sparkline({ data, color }) {
@@ -65,6 +56,7 @@ function RevenueChart({ contacts }) {
 // ─── Main App ───────────────────────────────────────────────────────────────────
 export default function CRM() {
   const [authed, setAuthed] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
   const [login, setLogin] = useState("");
   const [password, setPassword] = useState("");
   const [showPwd, setShowPwd] = useState(false);
@@ -77,22 +69,36 @@ export default function CRM() {
   const [form, setForm] = useState({});
   const [detailId, setDetailId] = useState(null);
 
-  useEffect(() => {
-    const session = store.get("crm_session");
-    if (session) setAuthed(true);
-    const saved = store.get("crm_contacts");
-    setContacts(saved && saved.length > 0 ? saved : INITIAL_CONTACTS);
-  }, []);
-
-  useEffect(() => { if (contacts.length > 0) store.set("crm_contacts", contacts); }, [contacts]);
-
-  const handleLogin = () => {
-    if (login === CREDENTIALS.login && password === CREDENTIALS.password) {
-      setAuthed(true); store.set("crm_session", true); setLoginError("");
-    } else setLoginError("Identifiant ou mot de passe incorrect.");
+  const loadContacts = async () => {
+    const data = await api.get("/api/contacts");
+    setContacts(data);
   };
 
-  const handleLogout = () => { store.remove("crm_session"); setAuthed(false); setLogin(""); setPassword(""); };
+  useEffect(() => {
+    const session = localStorage.getItem("crm_user");
+    if (session) {
+      setCurrentUser(JSON.parse(session));
+      setAuthed(true);
+    }
+  }, []);
+
+  useEffect(() => { if (authed) loadContacts(); }, [authed]);
+
+  const handleLogin = async () => {
+    const res = await api.post("/api/login", { login, password });
+    if (res.ok) {
+      const user = await res.json();
+      setCurrentUser(user);
+      setAuthed(true);
+      localStorage.setItem("crm_user", JSON.stringify(user));
+      setLoginError("");
+    } else {
+      const err = await res.json();
+      setLoginError(err.error);
+    }
+  };
+
+  const handleLogout = () => { localStorage.removeItem("crm_user"); setAuthed(false); setCurrentUser(null); setLogin(""); setPassword(""); };
 
   const stats = {
     candidates: contacts.filter(c => c.status === "Candidat").length,
@@ -113,14 +119,18 @@ export default function CRM() {
     setForm(contact ? { ...contact } : { name: "", company: "", email: "", phone: "", status: "Prospect", sector: "Tech", revenue: 0, notes: "" });
   };
 
-  const saveContact = () => {
+  const saveContact = async () => {
     if (!form.name || !form.company) return;
-    if (form.id) setContacts(cs => cs.map(c => c.id === form.id ? { ...form, revenue: Number(form.revenue) || 0 } : c));
-    else setContacts(cs => [...cs, { ...form, id: Date.now(), revenue: Number(form.revenue) || 0, createdAt: new Date().toISOString().split("T")[0] }]);
+    if (form.id) {
+      await api.put(`/api/contacts/${form.id}`, form);
+    } else {
+      await api.post("/api/contacts", form);
+    }
+    await loadContacts();
     setModal(null);
   };
 
-  const deleteContact = (id) => { setContacts(cs => cs.filter(c => c.id !== id)); setDetailId(null); };
+  const deleteContact = async (id) => { await api.del(`/api/contacts/${id}`); await loadContacts(); setDetailId(null); };
   const detailContact = contacts.find(c => c.id === detailId);
 
   if (!authed) return <LoginScreen login={login} setLogin={setLogin} password={password} setPassword={setPassword} showPwd={showPwd} setShowPwd={setShowPwd} error={loginError} onLogin={handleLogin} />;
@@ -178,10 +188,10 @@ export default function CRM() {
         <div style={{ marginTop: "auto" }}>
           <div style={{ padding: "12px 8px", borderTop: "1px solid #f1f5f9" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-              <div style={{ width: 30, height: 30, background: "linear-gradient(135deg, #dbeafe, #bfdbfe)", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "#1d4ed8" }}>A</div>
+              <div style={{ width: 30, height: 30, background: "linear-gradient(135deg, #dbeafe, #bfdbfe)", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "#1d4ed8" }}>{currentUser?.fullName?.[0] || "?"}</div>
               <div>
-                <div style={{ fontSize: 12.5, fontWeight: 600, color: "#0f172a" }}>Admin</div>
-                <div style={{ fontSize: 10.5, color: "#94a3b8" }}>Administrateur</div>
+                <div style={{ fontSize: 12.5, fontWeight: 600, color: "#0f172a" }}>{currentUser?.fullName || "Utilisateur"}</div>
+                <div style={{ fontSize: 10.5, color: "#94a3b8" }}>{currentUser?.login || ""}</div>
               </div>
             </div>
             <button className="btn btn-ghost" style={{ width: "100%", justifyContent: "center", fontSize: 12.5, padding: "7px 12px" }} onClick={handleLogout}>
@@ -252,7 +262,7 @@ function LoginScreen({ login, setLogin, password, setPassword, showPwd, setShowP
           </button>
         </div>
         <div style={{ marginTop: 20, padding: 14, background: "#f8fafc", borderRadius: 12, textAlign: "center" }}>
-          <p style={{ fontSize: 11.5, color: "#64748b" }}>Login: <strong>admin</strong> · Mot de passe: <strong>agency2026</strong></p>
+          <p style={{ fontSize: 11.5, color: "#64748b" }}><strong>oceane</strong> / oceane2026 · <strong>pierre</strong> / pierre2026</p>
         </div>
       </div>
     </div>
