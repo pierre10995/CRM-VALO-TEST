@@ -13,6 +13,7 @@ const STAGES = ["Présélectionné", "Soumis", "Entretien", "Finaliste", "Placé
 const ACTIVITY_TYPES = ["Appel", "Email", "Réunion", "Note"];
 const CONTRACT_TYPES = ["CDI", "CDD", "Contrat", "Freelance", "Stage"];
 const MISSION_STATUSES = ["Ouverte", "En cours", "Gagné", "Pourvue", "Fermée"];
+const VALIDATION_STATUSES = ["Validé", "À moitié Validé", "Doute", "Refusé par VALO", "Refusé par le client"];
 const PRIORITIES = ["Basse", "Normale", "Haute", "Urgente"];
 
 const fmtCAD = (n) => Number(n || 0).toLocaleString("fr-CA") + " $ CAD";
@@ -463,11 +464,22 @@ function ClientsPage({ contacts, search, setSearch, filterStatus, setFilterStatu
 
 // ─── Candidats Page ─────────────────────────────────────────────────────────
 function CandidatsPage({ contacts, search, setSearch, onAdd, onEdit, onDelete, onDetail, detailId, setDetailId, candidatures, missions, loadAll }) {
+  const [filterSkill, setFilterSkill] = useState("");
+  const [filterValidation, setFilterValidation] = useState("");
+
+  // Collect all unique skills across candidates
+  const allSkills = [...new Set(contacts.flatMap(c => (c.skills || "").split(",").map(s => s.trim()).filter(Boolean)))].sort();
+
   const filtered = contacts.filter(c => {
     const q = search.toLowerCase();
-    return !search || c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q) || (c.skills || "").toLowerCase().includes(q) || (c.city || "").toLowerCase().includes(q);
+    const matchSearch = !search || c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q) || (c.skills || "").toLowerCase().includes(q) || (c.city || "").toLowerCase().includes(q);
+    const matchSkill = !filterSkill || (c.skills || "").toLowerCase().includes(filterSkill.toLowerCase());
+    const matchValidation = !filterValidation || c.validationStatus === filterValidation;
+    return matchSearch && matchSkill && matchValidation;
   });
   const detail = contacts.find(c => c.id === detailId);
+
+  const validationColors = { "Validé": { bg: "#d1fae5", color: "#059669" }, "À moitié Validé": { bg: "#fef3c7", color: "#d97706" }, "Doute": { bg: "#e0e7ff", color: "#4f46e5" }, "Refusé par VALO": { bg: "#fee2e2", color: "#dc2626" }, "Refusé par le client": { bg: "#fce7f3", color: "#be185d" } };
 
   return (
     <div>
@@ -478,17 +490,30 @@ function CandidatsPage({ contacts, search, setSearch, onAdd, onEdit, onDelete, o
         </div>
         <button className="btn btn-primary" onClick={onAdd}>+ Ajouter un candidat</button>
       </div>
-      <input className="input" style={{ marginBottom: 20 }} placeholder="Rechercher par nom, competences, ville..." value={search} onChange={e => setSearch(e.target.value)} />
+      <input className="input" style={{ marginBottom: 12 }} placeholder="Rechercher par nom, competences, ville..." value={search} onChange={e => setSearch(e.target.value)} />
+      <div style={{ display: "flex", gap: 10, marginBottom: 20, flexWrap: "wrap" }}>
+        <select className="input" style={{ width: "auto", minWidth: 180 }} value={filterSkill} onChange={e => setFilterSkill(e.target.value)}>
+          <option value="">Toutes les compétences</option>
+          {allSkills.map(s => <option key={s} value={s}>{s}</option>)}
+        </select>
+        <select className="input" style={{ width: "auto", minWidth: 200 }} value={filterValidation} onChange={e => setFilterValidation(e.target.value)}>
+          <option value="">Tous les statuts validation</option>
+          {VALIDATION_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+        </select>
+        {(filterSkill || filterValidation) && <button className="btn btn-ghost" style={{ fontSize: 12, padding: "6px 12px" }} onClick={() => { setFilterSkill(""); setFilterValidation(""); }}>Réinitialiser filtres</button>}
+      </div>
       <div className="card" style={{ padding: 0, overflow: "hidden" }}>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead><tr style={{ borderBottom: "1px solid #f1f5f9" }}>
-            {["Candidat", "Ville", "Compétences", "Salaire", "Disponibilité", "Actions"].map(h => (
+            {["Candidat", "Ville", "Compétences", "Statut", "Salaire", "Actions"].map(h => (
               <th key={h} style={{ padding: "14px 20px", textAlign: "left", fontSize: 11.5, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase" }}>{h}</th>
             ))}
           </tr></thead>
           <tbody>
             {filtered.length === 0 && <tr><td colSpan={6} style={{ padding: 40, textAlign: "center", color: "#94a3b8" }}>Aucun candidat</td></tr>}
-            {filtered.map(c => (
+            {filtered.map(c => {
+              const vc = validationColors[c.validationStatus];
+              return (
               <tr key={c.id} className="row-hover" style={{ borderBottom: "1px solid #f8fafc" }} onClick={() => onDetail(c.id)}>
                 <td style={{ padding: "14px 20px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -507,8 +532,10 @@ function CandidatsPage({ contacts, search, setSearch, onAdd, onEdit, onDelete, o
                     ))}
                   </div>
                 </td>
+                <td style={{ padding: "14px 20px" }}>
+                  {c.validationStatus ? <span style={{ fontSize: 11.5, fontWeight: 600, padding: "3px 10px", borderRadius: 12, background: vc?.bg || "#f1f5f9", color: vc?.color || "#64748b" }}>{c.validationStatus}</span> : <span style={{ fontSize: 12, color: "#cbd5e1" }}>—</span>}
+                </td>
                 <td style={{ padding: "14px 20px", fontSize: 13.5, fontWeight: 600, color: c.salaryExpectation > 0 ? "#0f172a" : "#cbd5e1" }}>{c.salaryExpectation > 0 ? fmtCAD(c.salaryExpectation) : "—"}</td>
-                <td style={{ padding: "14px 20px", fontSize: 13, color: "#374151" }}>{c.availability || "—"}</td>
                 <td style={{ padding: "14px 20px" }} onClick={e => e.stopPropagation()}>
                   <div style={{ display: "flex", gap: 6 }}>
                     <button className="btn btn-ghost" style={{ padding: "6px 10px", fontSize: 12 }} onClick={() => onEdit(c)}>Modifier</button>
@@ -516,7 +543,8 @@ function CandidatsPage({ contacts, search, setSearch, onAdd, onEdit, onDelete, o
                   </div>
                 </td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -632,6 +660,15 @@ function FicheCandidat({ contact: c, onClose, onEdit, onDelete, candidatures, mi
           <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", marginBottom: 4 }}>SECTEUR</div>
           <div style={{ fontSize: 13, color: "#0f172a" }}>{c.sector || "—"}</div>
         </div>
+      </div>
+
+      {/* Statut validation */}
+      <div style={{ marginBottom: 20 }}>
+        <div style={{ fontSize: 12, fontWeight: 700, color: "#94a3b8", marginBottom: 8 }}>STATUT VALIDATION</div>
+        {c.validationStatus ? (() => {
+          const vc = { "Validé": { bg: "#d1fae5", color: "#059669" }, "À moitié Validé": { bg: "#fef3c7", color: "#d97706" }, "Doute": { bg: "#e0e7ff", color: "#4f46e5" }, "Refusé par VALO": { bg: "#fee2e2", color: "#dc2626" }, "Refusé par le client": { bg: "#fce7f3", color: "#be185d" } }[c.validationStatus] || { bg: "#f1f5f9", color: "#64748b" };
+          return <span style={{ fontSize: 13, fontWeight: 600, padding: "5px 14px", borderRadius: 16, background: vc.bg, color: vc.color }}>{c.validationStatus}</span>;
+        })() : <span style={{ fontSize: 13, color: "#cbd5e1" }}>Non défini</span>}
       </div>
 
       {/* Skills */}
@@ -1533,6 +1570,12 @@ function CandidatForm({ form, setForm, onSave, onCancel }) {
         <select className="input" value={form.sector || "Tech"} onChange={e => f("sector", e.target.value)}>{SECTORS.map(s => <option key={s}>{s}</option>)}</select>
       </Field>
       <Field label="Compétences (séparées par virgules)"><input className="input" value={form.skills || ""} onChange={e => f("skills", e.target.value)} placeholder="React, Node.js, PostgreSQL..." /></Field>
+      <Field label="Statut de validation">
+        <select className="input" value={form.validationStatus || ""} onChange={e => f("validationStatus", e.target.value)}>
+          <option value="">— Non défini —</option>
+          {VALIDATION_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+        </select>
+      </Field>
       <Field label="Notes"><textarea className="input" style={{ resize: "vertical", minHeight: 72 }} value={form.notes || ""} onChange={e => f("notes", e.target.value)} placeholder="Informations..." /></Field>
       <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
         <button className="btn btn-ghost" onClick={onCancel}>Annuler</button>

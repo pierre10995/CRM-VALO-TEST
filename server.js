@@ -59,6 +59,7 @@ async function initDB() {
       ["skills", "TEXT DEFAULT ''"],
       ["salary_expectation", "NUMERIC DEFAULT 0"],
       ["availability", "VARCHAR(50) DEFAULT ''"],
+      ["validation_status", "VARCHAR(30) DEFAULT ''"],
     ];
     for (const [col, type] of newCols) {
       await client.query(`ALTER TABLE contacts ADD COLUMN IF NOT EXISTS ${col} ${type}`);
@@ -222,6 +223,7 @@ function fmtContact(r) {
     status: r.status, sector: r.sector, revenue: Number(r.revenue), notes: r.notes,
     city: r.city || "", linkedin: r.linkedin || "", skills: r.skills || "",
     salaryExpectation: Number(r.salary_expectation) || 0, availability: r.availability || "",
+    validationStatus: r.validation_status || "",
     createdAt: r.created_at,
   };
 }
@@ -249,25 +251,25 @@ app.get("/api/contacts", async (req, res) => {
 });
 
 app.post("/api/contacts", async (req, res) => {
-  const { name, company, email, phone, status, sector, revenue, notes, city, linkedin, skills, salaryExpectation, availability } = req.body;
+  const { name, company, email, phone, status, sector, revenue, notes, city, linkedin, skills, salaryExpectation, availability, validationStatus } = req.body;
   if (!name) return res.status(400).json({ error: "Nom requis" });
   try {
     const { rows } = await pool.query(
-      `INSERT INTO contacts (name, company, email, phone, status, sector, revenue, notes, city, linkedin, skills, salary_expectation, availability)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING *`,
-      [name, company || "", email || "", phone || "", status || "Candidat", sector || "Tech", Number(revenue) || 0, notes || "", city || "", linkedin || "", skills || "", Number(salaryExpectation) || 0, availability || ""]
+      `INSERT INTO contacts (name, company, email, phone, status, sector, revenue, notes, city, linkedin, skills, salary_expectation, availability, validation_status)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING *`,
+      [name, company || "", email || "", phone || "", status || "Candidat", sector || "Tech", Number(revenue) || 0, notes || "", city || "", linkedin || "", skills || "", Number(salaryExpectation) || 0, availability || "", validationStatus || ""]
     );
     res.json(fmtContact(rows[0]));
   } catch (err) { res.status(500).json({ error: "Erreur serveur" }); }
 });
 
 app.put("/api/contacts/:id", async (req, res) => {
-  const { name, company, email, phone, status, sector, revenue, notes, city, linkedin, skills, salaryExpectation, availability } = req.body;
+  const { name, company, email, phone, status, sector, revenue, notes, city, linkedin, skills, salaryExpectation, availability, validationStatus } = req.body;
   if (!name) return res.status(400).json({ error: "Nom requis" });
   try {
     const { rows } = await pool.query(
-      `UPDATE contacts SET name=$1, company=$2, email=$3, phone=$4, status=$5, sector=$6, revenue=$7, notes=$8, city=$9, linkedin=$10, skills=$11, salary_expectation=$12, availability=$13 WHERE id=$14 RETURNING *`,
-      [name, company || "", email || "", phone || "", status || "Candidat", sector || "Tech", Number(revenue) || 0, notes || "", city || "", linkedin || "", skills || "", Number(salaryExpectation) || 0, availability || "", req.params.id]
+      `UPDATE contacts SET name=$1, company=$2, email=$3, phone=$4, status=$5, sector=$6, revenue=$7, notes=$8, city=$9, linkedin=$10, skills=$11, salary_expectation=$12, availability=$13, validation_status=$14 WHERE id=$15 RETURNING *`,
+      [name, company || "", email || "", phone || "", status || "Candidat", sector || "Tech", Number(revenue) || 0, notes || "", city || "", linkedin || "", skills || "", Number(salaryExpectation) || 0, availability || "", validationStatus || "", req.params.id]
     );
     if (rows.length === 0) return res.status(404).json({ error: "Contact non trouvé" });
     res.json(fmtContact(rows[0]));
