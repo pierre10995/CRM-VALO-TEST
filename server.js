@@ -522,6 +522,19 @@ function fmtEvaluation(r) {
   };
 }
 
+app.get("/api/evaluations", async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT e.*, c.name as candidate_name, m.title as mission_title, m.company as mission_company
+       FROM evaluations e
+       LEFT JOIN contacts c ON e.candidate_id = c.id
+       LEFT JOIN missions m ON e.mission_id = m.id
+       ORDER BY e.created_at DESC`
+    );
+    res.json(rows.map(fmtEvaluation));
+  } catch (err) { res.status(500).json({ error: "Erreur serveur" }); }
+});
+
 app.get("/api/evaluations/candidate/:candidateId", async (req, res) => {
   try {
     const { rows } = await pool.query(
