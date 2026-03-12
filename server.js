@@ -6,13 +6,42 @@ import path from "path";
 import { fileURLToPath } from "url";
 import Anthropic from "@anthropic-ai/sdk";
 import pdf from "pdf-parse/lib/pdf-parse.js";
+import jwt from "jsonwebtoken";
+import rateLimit from "express-rate-limit";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = process.env.PORT || 3000;
+const JWT_SECRET = process.env.JWT_SECRET || "valo-crm-secret-change-me-in-production";
+const JWT_EXPIRES_IN = "8h";
 
 app.use(cors());
 app.use(express.json({ limit: "20mb" }));
+
+// ─── Rate limiting on login ─────────────────────────────────────────────────
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // max 10 attempts per window
+  message: { error: "Trop de tentatives de connexion. Réessayez dans 15 minutes." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// ─── JWT Auth Middleware ─────────────────────────────────────────────────────
+function authMiddleware(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ error: "Non autorisé" });
+  }
+  try {
+    const token = authHeader.split(" ")[1];
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch (err) {
+    return res.status(401).json({ error: "Session expirée, veuillez vous reconnecter" });
+  }
+}
 
 // ─── PostgreSQL ──────────────────────────────────────────────────────────────
 const pool = new pg.Pool({
@@ -172,8 +201,10 @@ async function initDB() {
     // Seed users
     const { rows: existingUsers } = await client.query("SELECT COUNT(*) FROM users");
     if (parseInt(existingUsers[0].count) === 0) {
-      const hash1 = bcrypt.hashSync("oceane2026", 10);
-      const hash2 = bcrypt.hashSync("pierre2026", 10);
+      const pwd1 = process.env.SEED_PWD_OCEANE || "oceane2026";
+      const pwd2 = process.env.SEED_PWD_PIERRE || "pierre2026";
+      const hash1 = bcrypt.hashSync(pwd1, 10);
+      const hash2 = bcrypt.hashSync(pwd2, 10);
       await client.query(
         "INSERT INTO users (login, password, full_name) VALUES ($1, $2, $3), ($4, $5, $6)",
         ["oceane", hash1, "Océane Le Goff", "pierre", hash2, "Pierre Scelles"]
@@ -229,14 +260,21 @@ function fmtContact(r) {
 }
 
 // ─── Auth ────────────────────────────────────────────────────────────────────
-app.post("/api/login", async (req, res) => {
+// Protect all /api/ routes except /api/login
+app.use("/api", (req, res, next) => {
+  if (req.path === "/login") return next();
+  authMiddleware(req, res, next);
+});
+
+app.post("/api/login", loginLimiter, async (req, res) => {
   const { login, password } = req.body;
   try {
     const { rows } = await pool.query("SELECT * FROM users WHERE login = $1", [login]);
     if (rows.length === 0) return res.status(401).json({ error: "Identifiant ou mot de passe incorrect." });
     const user = rows[0];
     if (!bcrypt.compareSync(password, user.password)) return res.status(401).json({ error: "Identifiant ou mot de passe incorrect." });
-    res.json({ id: user.id, login: user.login, fullName: user.full_name });
+    const token = jwt.sign({ id: user.id, login: user.login }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+    res.json({ id: user.id, login: user.login, fullName: user.full_name, token });
   } catch (err) {
     res.status(500).json({ error: "Erreur serveur" });
   }

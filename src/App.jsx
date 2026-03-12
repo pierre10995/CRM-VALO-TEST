@@ -1,11 +1,27 @@
 import { useState, useEffect } from "react";
 
-// API helpers
+// API helpers with JWT auth
+function getAuthHeaders() {
+  const token = localStorage.getItem("crm_token");
+  const headers = { "Content-Type": "application/json" };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  return headers;
+}
+
+async function handleAuthResponse(r) {
+  if (r.status === 401) {
+    localStorage.removeItem("crm_token");
+    localStorage.removeItem("crm_user");
+    window.location.reload();
+  }
+  return r;
+}
+
 const api = {
-  get: async (url) => { const r = await fetch(url); return r.json(); },
-  post: async (url, data) => { const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) }); return r; },
-  put: async (url, data) => { const r = await fetch(url, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) }); return r; },
-  del: async (url) => { const r = await fetch(url, { method: "DELETE" }); return r; },
+  get: async (url) => { const r = await handleAuthResponse(await fetch(url, { headers: getAuthHeaders() })); return r.json(); },
+  post: async (url, data) => { return handleAuthResponse(await fetch(url, { method: "POST", headers: getAuthHeaders(), body: JSON.stringify(data) })); },
+  put: async (url, data) => { return handleAuthResponse(await fetch(url, { method: "PUT", headers: getAuthHeaders(), body: JSON.stringify(data) })); },
+  del: async (url) => { return handleAuthResponse(await fetch(url, { method: "DELETE", headers: getAuthHeaders() })); },
 };
 
 const SECTORS = ["Tech", "Finance", "Santé", "Retail", "Industrie", "Services", "Médias", "Éducation", "Autre"];
@@ -87,15 +103,17 @@ export default function CRM() {
 
   useEffect(() => {
     const session = localStorage.getItem("crm_user");
-    if (session) { setCurrentUser(JSON.parse(session)); setAuthed(true); }
+    const token = localStorage.getItem("crm_token");
+    if (session && token) { setCurrentUser(JSON.parse(session)); setAuthed(true); }
   }, []);
 
   useEffect(() => { if (authed) loadAll(); }, [authed]);
 
   const handleLogin = async () => {
-    const res = await api.post("/api/login", loginForm);
+    const res = await fetch("/api/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(loginForm) });
     if (res.ok) {
       const user = await res.json();
+      localStorage.setItem("crm_token", user.token);
       setCurrentUser(user); setAuthed(true);
       localStorage.setItem("crm_user", JSON.stringify(user));
       setLoginError("");
@@ -107,6 +125,7 @@ export default function CRM() {
 
   const handleLogout = () => {
     localStorage.removeItem("crm_user");
+    localStorage.removeItem("crm_token");
     setAuthed(false); setCurrentUser(null);
     setLoginForm({ login: "", password: "" });
   };
