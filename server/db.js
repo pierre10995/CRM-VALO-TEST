@@ -225,9 +225,9 @@ async function initDB() {
       if (parseInt(existingYears[0].count) === 0) {
         await client.query(`
           INSERT INTO fiscal_years (label, start_date, end_date, target) VALUES
-          ('2024-2025', '2024-04-01', '2025-03-31', 100000),
-          ('2026-2027', '2026-04-01', '2027-03-31', 150000),
-          ('2027-2028', '2027-04-01', '2028-03-31', 200000)
+          ('Année 1 - 2024-2025', '2024-04-01', '2025-03-31', 100000),
+          ('Année 2 - 2025-2026', '2025-04-01', '2026-03-31', 150000),
+          ('Année 3 - 2026-2027', '2026-04-01', '2027-03-31', 200000)
         `);
       }
       await markSeeded("fiscal_years");
