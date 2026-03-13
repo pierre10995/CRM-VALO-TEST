@@ -201,29 +201,45 @@ async function initDB() {
       );
     `);
 
+    // Seed tracking table — prevents re-seeding after user deletes data
+    await client.query(`CREATE TABLE IF NOT EXISTS seed_log (key VARCHAR(50) PRIMARY KEY, done_at TIMESTAMP DEFAULT NOW())`);
+    const alreadySeeded = async (key) => {
+      const { rows } = await client.query("SELECT 1 FROM seed_log WHERE key = $1", [key]);
+      return rows.length > 0;
+    };
+    const markSeeded = async (key) => {
+      await client.query("INSERT INTO seed_log (key) VALUES ($1) ON CONFLICT DO NOTHING", [key]);
+    };
+
     // Seed fiscal years
-    const { rows: existingYears } = await client.query("SELECT COUNT(*) FROM fiscal_years");
-    if (parseInt(existingYears[0].count) === 0) {
-      await client.query(`
-        INSERT INTO fiscal_years (label, start_date, end_date, target) VALUES
-        ('2024-2025', '2024-04-01', '2025-03-31', 100000),
-        ('2025-2026', '2025-04-01', '2026-03-31', 150000),
-        ('2026-2027', '2026-04-01', '2027-03-31', 200000)
-      `);
+    if (!await alreadySeeded("fiscal_years")) {
+      const { rows: existingYears } = await client.query("SELECT COUNT(*) FROM fiscal_years");
+      if (parseInt(existingYears[0].count) === 0) {
+        await client.query(`
+          INSERT INTO fiscal_years (label, start_date, end_date, target) VALUES
+          ('2024-2025', '2024-04-01', '2025-03-31', 100000),
+          ('2025-2026', '2025-04-01', '2026-03-31', 150000),
+          ('2026-2027', '2026-04-01', '2027-03-31', 200000)
+        `);
+      }
+      await markSeeded("fiscal_years");
     }
 
     // Seed users
-    const { rows: existingUsers } = await client.query("SELECT COUNT(*) FROM users");
-    if (parseInt(existingUsers[0].count) === 0) {
-      const pwd1 = process.env.SEED_PWD_OCEANE || "oceane2026";
-      const pwd2 = process.env.SEED_PWD_PIERRE || "pierre2026";
-      const hash1 = bcrypt.hashSync(pwd1, 10);
-      const hash2 = bcrypt.hashSync(pwd2, 10);
-      await client.query(
-        "INSERT INTO users (login, password, full_name) VALUES ($1, $2, $3), ($4, $5, $6)",
-        ["oceane@valo-inno.com", hash1, "Océane Le Goff", "pierre@valo-inno.com", hash2, "Pierre Scelles"]
-      );
-      console.log("Users seeded");
+    if (!await alreadySeeded("users")) {
+      const { rows: existingUsers } = await client.query("SELECT COUNT(*) FROM users");
+      if (parseInt(existingUsers[0].count) === 0) {
+        const pwd1 = process.env.SEED_PWD_OCEANE || "oceane2026";
+        const pwd2 = process.env.SEED_PWD_PIERRE || "pierre2026";
+        const hash1 = bcrypt.hashSync(pwd1, 10);
+        const hash2 = bcrypt.hashSync(pwd2, 10);
+        await client.query(
+          "INSERT INTO users (login, password, full_name) VALUES ($1, $2, $3), ($4, $5, $6)",
+          ["oceane@valo-inno.com", hash1, "Océane Le Goff", "pierre@valo-inno.com", hash2, "Pierre Scelles"]
+        );
+        console.log("Users seeded");
+      }
+      await markSeeded("users");
     }
 
     // Migrate old logins to email format
@@ -231,33 +247,39 @@ async function initDB() {
     await client.query("UPDATE users SET login = 'pierre@valo-inno.com' WHERE login = 'pierre'");
 
     // Seed contacts
-    const { rows: existingContacts } = await client.query("SELECT COUNT(*) FROM contacts");
-    if (parseInt(existingContacts[0].count) === 0) {
-      await client.query(`
-        INSERT INTO contacts (name, company, email, phone, status, sector, revenue, notes, city, skills, salary_expectation, availability, created_at) VALUES
-        ('Sophie Martin', 'TechCorp', 's.martin@techcorp.ca', '(514) 555-1234', 'Client', 'Tech', 24000, 'Partenaire stratégique depuis 2023', 'Montréal', '', 0, '', '2024-01-15'),
-        ('Julien Bernard', 'FinanceHub', 'j.bernard@financehub.ca', '(438) 555-9876', 'Prospect', 'Finance', 0, 'Intéressé par nos services RH', 'Toronto', '', 0, '', '2024-03-10'),
-        ('Emma Durand', 'HealthFirst', 'e.durand@healthfirst.ca', '(418) 555-1122', 'Candidat', 'Santé', 0, 'Profil senior, disponible en mars', 'Québec', 'Gestion de projet, Santé, Leadership', 85000, 'Immédiate', '2024-04-20'),
-        ('Thomas Petit', 'RetailGroup', 't.petit@retailgroup.ca', '(613) 555-4433', 'Client', 'Retail', 38000, 'Contrat annuel renouvelé', 'Ottawa', '', 0, '', '2024-02-01'),
-        ('Camille Moreau', 'IndusPro', 'c.moreau@induspro.ca', '(819) 555-6677', 'Prospect', 'Industrie', 0, 'RDV prévu le 20 avril', 'Sherbrooke', '', 0, '', '2024-05-05'),
-        ('Marc Tremblay', '', 'marc.tremblay@gmail.com', '(514) 555-8899', 'Candidat', 'Tech', 0, 'Développeur Full Stack 5 ans exp', 'Montréal', 'React, Node.js, PostgreSQL, TypeScript', 95000, '2 semaines', '2024-06-01'),
-        ('Isabelle Roy', '', 'i.roy@outlook.com', '(438) 555-2211', 'Candidat', 'Finance', 0, 'Analyste financier CFA', 'Montréal', 'Analyse financière, Excel, Python, CFA', 78000, '1 mois', '2024-06-15'),
-        ('David Chen', 'DataViz Inc', 'd.chen@dataviz.ca', '(514) 555-3344', 'Client', 'Tech', 45000, 'Recherche profils data régulièrement', 'Montréal', '', 0, '', '2024-03-20')
-      `);
-      console.log("Contacts seeded");
+    if (!await alreadySeeded("contacts")) {
+      const { rows: existingContacts } = await client.query("SELECT COUNT(*) FROM contacts");
+      if (parseInt(existingContacts[0].count) === 0) {
+        await client.query(`
+          INSERT INTO contacts (name, company, email, phone, status, sector, revenue, notes, city, skills, salary_expectation, availability, created_at) VALUES
+          ('Sophie Martin', 'TechCorp', 's.martin@techcorp.ca', '(514) 555-1234', 'Client', 'Tech', 24000, 'Partenaire stratégique depuis 2023', 'Montréal', '', 0, '', '2024-01-15'),
+          ('Julien Bernard', 'FinanceHub', 'j.bernard@financehub.ca', '(438) 555-9876', 'Prospect', 'Finance', 0, 'Intéressé par nos services RH', 'Toronto', '', 0, '', '2024-03-10'),
+          ('Emma Durand', 'HealthFirst', 'e.durand@healthfirst.ca', '(418) 555-1122', 'Candidat', 'Santé', 0, 'Profil senior, disponible en mars', 'Québec', 'Gestion de projet, Santé, Leadership', 85000, 'Immédiate', '2024-04-20'),
+          ('Thomas Petit', 'RetailGroup', 't.petit@retailgroup.ca', '(613) 555-4433', 'Client', 'Retail', 38000, 'Contrat annuel renouvelé', 'Ottawa', '', 0, '', '2024-02-01'),
+          ('Camille Moreau', 'IndusPro', 'c.moreau@induspro.ca', '(819) 555-6677', 'Prospect', 'Industrie', 0, 'RDV prévu le 20 avril', 'Sherbrooke', '', 0, '', '2024-05-05'),
+          ('Marc Tremblay', '', 'marc.tremblay@gmail.com', '(514) 555-8899', 'Candidat', 'Tech', 0, 'Développeur Full Stack 5 ans exp', 'Montréal', 'React, Node.js, PostgreSQL, TypeScript', 95000, '2 semaines', '2024-06-01'),
+          ('Isabelle Roy', '', 'i.roy@outlook.com', '(438) 555-2211', 'Candidat', 'Finance', 0, 'Analyste financier CFA', 'Montréal', 'Analyse financière, Excel, Python, CFA', 78000, '1 mois', '2024-06-15'),
+          ('David Chen', 'DataViz Inc', 'd.chen@dataviz.ca', '(514) 555-3344', 'Client', 'Tech', 45000, 'Recherche profils data régulièrement', 'Montréal', '', 0, '', '2024-03-20')
+        `);
+        console.log("Contacts seeded");
+      }
+      await markSeeded("contacts");
     }
 
     // Seed missions
-    const { rows: existingMissions } = await client.query("SELECT COUNT(*) FROM missions");
-    if (parseInt(existingMissions[0].count) === 0) {
-      await client.query(`
-        INSERT INTO missions (title, company, location, contract_type, salary_min, salary_max, description, requirements, status, priority, commission, deadline) VALUES
-        ('Développeur Full Stack Senior', 'TechCorp', 'Montréal', 'CDI', 85000, 105000, 'Développement d''applications web pour clients majeurs', 'React, Node.js, 5+ ans exp', 'Ouverte', 'Haute', 8000, '2024-08-01'),
-        ('Analyste Financier', 'FinanceHub', 'Toronto', 'CDI', 70000, 90000, 'Analyse de portefeuilles et reporting', 'CFA requis, Excel avancé, 3+ ans', 'Ouverte', 'Normale', 6000, '2024-07-15'),
-        ('Chef de Projet Santé', 'HealthFirst', 'Québec', 'Contrat', 75000, 95000, 'Gestion de projets de transformation digitale', 'PMP, expérience santé, bilingue', 'En cours', 'Haute', 7500, '2024-09-01'),
-        ('Data Analyst', 'DataViz Inc', 'Montréal', 'CDI', 65000, 80000, 'Analyse de données et visualisation', 'Python, SQL, Tableau, 2+ ans', 'Ouverte', 'Normale', 5000, '2024-08-15')
-      `);
-      console.log("Missions seeded");
+    if (!await alreadySeeded("missions")) {
+      const { rows: existingMissions } = await client.query("SELECT COUNT(*) FROM missions");
+      if (parseInt(existingMissions[0].count) === 0) {
+        await client.query(`
+          INSERT INTO missions (title, company, location, contract_type, salary_min, salary_max, description, requirements, status, priority, commission, deadline) VALUES
+          ('Développeur Full Stack Senior', 'TechCorp', 'Montréal', 'CDI', 85000, 105000, 'Développement d''applications web pour clients majeurs', 'React, Node.js, 5+ ans exp', 'Ouverte', 'Haute', 8000, '2024-08-01'),
+          ('Analyste Financier', 'FinanceHub', 'Toronto', 'CDI', 70000, 90000, 'Analyse de portefeuilles et reporting', 'CFA requis, Excel avancé, 3+ ans', 'Ouverte', 'Normale', 6000, '2024-07-15'),
+          ('Chef de Projet Santé', 'HealthFirst', 'Québec', 'Contrat', 75000, 95000, 'Gestion de projets de transformation digitale', 'PMP, expérience santé, bilingue', 'En cours', 'Haute', 7500, '2024-09-01'),
+          ('Data Analyst', 'DataViz Inc', 'Montréal', 'CDI', 65000, 80000, 'Analyse de données et visualisation', 'Python, SQL, Tableau, 2+ ans', 'Ouverte', 'Normale', 5000, '2024-08-15')
+        `);
+        console.log("Missions seeded");
+      }
+      await markSeeded("missions");
     }
 
   } finally {
