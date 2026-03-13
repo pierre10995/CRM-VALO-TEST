@@ -1,7 +1,6 @@
-import { SECTORS } from "../../utils/constants";
 import Field from "../common/Field";
 
-export default function ClientForm({ form, setForm, onSave, onCancel }) {
+export default function ClientForm({ form, setForm, onSave, onCancel, sectors = [] }) {
   const f = (k, v) => setForm(p => ({ ...p, [k]: v }));
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -16,7 +15,8 @@ export default function ClientForm({ form, setForm, onSave, onCancel }) {
           <select className="input" value={form.status || "Prospect"} onChange={e => f("status", e.target.value)}><option>Prospect</option><option>Client</option></select>
         </Field>
         <Field label="Secteur">
-          <select className="input" value={form.sector || "Tech"} onChange={e => f("sector", e.target.value)}>{SECTORS.map(s => <option key={s}>{s}</option>)}</select>
+          <input className="input" list="sectors-list" value={form.sector || ""} onChange={e => f("sector", e.target.value)} placeholder="Taper ou choisir..." />
+          <datalist id="sectors-list">{sectors.map(s => <option key={s} value={s} />)}</datalist>
         </Field>
         <Field label="CA annuel ($ CAD)"><input className="input" type="number" value={form.revenue || ""} onChange={e => f("revenue", e.target.value)} placeholder="0" /></Field>
       </div>

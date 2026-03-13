@@ -615,6 +615,17 @@ app.get("/api/stats", async (req, res) => {
   } catch (err) { res.status(500).json({ error: "Erreur serveur" }); }
 });
 
+// ─── Sectors (default + custom from DB) ─────────────────────────────────────
+app.get("/api/sectors", async (req, res) => {
+  const defaults = ["Tech", "Finance", "Santé", "Retail", "Industrie", "Services", "Médias", "Éducation", "Autre"];
+  try {
+    const { rows } = await pool.query("SELECT DISTINCT sector FROM contacts WHERE sector IS NOT NULL AND sector != '' ORDER BY sector");
+    const fromDb = rows.map(r => r.sector);
+    const all = [...new Set([...defaults, ...fromDb])].sort((a, b) => a.localeCompare(b, "fr"));
+    res.json(all);
+  } catch (err) { res.json(defaults); }
+});
+
 // ─── Users list (for assignment dropdowns) ───────────────────────────────────
 app.get("/api/users", async (req, res) => {
   try {

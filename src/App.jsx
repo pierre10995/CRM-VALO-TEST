@@ -40,6 +40,7 @@ export default function CRM() {
   const [users, setUsers] = useState([]);
   const [stats, setStats] = useState(null);
   const [fiscalYears, setFiscalYears] = useState([]);
+  const [sectors, setSectors] = useState([]);
 
   // UI state
   const [modal, setModal] = useState(null);
@@ -52,7 +53,7 @@ export default function CRM() {
   const clients = contacts.filter(c => c.status === "Client" || c.status === "Prospect");
 
   const loadAll = async () => {
-    const [c, m, cd, a, u, s, fy] = await Promise.all([
+    const [c, m, cd, a, u, s, fy, sec] = await Promise.all([
       api.get("/api/contacts"),
       api.get("/api/missions"),
       api.get("/api/candidatures"),
@@ -60,8 +61,9 @@ export default function CRM() {
       api.get("/api/users"),
       api.get("/api/stats"),
       api.get("/api/fiscal-years"),
+      api.get("/api/sectors"),
     ]);
-    setContacts(c); setMissions(m); setCandidatures(cd); setActivities(a); setUsers(u); setStats(s); setFiscalYears(fy);
+    setContacts(c); setMissions(m); setCandidatures(cd); setActivities(a); setUsers(u); setStats(s); setFiscalYears(fy); setSectors(sec);
   };
 
   useEffect(() => {
@@ -173,12 +175,12 @@ export default function CRM() {
       {/* Modals */}
       {modal === "client" && (
         <ModalWrapper onClose={() => setModal(null)} title={form.id ? "Modifier le client" : "Nouveau client"}>
-          <ClientForm form={form} setForm={setForm} onSave={saveContact} onCancel={() => setModal(null)} />
+          <ClientForm form={form} setForm={setForm} onSave={saveContact} onCancel={() => setModal(null)} sectors={sectors} />
         </ModalWrapper>
       )}
       {modal === "candidat" && (
         <ModalWrapper onClose={() => setModal(null)} title={form.id ? "Modifier le candidat" : "Nouveau candidat"}>
-          <CandidatForm form={form} setForm={setForm} onSave={saveContact} onCancel={() => setModal(null)} />
+          <CandidatForm form={form} setForm={setForm} onSave={saveContact} onCancel={() => setModal(null)} sectors={sectors} />
         </ModalWrapper>
       )}
       {modal === "mission" && (
