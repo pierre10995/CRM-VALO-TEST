@@ -79,7 +79,7 @@ export default function LoginScreen({ form, setForm, showPwd, setShowPwd, error,
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             <div>
               <label style={{ fontSize: 12.5, fontWeight: 600, color: "#374151", display: "block", marginBottom: 6 }}>Identifiant</label>
-              <input className="input-l" value={form.login} onChange={e => setForm(p => ({ ...p, login: e.target.value }))} placeholder="Identifiant" onKeyDown={e => e.key === "Enter" && document.getElementById("pwd-field")?.focus()} />
+              <input className="input-l" value={form.login} onChange={e => setForm(p => ({ ...p, login: e.target.value }))} placeholder="prenom@valo-inno.com" onKeyDown={e => e.key === "Enter" && document.getElementById("pwd-field")?.focus()} />
             </div>
             <div>
               <label style={{ fontSize: 12.5, fontWeight: 600, color: "#374151", display: "block", marginBottom: 6 }}>Mot de passe</label>
@@ -103,7 +103,7 @@ export default function LoginScreen({ form, setForm, showPwd, setShowPwd, error,
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             <div>
               <label style={{ fontSize: 12.5, fontWeight: 600, color: "#374151", display: "block", marginBottom: 6 }}>Votre identifiant</label>
-              <input className="input-l" value={forgotLogin} onChange={e => setForgotLogin(e.target.value)} placeholder="Identifiant" onKeyDown={e => e.key === "Enter" && handleForgot()} />
+              <input className="input-l" value={forgotLogin} onChange={e => setForgotLogin(e.target.value)} placeholder="prenom@valo-inno.com" onKeyDown={e => e.key === "Enter" && handleForgot()} />
             </div>
             {resetError && <div style={{ padding: "10px 14px", background: "#fee2e2", borderRadius: 10, fontSize: 13, color: "#dc2626", fontWeight: 500 }}>{resetError}</div>}
             <button onClick={handleForgot} disabled={loading} style={{ padding: 13, background: "linear-gradient(135deg, #1d4ed8, #3b82f6)", color: "white", border: "none", borderRadius: 12, fontSize: 14.5, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 6px 20px rgba(37,99,235,0.35)", marginTop: 4, opacity: loading ? 0.7 : 1 }}>

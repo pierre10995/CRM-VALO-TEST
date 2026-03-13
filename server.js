@@ -221,10 +221,14 @@ async function initDB() {
       const hash2 = bcrypt.hashSync(pwd2, 10);
       await client.query(
         "INSERT INTO users (login, password, full_name) VALUES ($1, $2, $3), ($4, $5, $6)",
-        ["oceane", hash1, "Océane Le Goff", "pierre", hash2, "Pierre Scelles"]
+        ["oceane@valo-inno.com", hash1, "Océane Le Goff", "pierre@valo-inno.com", hash2, "Pierre Scelles"]
       );
       console.log("Users seeded");
     }
+
+    // Migrate old logins to email format
+    await client.query("UPDATE users SET login = 'oceane@valo-inno.com' WHERE login = 'oceane'");
+    await client.query("UPDATE users SET login = 'pierre@valo-inno.com' WHERE login = 'pierre'");
 
     // Seed contacts
     const { rows: existingContacts } = await client.query("SELECT COUNT(*) FROM contacts");
