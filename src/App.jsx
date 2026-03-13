@@ -41,6 +41,7 @@ export default function CRM() {
   const [stats, setStats] = useState(null);
   const [fiscalYears, setFiscalYears] = useState([]);
   const [sectors, setSectors] = useState([]);
+  const [workModes, setWorkModes] = useState([]);
 
   // UI state
   const [modal, setModal] = useState(null);
@@ -53,7 +54,7 @@ export default function CRM() {
   const clients = contacts.filter(c => c.status === "Client" || c.status === "Prospect");
 
   const loadAll = async () => {
-    const [c, m, cd, a, u, s, fy, sec] = await Promise.all([
+    const [c, m, cd, a, u, s, fy, sec, wm] = await Promise.all([
       api.get("/api/contacts"),
       api.get("/api/missions"),
       api.get("/api/candidatures"),
@@ -62,8 +63,9 @@ export default function CRM() {
       api.get("/api/stats"),
       api.get("/api/fiscal-years"),
       api.get("/api/sectors"),
+      api.get("/api/work-modes"),
     ]);
-    setContacts(c); setMissions(m); setCandidatures(cd); setActivities(a); setUsers(u); setStats(s); setFiscalYears(fy); setSectors(sec);
+    setContacts(c); setMissions(m); setCandidatures(cd); setActivities(a); setUsers(u); setStats(s); setFiscalYears(fy); setSectors(sec); setWorkModes(wm);
   };
 
   useEffect(() => {
@@ -185,7 +187,7 @@ export default function CRM() {
       )}
       {modal === "mission" && (
         <ModalWrapper onClose={() => setModal(null)} title={form.id ? "Modifier le poste" : "Nouveau poste"}>
-          <MissionForm form={form} setForm={setForm} onSave={saveMission} onCancel={() => setModal(null)} contacts={contacts} users={users} fiscalYears={fiscalYears} />
+          <MissionForm form={form} setForm={setForm} onSave={saveMission} onCancel={() => setModal(null)} contacts={contacts} users={users} fiscalYears={fiscalYears} workModes={workModes} />
         </ModalWrapper>
       )}
       {modal === "candidature" && (

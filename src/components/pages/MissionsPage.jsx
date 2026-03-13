@@ -31,6 +31,7 @@ export default function MissionsPage({ missions, contacts, users, candidatures, 
               </div>
               <div style={{ display: "flex", gap: 16, fontSize: 12.5, color: "#64748b", marginBottom: 10 }}>
                 <span>{m.contractType}</span>
+                {m.workMode && <span>{m.workMode}</span>}
                 <span>{m.salaryMin > 0 ? `${fmtCAD(m.salaryMin)} - ${fmtCAD(m.salaryMax)}` : "—"}</span>
               </div>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>

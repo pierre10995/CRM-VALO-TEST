@@ -141,6 +141,7 @@ async function initDB() {
     `);
 
     await client.query(`ALTER TABLE missions ADD COLUMN IF NOT EXISTS fiscal_year_id INTEGER REFERENCES fiscal_years(id) ON DELETE SET NULL`);
+    await client.query(`ALTER TABLE missions ADD COLUMN IF NOT EXISTS work_mode VARCHAR(50) DEFAULT ''`);
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS candidatures (
@@ -430,7 +431,7 @@ function fmtMission(r) {
     status: r.status, priority: r.priority || "Normale",
     assignedTo: r.assigned_to, commission: Number(r.commission) || 0,
     createdAt: r.created_at, deadline: r.deadline,
-    fiscalYearId: r.fiscal_year_id || null,
+    fiscalYearId: r.fiscal_year_id || null, workMode: r.work_mode || "",
     clientName: r.client_name || "", assignedName: r.assigned_name || "",
     candidatureCount: parseInt(r.candidature_count) || 0,
     fiscalYearLabel: r.fiscal_year_label || "",
@@ -453,25 +454,25 @@ app.get("/api/missions", async (req, res) => {
 });
 
 app.post("/api/missions", async (req, res) => {
-  const { title, clientContactId, company, location, contractType, salaryMin, salaryMax, description, requirements, status, priority, assignedTo, commission, deadline, fiscalYearId } = req.body;
+  const { title, clientContactId, company, location, contractType, salaryMin, salaryMax, description, requirements, status, priority, assignedTo, commission, deadline, fiscalYearId, workMode } = req.body;
   if (!title || !company) return res.status(400).json({ error: "Titre et entreprise requis" });
   try {
     const { rows } = await pool.query(
-      `INSERT INTO missions (title, client_contact_id, company, location, contract_type, salary_min, salary_max, description, requirements, status, priority, assigned_to, commission, deadline, fiscal_year_id)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) RETURNING *`,
-      [title, clientContactId || null, company, location || "", contractType || "CDI", Number(salaryMin) || 0, Number(salaryMax) || 0, description || "", requirements || "", status || "Ouverte", priority || "Normale", assignedTo || null, Number(commission) || 0, deadline || null, fiscalYearId || null]
+      `INSERT INTO missions (title, client_contact_id, company, location, contract_type, salary_min, salary_max, description, requirements, status, priority, assigned_to, commission, deadline, fiscal_year_id, work_mode)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) RETURNING *`,
+      [title, clientContactId || null, company, location || "", contractType || "CDI", Number(salaryMin) || 0, Number(salaryMax) || 0, description || "", requirements || "", status || "Ouverte", priority || "Normale", assignedTo || null, Number(commission) || 0, deadline || null, fiscalYearId || null, workMode || ""]
     );
     res.json(fmtMission(rows[0]));
   } catch (err) { res.status(500).json({ error: "Erreur serveur" }); }
 });
 
 app.put("/api/missions/:id", async (req, res) => {
-  const { title, clientContactId, company, location, contractType, salaryMin, salaryMax, description, requirements, status, priority, assignedTo, commission, deadline, fiscalYearId } = req.body;
+  const { title, clientContactId, company, location, contractType, salaryMin, salaryMax, description, requirements, status, priority, assignedTo, commission, deadline, fiscalYearId, workMode } = req.body;
   if (!title || !company) return res.status(400).json({ error: "Titre et entreprise requis" });
   try {
     const { rows } = await pool.query(
-      `UPDATE missions SET title=$1, client_contact_id=$2, company=$3, location=$4, contract_type=$5, salary_min=$6, salary_max=$7, description=$8, requirements=$9, status=$10, priority=$11, assigned_to=$12, commission=$13, deadline=$14, fiscal_year_id=$15 WHERE id=$16 RETURNING *`,
-      [title, clientContactId || null, company, location || "", contractType || "CDI", Number(salaryMin) || 0, Number(salaryMax) || 0, description || "", requirements || "", status || "Ouverte", priority || "Normale", assignedTo || null, Number(commission) || 0, deadline || null, fiscalYearId || null, req.params.id]
+      `UPDATE missions SET title=$1, client_contact_id=$2, company=$3, location=$4, contract_type=$5, salary_min=$6, salary_max=$7, description=$8, requirements=$9, status=$10, priority=$11, assigned_to=$12, commission=$13, deadline=$14, fiscal_year_id=$15, work_mode=$16 WHERE id=$17 RETURNING *`,
+      [title, clientContactId || null, company, location || "", contractType || "CDI", Number(salaryMin) || 0, Number(salaryMax) || 0, description || "", requirements || "", status || "Ouverte", priority || "Normale", assignedTo || null, Number(commission) || 0, deadline || null, fiscalYearId || null, workMode || "", req.params.id]
     );
     if (rows.length === 0) return res.status(404).json({ error: "Mission non trouvée" });
     res.json(fmtMission(rows[0]));
@@ -621,6 +622,17 @@ app.get("/api/sectors", async (req, res) => {
   try {
     const { rows } = await pool.query("SELECT DISTINCT sector FROM contacts WHERE sector IS NOT NULL AND sector != '' ORDER BY sector");
     const fromDb = rows.map(r => r.sector);
+    const all = [...new Set([...defaults, ...fromDb])].sort((a, b) => a.localeCompare(b, "fr"));
+    res.json(all);
+  } catch (err) { res.json(defaults); }
+});
+
+// ─── Work modes (default + custom from DB) ──────────────────────────────────
+app.get("/api/work-modes", async (req, res) => {
+  const defaults = ["Hybride", "Sur site", "100% Remote"];
+  try {
+    const { rows } = await pool.query("SELECT DISTINCT work_mode FROM missions WHERE work_mode IS NOT NULL AND work_mode != '' ORDER BY work_mode");
+    const fromDb = rows.map(r => r.work_mode);
     const all = [...new Set([...defaults, ...fromDb])].sort((a, b) => a.localeCompare(b, "fr"));
     res.json(all);
   } catch (err) { res.json(defaults); }
