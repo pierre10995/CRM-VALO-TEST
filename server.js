@@ -868,6 +868,244 @@ Réponds UNIQUEMENT en JSON valide avec cette structure exacte (pas de markdown,
   }
 });
 
+// ─── AI Matching candidat-mission ────────────────────────────────────────────
+app.post("/api/matching/mission/:id", async (req, res) => {
+  const missionId = req.params.id;
+  try {
+    const { rows: mRows } = await pool.query("SELECT * FROM missions WHERE id=$1", [missionId]);
+    if (mRows.length === 0) return res.status(404).json({ error: "Mission non trouvée" });
+    const mission = mRows[0];
+
+    const { rows: candidates } = await pool.query("SELECT * FROM contacts WHERE status='Candidat'");
+    if (candidates.length === 0) return res.json([]);
+
+    // Build candidate summaries
+    const candidateList = candidates.map(c =>
+      `ID:${c.id} | ${c.name} | Compétences: ${c.skills || "N/A"} | Ville: ${c.city || "N/A"} | Salaire souhaité: ${c.salary_expectation || "N/A"}$ | Disponibilité: ${c.availability || "N/A"} | Secteur: ${c.sector || "N/A"} | Notes: ${c.notes || "N/A"}`
+    ).join("\n");
+
+    const missionDesc = `Titre: ${mission.title} | Entreprise: ${mission.company} | Lieu: ${mission.location || "N/A"} | Contrat: ${mission.contract_type || "N/A"} | Salaire: ${mission.salary_min || 0}-${mission.salary_max || 0}$ | Description: ${mission.description || "N/A"} | Pré-requis: ${mission.requirements || "N/A"}`;
+
+    if (!process.env.ANTHROPIC_API_KEY) return res.status(400).json({ error: "Clé API Anthropic manquante" });
+    const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+    const message = await anthropic.messages.create({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 1500,
+      messages: [{ role: "user", content: `Tu es un expert en recrutement. Analyse cette mission et classe les candidats par compatibilité.
+
+MISSION:
+${missionDesc}
+
+CANDIDATS DISPONIBLES:
+${candidateList}
+
+Réponds UNIQUEMENT en JSON valide (pas de markdown) :
+[{"id": <id du candidat>, "score": <0-100>, "reason": "<explication courte en 1 phrase>"}]
+
+Retourne maximum 5 candidats, triés par score décroissant. Ne retourne que les candidats avec un score >= 30.` }]
+    });
+
+    let results;
+    const text = message.content[0].text.trim();
+    try { results = JSON.parse(text); }
+    catch { const m = text.match(/\[[\s\S]*\]/); results = m ? JSON.parse(m[0]) : []; }
+
+    // Enrich with candidate names
+    const enriched = results.map(r => {
+      const c = candidates.find(c => c.id === r.id);
+      return { ...r, name: c?.name || "Inconnu", skills: c?.skills || "", city: c?.city || "" };
+    });
+
+    res.json(enriched);
+  } catch (err) {
+    console.error("Matching error:", err);
+    res.status(500).json({ error: err.message || "Erreur lors du matching" });
+  }
+});
+
+app.post("/api/matching/candidate/:id", async (req, res) => {
+  const candidateId = req.params.id;
+  try {
+    const { rows: cRows } = await pool.query("SELECT * FROM contacts WHERE id=$1 AND status='Candidat'", [candidateId]);
+    if (cRows.length === 0) return res.status(404).json({ error: "Candidat non trouvé" });
+    const candidate = cRows[0];
+
+    const { rows: openMissions } = await pool.query("SELECT * FROM missions WHERE status IN ('Ouverte', 'En cours')");
+    if (openMissions.length === 0) return res.json([]);
+
+    const candidateDesc = `Nom: ${candidate.name} | Compétences: ${candidate.skills || "N/A"} | Ville: ${candidate.city || "N/A"} | Salaire souhaité: ${candidate.salary_expectation || "N/A"}$ | Disponibilité: ${candidate.availability || "N/A"} | Secteur: ${candidate.sector || "N/A"} | Notes: ${candidate.notes || "N/A"}`;
+
+    const missionList = openMissions.map(m =>
+      `ID:${m.id} | ${m.title} chez ${m.company} | Lieu: ${m.location || "N/A"} | Contrat: ${m.contract_type || "N/A"} | Salaire: ${m.salary_min || 0}-${m.salary_max || 0}$ | Pré-requis: ${m.requirements || "N/A"}`
+    ).join("\n");
+
+    if (!process.env.ANTHROPIC_API_KEY) return res.status(400).json({ error: "Clé API Anthropic manquante" });
+    const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+    const message = await anthropic.messages.create({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 1500,
+      messages: [{ role: "user", content: `Tu es un expert en recrutement. Analyse ce candidat et classe les missions par compatibilité.
+
+CANDIDAT:
+${candidateDesc}
+
+MISSIONS OUVERTES:
+${missionList}
+
+Réponds UNIQUEMENT en JSON valide (pas de markdown) :
+[{"id": <id de la mission>, "score": <0-100>, "reason": "<explication courte en 1 phrase>"}]
+
+Retourne maximum 5 missions, triées par score décroissant. Ne retourne que les missions avec un score >= 30.` }]
+    });
+
+    let results;
+    const text = message.content[0].text.trim();
+    try { results = JSON.parse(text); }
+    catch { const m = text.match(/\[[\s\S]*\]/); results = m ? JSON.parse(m[0]) : []; }
+
+    const enriched = results.map(r => {
+      const m = openMissions.find(m => m.id === r.id);
+      return { ...r, title: m?.title || "Inconnue", company: m?.company || "" };
+    });
+
+    res.json(enriched);
+  } catch (err) {
+    console.error("Matching error:", err);
+    res.status(500).json({ error: err.message || "Erreur lors du matching" });
+  }
+});
+
+// ─── Relances automatiques ──────────────────────────────────────────────────
+app.get("/api/auto-reminders", async (req, res) => {
+  try {
+    const reminders = [];
+
+    // Prospects not contacted in 7+ days
+    const { rows: staleProspects } = await pool.query(`
+      SELECT c.id, c.name, c.company, c.created_at,
+        (SELECT MAX(a.created_at) FROM activities a WHERE a.contact_id = c.id) as last_activity
+      FROM contacts c WHERE c.status = 'Prospect'
+    `);
+    for (const p of staleProspects) {
+      const lastDate = p.last_activity || p.created_at;
+      const daysSince = Math.floor((Date.now() - new Date(lastDate).getTime()) / (1000 * 60 * 60 * 24));
+      if (daysSince >= 7) {
+        reminders.push({ type: "prospect", contactId: p.id, name: p.company || p.name, days: daysSince, message: `Prospect "${p.company || p.name}" sans contact depuis ${daysSince} jours` });
+      }
+    }
+
+    // Candidats in process (Soumis/Entretien/Finaliste) without activity in 5+ days
+    const { rows: activeCandidatures } = await pool.query(`
+      SELECT cd.id, cd.candidate_id, cd.mission_id, cd.stage, cd.updated_at,
+        c.name as candidate_name, m.title as mission_title,
+        (SELECT MAX(a.created_at) FROM activities a WHERE a.contact_id = cd.candidate_id) as last_activity
+      FROM candidatures cd
+      JOIN contacts c ON cd.candidate_id = c.id
+      JOIN missions m ON cd.mission_id = m.id
+      WHERE cd.stage IN ('Soumis', 'Entretien', 'Finaliste')
+    `);
+    for (const cd of activeCandidatures) {
+      const lastDate = cd.last_activity || cd.updated_at;
+      const daysSince = Math.floor((Date.now() - new Date(lastDate).getTime()) / (1000 * 60 * 60 * 24));
+      if (daysSince >= 5) {
+        reminders.push({ type: "candidature", contactId: cd.candidate_id, missionId: cd.mission_id, name: cd.candidate_name, missionTitle: cd.mission_title, stage: cd.stage, days: daysSince, message: `${cd.candidate_name} (${cd.stage} pour "${cd.mission_title}") sans suivi depuis ${daysSince} jours` });
+      }
+    }
+
+    // Missions without candidates for 10+ days
+    const { rows: emptyMissions } = await pool.query(`
+      SELECT m.id, m.title, m.company, m.created_at,
+        (SELECT COUNT(*) FROM candidatures cd WHERE cd.mission_id = m.id) as candidate_count
+      FROM missions m WHERE m.status IN ('Ouverte', 'En cours')
+    `);
+    for (const m of emptyMissions) {
+      if (parseInt(m.candidate_count) === 0) {
+        const daysSince = Math.floor((Date.now() - new Date(m.created_at).getTime()) / (1000 * 60 * 60 * 24));
+        if (daysSince >= 10) {
+          reminders.push({ type: "mission", missionId: m.id, name: m.title, company: m.company, days: daysSince, message: `Mission "${m.title}" (${m.company}) sans candidat depuis ${daysSince} jours` });
+        }
+      }
+    }
+
+    reminders.sort((a, b) => b.days - a.days);
+    res.json(reminders);
+  } catch (err) {
+    console.error("Reminders error:", err);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
+// ─── AI CV Summary ──────────────────────────────────────────────────────────
+app.post("/api/cv-summary/generate", async (req, res) => {
+  const { candidateId } = req.body;
+  if (!candidateId) return res.status(400).json({ error: "Candidat requis" });
+
+  try {
+    const { rows: candidates } = await pool.query("SELECT * FROM contacts WHERE id=$1", [candidateId]);
+    if (candidates.length === 0) return res.status(404).json({ error: "Candidat non trouvé" });
+    const candidate = candidates[0];
+
+    const { rows: cvFiles } = await pool.query(
+      "SELECT * FROM files WHERE contact_id=$1 AND file_type='cv' ORDER BY created_at DESC LIMIT 1", [candidateId]
+    );
+    if (cvFiles.length === 0) return res.status(400).json({ error: "Aucun CV uploadé pour ce candidat" });
+
+    let cvText = "";
+    try {
+      const buffer = Buffer.from(cvFiles[0].file_data, "base64");
+      const pdfData = await pdf(buffer);
+      cvText = pdfData.text || "";
+    } catch (pdfErr) {
+      return res.status(400).json({ error: "Impossible de lire le fichier PDF" });
+    }
+
+    if (!cvText.trim()) return res.status(400).json({ error: "Le PDF ne contient pas de texte exploitable" });
+
+    if (!process.env.ANTHROPIC_API_KEY) return res.status(400).json({ error: "Clé API Anthropic manquante" });
+    const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+    const message = await anthropic.messages.create({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 1500,
+      messages: [{ role: "user", content: `Tu es un expert en recrutement. Analyse ce CV et produis un résumé structuré.
+
+CONTENU DU CV:
+${cvText}
+
+Réponds UNIQUEMENT en JSON valide (pas de markdown) :
+{
+  "summary": "<résumé professionnel en 2-3 phrases>",
+  "experience_years": <nombre estimé d'années d'expérience ou null>,
+  "key_skills": ["<compétence 1>", "<compétence 2>", ...],
+  "languages": ["<langue 1>", ...],
+  "education": "<formation principale>",
+  "current_role": "<poste actuel ou dernier poste>",
+  "strengths": ["<point fort 1>", "<point fort 2>", ...],
+  "salary_estimate": "<estimation salariale en $ CAD si possible, sinon null>"
+}` }]
+    });
+
+    let result;
+    const text = message.content[0].text.trim();
+    try { result = JSON.parse(text); }
+    catch { const m = text.match(/\{[\s\S]*\}/); result = m ? JSON.parse(m[0]) : null; }
+
+    if (!result) return res.status(500).json({ error: "Réponse IA invalide" });
+
+    // Auto-update candidate skills if empty
+    if ((!candidate.skills || candidate.skills.trim() === "") && result.key_skills?.length > 0) {
+      await pool.query("UPDATE contacts SET skills = $1 WHERE id = $2", [result.key_skills.join(", "), candidateId]);
+    }
+
+    res.json(result);
+  } catch (err) {
+    console.error("CV Summary error:", err);
+    res.status(500).json({ error: err.message || "Erreur lors de l'analyse du CV" });
+  }
+});
+
 // ─── Fiscal Years ───────────────────────────────────────────────────────────
 app.get("/api/fiscal-years", async (req, res) => {
   try {

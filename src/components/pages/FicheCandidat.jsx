@@ -6,6 +6,10 @@ export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, c
   const [files, setFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [evaluations, setEvaluations] = useState([]);
+  const [suggestions, setSuggestions] = useState([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const [cvSummary, setCvSummary] = useState(null);
+  const [loadingSummary, setLoadingSummary] = useState(false);
 
   const loadFiles = async () => {
     const data = await api.get(`/api/files/contact/${c.id}`);
@@ -57,6 +61,26 @@ export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, c
 
   const downloadFile = (id, name) => {
     window.open(`/api/files/${id}`, "_blank");
+  };
+
+  const findSuggestions = async () => {
+    setLoadingSuggestions(true);
+    try {
+      const res = await api.post(`/api/matching/candidate/${c.id}`);
+      if (res.ok) { const data = await res.json(); setSuggestions(data); }
+      else { const err = await res.json(); alert(err.error || "Erreur"); }
+    } catch { alert("Erreur réseau"); }
+    setLoadingSuggestions(false);
+  };
+
+  const generateCvSummary = async () => {
+    setLoadingSummary(true);
+    try {
+      const res = await api.post("/api/cv-summary/generate", { candidateId: c.id });
+      if (res.ok) { const data = await res.json(); setCvSummary(data); if (loadAll) loadAll(); }
+      else { const err = await res.json(); alert(err.error || "Erreur"); }
+    } catch { alert("Erreur réseau"); }
+    setLoadingSummary(false);
   };
 
   const cvFiles = files.filter(f => f.file_type === "cv");
@@ -152,6 +176,52 @@ export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, c
         ))}
       </div>
 
+      {/* Résumé IA du CV */}
+      {cvFiles.length > 0 && (
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>Résumé IA du CV</div>
+            <button className="btn btn-primary" style={{ padding: "6px 14px", fontSize: 12 }} onClick={generateCvSummary} disabled={loadingSummary}>
+              {loadingSummary ? "Analyse en cours..." : cvSummary ? "Relancer l'analyse" : "Analyser le CV"}
+            </button>
+          </div>
+          {!cvSummary && !loadingSummary && <p style={{ fontSize: 12, color: "#94a3b8" }}>Cliquez pour générer un résumé IA du CV</p>}
+          {cvSummary && (
+            <div style={{ background: "#f0f9ff", borderRadius: 10, padding: 14, border: "1px solid #bae6fd" }}>
+              <p style={{ fontSize: 13, color: "#0f172a", lineHeight: 1.6, marginBottom: 10 }}>{cvSummary.summary}</p>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
+                {cvSummary.current_role && <div><span style={{ fontSize: 10, fontWeight: 700, color: "#94a3b8" }}>POSTE ACTUEL</span><div style={{ fontSize: 12, color: "#0f172a" }}>{cvSummary.current_role}</div></div>}
+                {cvSummary.experience_years && <div><span style={{ fontSize: 10, fontWeight: 700, color: "#94a3b8" }}>EXPERIENCE</span><div style={{ fontSize: 12, color: "#0f172a" }}>{cvSummary.experience_years} ans</div></div>}
+                {cvSummary.education && <div><span style={{ fontSize: 10, fontWeight: 700, color: "#94a3b8" }}>FORMATION</span><div style={{ fontSize: 12, color: "#0f172a" }}>{cvSummary.education}</div></div>}
+                {cvSummary.salary_estimate && <div><span style={{ fontSize: 10, fontWeight: 700, color: "#94a3b8" }}>SALAIRE ESTIME</span><div style={{ fontSize: 12, color: "#0f172a" }}>{cvSummary.salary_estimate}</div></div>}
+              </div>
+              {cvSummary.key_skills?.length > 0 && (
+                <div style={{ marginBottom: 8 }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: "#94a3b8" }}>COMPETENCES CLES</span>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 4 }}>
+                    {cvSummary.key_skills.map((s, i) => <span key={i} style={{ fontSize: 11, background: "#dbeafe", color: "#2563eb", padding: "2px 8px", borderRadius: 10 }}>{s}</span>)}
+                  </div>
+                </div>
+              )}
+              {cvSummary.languages?.length > 0 && (
+                <div style={{ marginBottom: 8 }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: "#94a3b8" }}>LANGUES</span>
+                  <div style={{ fontSize: 12, color: "#0f172a", marginTop: 2 }}>{cvSummary.languages.join(", ")}</div>
+                </div>
+              )}
+              {cvSummary.strengths?.length > 0 && (
+                <div>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: "#94a3b8" }}>POINTS FORTS</span>
+                  <ul style={{ margin: "4px 0 0 16px", padding: 0 }}>
+                    {cvSummary.strengths.map((s, i) => <li key={i} style={{ fontSize: 12, color: "#374151", lineHeight: 1.5 }}>{s}</li>)}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Compte-rendus */}
       <div style={{ marginBottom: 20 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
@@ -199,6 +269,29 @@ export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, c
           })}
         </div>
       )}
+
+      {/* Matching IA - missions suggérées */}
+      <div style={{ marginBottom: 20 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>Missions suggérées par l'IA</div>
+          <button className="btn btn-primary" style={{ padding: "6px 14px", fontSize: 12 }} onClick={findSuggestions} disabled={loadingSuggestions}>
+            {loadingSuggestions ? "Analyse en cours..." : "Trouver des missions"}
+          </button>
+        </div>
+        {suggestions.length === 0 && !loadingSuggestions && <p style={{ fontSize: 12, color: "#94a3b8" }}>Cliquez pour lancer le matching IA</p>}
+        {suggestions.map((s, i) => {
+          const scoreColor = s.score >= 70 ? "#059669" : s.score >= 40 ? "#d97706" : "#dc2626";
+          return (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "#f8fafc", borderRadius: 8, marginBottom: 6 }}>
+              <div style={{ width: 32, height: 32, borderRadius: "50%", background: s.score >= 70 ? "#ecfdf5" : s.score >= 40 ? "#fffbeb" : "#fef2f2", border: `2px solid ${scoreColor}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 800, color: scoreColor }}>{s.score}</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: "#0f172a" }}>{s.title} — {s.company}</div>
+                <div style={{ fontSize: 11, color: "#64748b" }}>{s.reason}</div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
 
       {/* Actions */}
       <div style={{ display: "flex", gap: 10 }}>

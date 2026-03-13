@@ -1,6 +1,13 @@
+import { useState, useEffect } from "react";
+import api from "../../services/api";
 import { fmtCAD } from "../../utils/constants";
 
 export default function DashboardPage({ stats, activities, contacts, missions, candidatures }) {
+  const [reminders, setReminders] = useState([]);
+
+  useEffect(() => {
+    api.get("/api/auto-reminders").then(setReminders).catch(() => {});
+  }, []);
   const totalClients = contacts.filter(c => c.status === "Client").length;
   const totalCandidats = contacts.filter(c => c.status === "Candidat").length;
   const missionsOuvertes = missions.filter(m => m.status === "Ouverte" || m.status === "En cours").length;
@@ -33,6 +40,25 @@ export default function DashboardPage({ stats, activities, contacts, missions, c
           </div>
         ))}
       </div>
+      {reminders.length > 0 && (
+        <div className="card" style={{ marginBottom: 16, background: "#fffbeb", border: "1px solid #fde68a" }}>
+          <h3 style={{ fontSize: 15, fontWeight: 700, color: "#d97706", marginBottom: 14 }}>Relances suggérées ({reminders.length})</h3>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {reminders.slice(0, 8).map((r, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "white", borderRadius: 8, border: "1px solid #fef3c7" }}>
+                <div style={{ width: 28, height: 28, borderRadius: 8, background: r.type === "prospect" ? "#dbeafe" : r.type === "candidature" ? "#fef3c7" : "#fee2e2", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: r.type === "prospect" ? "#2563eb" : r.type === "candidature" ? "#d97706" : "#dc2626" }}>
+                  {r.type === "prospect" ? "P" : r.type === "candidature" ? "C" : "M"}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 12.5, color: "#0f172a" }}>{r.message}</div>
+                </div>
+                <span style={{ fontSize: 11, fontWeight: 700, color: r.days >= 14 ? "#dc2626" : "#d97706", background: r.days >= 14 ? "#fef2f2" : "#fffbeb", padding: "2px 8px", borderRadius: 8 }}>{r.days}j</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="card">
         <h3 style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", marginBottom: 18 }}>Activités récentes</h3>
         {recentActivities.length === 0 && <p style={{ color: "#94a3b8", fontSize: 13 }}>Aucune activité</p>}
