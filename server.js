@@ -8,12 +8,15 @@ import Anthropic from "@anthropic-ai/sdk";
 import pdf from "pdf-parse/lib/pdf-parse.js";
 import jwt from "jsonwebtoken";
 import rateLimit from "express-rate-limit";
+import { Resend } from "resend";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || "valo-crm-secret-change-me-in-production";
 const JWT_EXPIRES_IN = "8h";
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "";
 
 app.use(cors());
 app.use(express.json({ limit: "20mb" }));
@@ -58,6 +61,17 @@ async function initDB() {
         login VARCHAR(50) UNIQUE NOT NULL,
         password VARCHAR(100) NOT NULL,
         full_name VARCHAR(100) NOT NULL
+      );
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS password_resets (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        code VARCHAR(6) NOT NULL,
+        expires_at TIMESTAMP NOT NULL,
+        used BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT NOW()
       );
     `);
 
@@ -207,10 +221,14 @@ async function initDB() {
       const hash2 = bcrypt.hashSync(pwd2, 10);
       await client.query(
         "INSERT INTO users (login, password, full_name) VALUES ($1, $2, $3), ($4, $5, $6)",
-        ["oceane", hash1, "Océane Le Goff", "pierre", hash2, "Pierre Scelles"]
+        ["oceane@valo-inno.com", hash1, "Océane Le Goff", "pierre@valo-inno.com", hash2, "Pierre Scelles"]
       );
       console.log("Users seeded");
     }
+
+    // Migrate old logins to email format
+    await client.query("UPDATE users SET login = 'oceane@valo-inno.com' WHERE login = 'oceane'");
+    await client.query("UPDATE users SET login = 'pierre@valo-inno.com' WHERE login = 'pierre'");
 
     // Seed contacts
     const { rows: existingContacts } = await client.query("SELECT COUNT(*) FROM contacts");
@@ -262,7 +280,7 @@ function fmtContact(r) {
 // ─── Auth ────────────────────────────────────────────────────────────────────
 // Protect all /api/ routes except /api/login
 app.use("/api", (req, res, next) => {
-  if (req.path === "/login") return next();
+  if (req.path === "/login" || req.path === "/forgot-password" || req.path === "/reset-password") return next();
   authMiddleware(req, res, next);
 });
 
@@ -275,6 +293,67 @@ app.post("/api/login", loginLimiter, async (req, res) => {
     if (!bcrypt.compareSync(password, user.password)) return res.status(401).json({ error: "Identifiant ou mot de passe incorrect." });
     const token = jwt.sign({ id: user.id, login: user.login }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
     res.json({ id: user.id, login: user.login, fullName: user.full_name, token });
+  } catch (err) {
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
+// ─── Forgot / Reset Password ─────────────────────────────────────────────────
+app.post("/api/forgot-password", loginLimiter, async (req, res) => {
+  const { login } = req.body;
+  if (!login) return res.status(400).json({ error: "Identifiant requis" });
+  try {
+    const { rows } = await pool.query("SELECT * FROM users WHERE login = $1", [login]);
+    // Always return success to avoid revealing if user exists
+    if (rows.length === 0) return res.json({ ok: true });
+    const user = rows[0];
+    const code = String(Math.floor(100000 + Math.random() * 900000)); // 6-digit code
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 min
+    // Invalidate previous codes
+    await pool.query("UPDATE password_resets SET used = TRUE WHERE user_id = $1 AND used = FALSE", [user.id]);
+    await pool.query("INSERT INTO password_resets (user_id, code, expires_at) VALUES ($1, $2, $3)", [user.id, code, expiresAt]);
+    console.log(`[RESET PASSWORD] Code pour ${user.login} (${user.full_name}): ${code} — Expire dans 15 min`);
+    // Send code by email via Resend
+    if (resend && ADMIN_EMAIL) {
+      try {
+        await resend.emails.send({
+          from: "VALO CRM <onboarding@resend.dev>",
+          to: ADMIN_EMAIL,
+          subject: `Code de réinitialisation pour ${user.login}`,
+          html: `<h2>Réinitialisation de mot de passe</h2>
+            <p>L'utilisateur <strong>${user.login}</strong> (${user.full_name}) a demandé une réinitialisation de mot de passe.</p>
+            <p style="font-size:32px;font-weight:bold;letter-spacing:8px;text-align:center;padding:20px;background:#f0f0f0;border-radius:8px;">${code}</p>
+            <p>Ce code expire dans <strong>15 minutes</strong>.</p>`,
+        });
+        console.log(`[RESET PASSWORD] Email envoyé à ${ADMIN_EMAIL}`);
+      } catch (emailErr) {
+        console.error("[RESET PASSWORD] Erreur envoi email:", emailErr.message);
+      }
+    }
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
+app.post("/api/reset-password", loginLimiter, async (req, res) => {
+  const { login, code, newPassword } = req.body;
+  if (!login || !code || !newPassword) return res.status(400).json({ error: "Tous les champs sont requis" });
+  if (newPassword.length < 6) return res.status(400).json({ error: "Le mot de passe doit contenir au moins 6 caractères" });
+  try {
+    const { rows: userRows } = await pool.query("SELECT * FROM users WHERE login = $1", [login]);
+    if (userRows.length === 0) return res.status(400).json({ error: "Code invalide ou expiré" });
+    const user = userRows[0];
+    const { rows: resetRows } = await pool.query(
+      "SELECT * FROM password_resets WHERE user_id = $1 AND code = $2 AND used = FALSE AND expires_at > NOW() ORDER BY created_at DESC LIMIT 1",
+      [user.id, code]
+    );
+    if (resetRows.length === 0) return res.status(400).json({ error: "Code invalide ou expiré" });
+    const hash = bcrypt.hashSync(newPassword, 10);
+    await pool.query("UPDATE users SET password = $1 WHERE id = $2", [hash, user.id]);
+    await pool.query("UPDATE password_resets SET used = TRUE WHERE id = $1", [resetRows[0].id]);
+    console.log(`[RESET PASSWORD] Mot de passe réinitialisé pour ${user.login}`);
+    res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: "Erreur serveur" });
   }
