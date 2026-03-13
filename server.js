@@ -19,6 +19,7 @@ import fileRoutes from "./server/routes/files.js";
 import evaluationRoutes from "./server/routes/evaluations.js";
 import matchingRoutes from "./server/routes/matching.js";
 import statsRoutes from "./server/routes/stats.js";
+import cvParserRoutes from "./server/routes/cv-parser.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -46,6 +47,7 @@ app.use("/api/files", fileRoutes);
 app.use("/api/evaluations", evaluationRoutes);
 app.use("/api/matching", matchingRoutes);
 app.use("/api", statsRoutes);
+app.use("/api", cvParserRoutes);
 
 // Serve frontend
 app.use(express.static(path.join(__dirname, "dist")));

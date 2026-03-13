@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import api from "../../services/api";
 import Field from "../common/Field";
 
@@ -19,6 +19,9 @@ export default function CandidatForm({ form, setForm, onSave, onCancel, sectors 
   const [newColorIdx, setNewColorIdx] = useState(0);
   const [editingId, setEditingId] = useState(null);
   const [editLabel, setEditLabel] = useState("");
+  const [parsing, setParsing] = useState(false);
+  const [cvFileName, setCvFileName] = useState("");
+  const fileRef = useRef(null);
 
   const refreshStatuses = async () => { if (onStatusesChanged) await onStatusesChanged(); };
 
@@ -61,8 +64,58 @@ export default function CandidatForm({ form, setForm, onSave, onCancel, sectors 
     }
   };
 
+  const handleCvUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setCvFileName(file.name);
+    setParsing(true);
+
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const base64 = reader.result.split(",")[1];
+
+      // Store CV data for later upload
+      setForm(p => ({ ...p, _cvFile: { fileName: file.name, mimeType: file.type || "application/pdf", fileData: base64 } }));
+
+      // Parse CV for auto-fill
+      try {
+        const res = await api.post("/api/parse-cv", { fileData: base64 });
+        if (res.ok) {
+          const data = await res.json();
+          setForm(p => ({
+            ...p,
+            name: p.name || data.name || "",
+            email: p.email || data.email || "",
+            phone: p.phone || data.phone || "",
+          }));
+        }
+      } catch (err) {
+        console.error("CV parse failed:", err);
+      }
+      setParsing(false);
+    };
+    reader.readAsDataURL(file);
+  };
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      {/* CV Upload Section */}
+      <div style={{ background: "#f0f9ff", borderRadius: 10, padding: 14, border: "1px dashed #93c5fd" }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: "#2563eb", marginBottom: 8 }}>Importer un CV (PDF)</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <input ref={fileRef} type="file" accept=".pdf" onChange={handleCvUpload} style={{ display: "none" }} />
+          <button type="button" className="btn btn-primary" style={{ padding: "8px 16px", fontSize: 12 }} onClick={() => fileRef.current?.click()} disabled={parsing}>
+            {parsing ? "Analyse en cours..." : cvFileName ? "Changer le CV" : "Choisir un CV"}
+          </button>
+          {cvFileName && (
+            <span style={{ fontSize: 12, color: "#059669", fontWeight: 500 }}>{cvFileName}</span>
+          )}
+        </div>
+        {!form.id && (
+          <p style={{ fontSize: 11, color: "#64748b", marginTop: 6 }}>Le nom, email et téléphone seront extraits automatiquement du CV</p>
+        )}
+      </div>
+
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
         <Field label="Nom *"><input className="input" value={form.name || ""} onChange={e => f("name", e.target.value)} placeholder="Prénom Nom" /></Field>
         <Field label="Email"><input className="input" type="email" value={form.email || ""} onChange={e => f("email", e.target.value)} placeholder="email@exemple.ca" /></Field>

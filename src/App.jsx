@@ -104,8 +104,28 @@ export default function CRM() {
   // CRUD helpers
   const saveContact = async () => {
     if (!form.company && !form.name) return;
-    if (form.id) await api.put(`/api/contacts/${form.id}`, form);
-    else await api.post("/api/contacts", form);
+    const cvFile = form._cvFile;
+    const { _cvFile, ...formData } = form;
+    let contactId = form.id;
+    if (contactId) {
+      await api.put(`/api/contacts/${contactId}`, formData);
+    } else {
+      const res = await api.post("/api/contacts", formData);
+      if (res.ok) {
+        const created = await res.json();
+        contactId = created.id;
+      }
+    }
+    // Upload CV if one was attached during creation
+    if (cvFile && contactId) {
+      await api.post("/api/files", {
+        contactId,
+        fileType: "cv",
+        fileName: cvFile.fileName,
+        mimeType: cvFile.mimeType,
+        fileData: cvFile.fileData,
+      });
+    }
     await loadAll(); setModal(null);
   };
 
