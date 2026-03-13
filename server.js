@@ -8,12 +8,15 @@ import Anthropic from "@anthropic-ai/sdk";
 import pdf from "pdf-parse/lib/pdf-parse.js";
 import jwt from "jsonwebtoken";
 import rateLimit from "express-rate-limit";
+import { Resend } from "resend";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || "valo-crm-secret-change-me-in-production";
 const JWT_EXPIRES_IN = "8h";
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "";
 
 app.use(cors());
 app.use(express.json({ limit: "20mb" }));
@@ -306,6 +309,23 @@ app.post("/api/forgot-password", loginLimiter, async (req, res) => {
     await pool.query("UPDATE password_resets SET used = TRUE WHERE user_id = $1 AND used = FALSE", [user.id]);
     await pool.query("INSERT INTO password_resets (user_id, code, expires_at) VALUES ($1, $2, $3)", [user.id, code, expiresAt]);
     console.log(`[RESET PASSWORD] Code pour ${user.login} (${user.full_name}): ${code} — Expire dans 15 min`);
+    // Send code by email via Resend
+    if (resend && ADMIN_EMAIL) {
+      try {
+        await resend.emails.send({
+          from: "VALO CRM <onboarding@resend.dev>",
+          to: ADMIN_EMAIL,
+          subject: `Code de réinitialisation pour ${user.login}`,
+          html: `<h2>Réinitialisation de mot de passe</h2>
+            <p>L'utilisateur <strong>${user.login}</strong> (${user.full_name}) a demandé une réinitialisation de mot de passe.</p>
+            <p style="font-size:32px;font-weight:bold;letter-spacing:8px;text-align:center;padding:20px;background:#f0f0f0;border-radius:8px;">${code}</p>
+            <p>Ce code expire dans <strong>15 minutes</strong>.</p>`,
+        });
+        console.log(`[RESET PASSWORD] Email envoyé à ${ADMIN_EMAIL}`);
+      } catch (emailErr) {
+        console.error("[RESET PASSWORD] Erreur envoi email:", emailErr.message);
+      }
+    }
     res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: "Erreur serveur" });

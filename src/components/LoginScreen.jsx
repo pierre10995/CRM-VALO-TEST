@@ -17,7 +17,7 @@ export default function LoginScreen({ form, setForm, showPwd, setShowPwd, error,
     try {
       const res = await fetch("/api/forgot-password", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ login: forgotLogin }) });
       if (res.ok) {
-        setMessage("Si cet identifiant existe, un code de réinitialisation a été généré. Contactez votre administrateur pour obtenir le code.");
+        setMessage("Si cet identifiant existe, un code de réinitialisation a été envoyé à l'administrateur. Contactez-le pour obtenir votre code.");
         setMode("reset");
       } else {
         const err = await res.json();
