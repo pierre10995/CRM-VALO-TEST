@@ -493,6 +493,25 @@ app.put("/api/missions/:id", async (req, res) => {
       [title, clientContactId || null, company, location || "", contractType || "CDI", Number(salaryMin) || 0, Number(salaryMax) || 0, description || "", requirements || "", status || "Ouverte", priority || "Normale", assignedTo || null, Number(commission) || 0, deadline || null, fiscalYearId || null, workMode || "", req.params.id]
     );
     if (rows.length === 0) return res.status(404).json({ error: "Mission non trouvée" });
+
+    // Auto-create placements when mission status changes to "Gagné"
+    if (status === "Gagné") {
+      const { rows: placedCandidatures } = await pool.query(
+        `SELECT cd.id, cd.candidate_id, cd.mission_id, m.company
+         FROM candidatures cd JOIN missions m ON cd.mission_id = m.id
+         WHERE cd.mission_id = $1 AND cd.stage = 'Placé'`, [req.params.id]
+      );
+      for (const cd of placedCandidatures) {
+        const { rows: existing } = await pool.query("SELECT 1 FROM placements WHERE candidature_id = $1", [cd.id]);
+        if (existing.length === 0) {
+          await pool.query(
+            `INSERT INTO placements (candidature_id, candidate_id, mission_id, company) VALUES ($1,$2,$3,$4)`,
+            [cd.id, cd.candidate_id, cd.mission_id, cd.company || company]
+          );
+        }
+      }
+    }
+
     res.json(fmtMission(rows[0]));
   } catch (err) { res.status(500).json({ error: "Erreur serveur" }); }
 });
@@ -551,6 +570,22 @@ app.put("/api/candidatures/:id", async (req, res) => {
       [stage || "Soumis", rating || 0, notes || "", interviewDate || null, req.params.id]
     );
     if (rows.length === 0) return res.status(404).json({ error: "Candidature non trouvée" });
+
+    // Auto-create placement when candidature moves to "Placé" and mission is "Gagné"
+    if (stage === "Placé") {
+      const cd = rows[0];
+      const { rows: mRows } = await pool.query("SELECT status, company FROM missions WHERE id = $1", [cd.mission_id]);
+      if (mRows.length > 0 && mRows[0].status === "Gagné") {
+        const { rows: existing } = await pool.query("SELECT 1 FROM placements WHERE candidature_id = $1", [cd.id]);
+        if (existing.length === 0) {
+          await pool.query(
+            `INSERT INTO placements (candidature_id, candidate_id, mission_id, company) VALUES ($1,$2,$3,$4)`,
+            [cd.id, cd.candidate_id, cd.mission_id, mRows[0].company]
+          );
+        }
+      }
+    }
+
     res.json(fmtCandidature(rows[0]));
   } catch (err) { res.status(500).json({ error: "Erreur serveur" }); }
 });
