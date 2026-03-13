@@ -17,6 +17,7 @@ import ActivitesPage from "./components/pages/ActivitesPage";
 import EvaluationPage from "./components/pages/EvaluationPage";
 import RevenuePage from "./components/pages/RevenuePage";
 import PlacementsPage from "./components/pages/PlacementsPage";
+import ObjectifsPage from "./components/pages/ObjectifsPage";
 
 // Forms
 import ClientForm from "./components/forms/ClientForm";
@@ -176,6 +177,7 @@ export default function CRM() {
         {activeTab === "evaluation" && <EvaluationPage candidates={candidates} missions={missions} loadAll={loadAll} />}
         {activeTab === "placements" && <PlacementsPage candidatures={candidatures} candidates={candidates} missions={missions} />}
         {activeTab === "revenue" && <RevenuePage contacts={contacts} missions={missions} candidatures={candidatures} users={users} fiscalYears={fiscalYears} loadAll={loadAll} />}
+        {activeTab === "objectifs" && <ObjectifsPage contacts={contacts} missions={missions} candidatures={candidatures} users={users} />}
       </main>
 
       {/* Modals */}

@@ -229,6 +229,22 @@ async function initDB() {
     `);
 
     await client.query(`
+      CREATE TABLE IF NOT EXISTS objectives (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        period VARCHAR(20) NOT NULL,
+        year INTEGER NOT NULL,
+        month INTEGER,
+        target_new_clients INTEGER DEFAULT 0,
+        target_ca NUMERIC DEFAULT 0,
+        target_total NUMERIC DEFAULT 0,
+        notes TEXT DEFAULT '',
+        created_at TIMESTAMP DEFAULT NOW(),
+        UNIQUE(user_id, period, year, month)
+      );
+    `);
+
+    await client.query(`
       CREATE TABLE IF NOT EXISTS validation_statuses (
         id SERIAL PRIMARY KEY,
         label VARCHAR(100) NOT NULL UNIQUE,
@@ -771,6 +787,60 @@ app.put("/api/validation-statuses/:id", async (req, res) => {
 
 app.delete("/api/validation-statuses/:id", async (req, res) => {
   try { await pool.query("DELETE FROM validation_statuses WHERE id=$1", [req.params.id]); res.json({ ok: true }); }
+  catch (err) { res.status(500).json({ error: "Erreur serveur" }); }
+});
+
+// ─── Objectives CRUD ─────────────────────────────────────────────────────────
+function fmtObjective(r) {
+  return {
+    id: r.id, userId: r.user_id, period: r.period, year: r.year, month: r.month,
+    targetNewClients: r.target_new_clients || 0, targetCA: Number(r.target_ca) || 0,
+    targetTotal: Number(r.target_total) || 0, notes: r.notes || "", createdAt: r.created_at,
+    userName: r.user_name || "",
+  };
+}
+
+app.get("/api/objectives", async (req, res) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT o.*, u.full_name as user_name FROM objectives o
+      LEFT JOIN users u ON o.user_id = u.id
+      ORDER BY o.year DESC, o.month ASC NULLS FIRST, o.user_id
+    `);
+    res.json(rows.map(fmtObjective));
+  } catch (err) { res.status(500).json({ error: "Erreur serveur" }); }
+});
+
+app.post("/api/objectives", async (req, res) => {
+  const { userId, period, year, month, targetNewClients, targetCA, targetTotal, notes } = req.body;
+  if (!userId || !period || !year) return res.status(400).json({ error: "Utilisateur, période et année requis" });
+  try {
+    const { rows } = await pool.query(
+      `INSERT INTO objectives (user_id, period, year, month, target_new_clients, target_ca, target_total, notes)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+       ON CONFLICT (user_id, period, year, month) DO UPDATE SET target_new_clients=$5, target_ca=$6, target_total=$7, notes=$8
+       RETURNING *`,
+      [userId, period, year, month || null, targetNewClients || 0, Number(targetCA) || 0, Number(targetTotal) || 0, notes || ""]
+    );
+    const r = rows[0];
+    res.json(fmtObjective(r));
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.put("/api/objectives/:id", async (req, res) => {
+  const { targetNewClients, targetCA, targetTotal, notes } = req.body;
+  try {
+    const { rows } = await pool.query(
+      `UPDATE objectives SET target_new_clients=$1, target_ca=$2, target_total=$3, notes=$4 WHERE id=$5 RETURNING *`,
+      [targetNewClients || 0, Number(targetCA) || 0, Number(targetTotal) || 0, notes || "", req.params.id]
+    );
+    if (rows.length === 0) return res.status(404).json({ error: "Objectif non trouvé" });
+    res.json(fmtObjective(rows[0]));
+  } catch (err) { res.status(500).json({ error: "Erreur serveur" }); }
+});
+
+app.delete("/api/objectives/:id", async (req, res) => {
+  try { await pool.query("DELETE FROM objectives WHERE id=$1", [req.params.id]); res.json({ ok: true }); }
   catch (err) { res.status(500).json({ error: "Erreur serveur" }); }
 });
 
