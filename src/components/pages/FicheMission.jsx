@@ -5,6 +5,8 @@ import { fmtCAD } from "../../utils/constants";
 export default function FicheMission({ mission: m, onClose, onEdit, onDelete, candidatures }) {
   const [files, setFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
 
   const loadFiles = async () => {
     const data = await api.get(`/api/files/mission/${m.id}`);
@@ -48,6 +50,16 @@ export default function FicheMission({ mission: m, onClose, onEdit, onDelete, ca
     window.open(`/api/files/${id}`, "_blank");
   };
 
+  const findSuggestions = async () => {
+    setLoadingSuggestions(true);
+    try {
+      const res = await api.post(`/api/matching/mission/${m.id}`);
+      if (res.ok) { const data = await res.json(); setSuggestions(data); }
+      else { const err = await res.json(); alert(err.error || "Erreur"); }
+    } catch { alert("Erreur réseau"); }
+    setLoadingSuggestions(false);
+  };
+
   const mCandidatures = candidatures.filter(cd => cd.missionId === m.id);
 
   return (
@@ -80,6 +92,12 @@ export default function FicheMission({ mission: m, onClose, onEdit, onDelete, ca
           <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", marginBottom: 4 }}>STATUT</div>
           <div style={{ fontSize: 13, color: "#0f172a" }}>{m.status}</div>
         </div>
+        {m.workMode && (
+          <div style={{ background: "#f8fafc", borderRadius: 10, padding: 12 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", marginBottom: 4 }}>MODE DE TRAVAIL</div>
+            <div style={{ fontSize: 13, color: "#0f172a" }}>{m.workMode}</div>
+          </div>
+        )}
       </div>
 
       {m.description && (
@@ -108,7 +126,7 @@ export default function FicheMission({ mission: m, onClose, onEdit, onDelete, ca
             <span style={{ fontSize: 13, color: "#0f172a", flex: 1 }}>{f.file_name}</span>
             <span style={{ fontSize: 11, color: "#94a3b8" }}>{new Date(f.created_at).toLocaleDateString("fr-CA")}</span>
             <button className="btn btn-ghost" style={{ padding: "4px 10px", fontSize: 11 }} onClick={() => downloadFile(f.id)}>Télécharger</button>
-            <button className="btn btn-danger" style={{ padding: "4px 10px", fontSize: 11 }} onClick={() => deleteFile(f.id)}>Suppr.</button>
+            <button className="btn btn-danger" style={{ padding: "4px 10px", fontSize: 11 }} onClick={() => window.confirm("Attention : cette suppression est définitive. Voulez-vous continuer ?") && deleteFile(f.id)}>Suppr.</button>
           </div>
         ))}
         <p style={{ fontSize: 11, color: "#94a3b8", marginTop: 6, fontStyle: "italic" }}>Ce document sera utilisé par l'IA lors de l'évaluation des candidats.</p>
@@ -125,9 +143,32 @@ export default function FicheMission({ mission: m, onClose, onEdit, onDelete, ca
         ))}
       </div>
 
+      {/* Matching IA */}
+      <div style={{ marginBottom: 20 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>Candidats suggérés par l'IA</div>
+          <button className="btn btn-primary" style={{ padding: "6px 14px", fontSize: 12 }} onClick={findSuggestions} disabled={loadingSuggestions}>
+            {loadingSuggestions ? "Analyse en cours..." : "Trouver des candidats"}
+          </button>
+        </div>
+        {suggestions.length === 0 && !loadingSuggestions && <p style={{ fontSize: 12, color: "#94a3b8" }}>Cliquez pour lancer le matching IA</p>}
+        {suggestions.map((s, i) => {
+          const scoreColor = s.score >= 70 ? "#059669" : s.score >= 40 ? "#d97706" : "#dc2626";
+          return (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "#f8fafc", borderRadius: 8, marginBottom: 6 }}>
+              <div style={{ width: 32, height: 32, borderRadius: "50%", background: s.score >= 70 ? "#ecfdf5" : s.score >= 40 ? "#fffbeb" : "#fef2f2", border: `2px solid ${scoreColor}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 800, color: scoreColor }}>{s.score}</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: "#0f172a" }}>{s.name}</div>
+                <div style={{ fontSize: 11, color: "#64748b" }}>{s.reason}</div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
       <div style={{ display: "flex", gap: 10 }}>
         <button className="btn btn-ghost" style={{ flex: 1, justifyContent: "center" }} onClick={onEdit}>Modifier</button>
-        <button className="btn btn-danger" style={{ flex: 1, justifyContent: "center" }} onClick={onDelete}>Supprimer</button>
+        <button className="btn btn-danger" style={{ flex: 1, justifyContent: "center" }} onClick={() => window.confirm("Attention : cette suppression est définitive. Voulez-vous continuer ?") && onDelete()}>Supprimer</button>
       </div>
     </div>
   );

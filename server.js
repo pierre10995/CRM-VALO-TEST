@@ -141,6 +141,7 @@ async function initDB() {
     `);
 
     await client.query(`ALTER TABLE missions ADD COLUMN IF NOT EXISTS fiscal_year_id INTEGER REFERENCES fiscal_years(id) ON DELETE SET NULL`);
+    await client.query(`ALTER TABLE missions ADD COLUMN IF NOT EXISTS work_mode VARCHAR(50) DEFAULT ''`);
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS candidatures (
@@ -187,6 +188,24 @@ async function initDB() {
     await client.query(`ALTER TABLE files ADD COLUMN IF NOT EXISTS mission_id INTEGER REFERENCES missions(id) ON DELETE CASCADE`);
 
     await client.query(`
+      CREATE TABLE IF NOT EXISTS placements (
+        id SERIAL PRIMARY KEY,
+        candidature_id INTEGER REFERENCES candidatures(id) ON DELETE CASCADE,
+        candidate_id INTEGER REFERENCES contacts(id) ON DELETE CASCADE,
+        mission_id INTEGER REFERENCES missions(id) ON DELETE CASCADE,
+        company VARCHAR(100) DEFAULT '',
+        start_date DATE,
+        probation_date DATE,
+        start_invoice_sent BOOLEAN DEFAULT FALSE,
+        start_invoice_name VARCHAR(200) DEFAULT '',
+        probation_invoice_sent BOOLEAN DEFAULT FALSE,
+        probation_invoice_name VARCHAR(200) DEFAULT '',
+        notes TEXT DEFAULT '',
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+    `);
+
+    await client.query(`
       CREATE TABLE IF NOT EXISTS evaluations (
         id SERIAL PRIMARY KEY,
         candidate_id INTEGER REFERENCES contacts(id) ON DELETE CASCADE,
@@ -201,29 +220,45 @@ async function initDB() {
       );
     `);
 
+    // Seed tracking table — prevents re-seeding after user deletes data
+    await client.query(`CREATE TABLE IF NOT EXISTS seed_log (key VARCHAR(50) PRIMARY KEY, done_at TIMESTAMP DEFAULT NOW())`);
+    const alreadySeeded = async (key) => {
+      const { rows } = await client.query("SELECT 1 FROM seed_log WHERE key = $1", [key]);
+      return rows.length > 0;
+    };
+    const markSeeded = async (key) => {
+      await client.query("INSERT INTO seed_log (key) VALUES ($1) ON CONFLICT DO NOTHING", [key]);
+    };
+
     // Seed fiscal years
-    const { rows: existingYears } = await client.query("SELECT COUNT(*) FROM fiscal_years");
-    if (parseInt(existingYears[0].count) === 0) {
-      await client.query(`
-        INSERT INTO fiscal_years (label, start_date, end_date, target) VALUES
-        ('2024-2025', '2024-04-01', '2025-03-31', 100000),
-        ('2025-2026', '2025-04-01', '2026-03-31', 150000),
-        ('2026-2027', '2026-04-01', '2027-03-31', 200000)
-      `);
+    if (!await alreadySeeded("fiscal_years")) {
+      const { rows: existingYears } = await client.query("SELECT COUNT(*) FROM fiscal_years");
+      if (parseInt(existingYears[0].count) === 0) {
+        await client.query(`
+          INSERT INTO fiscal_years (label, start_date, end_date, target) VALUES
+          ('2024-2025', '2024-04-01', '2025-03-31', 100000),
+          ('2025-2026', '2025-04-01', '2026-03-31', 150000),
+          ('2026-2027', '2026-04-01', '2027-03-31', 200000)
+        `);
+      }
+      await markSeeded("fiscal_years");
     }
 
     // Seed users
-    const { rows: existingUsers } = await client.query("SELECT COUNT(*) FROM users");
-    if (parseInt(existingUsers[0].count) === 0) {
-      const pwd1 = process.env.SEED_PWD_OCEANE || "oceane2026";
-      const pwd2 = process.env.SEED_PWD_PIERRE || "pierre2026";
-      const hash1 = bcrypt.hashSync(pwd1, 10);
-      const hash2 = bcrypt.hashSync(pwd2, 10);
-      await client.query(
-        "INSERT INTO users (login, password, full_name) VALUES ($1, $2, $3), ($4, $5, $6)",
-        ["oceane@valo-inno.com", hash1, "Océane Le Goff", "pierre@valo-inno.com", hash2, "Pierre Scelles"]
-      );
-      console.log("Users seeded");
+    if (!await alreadySeeded("users")) {
+      const { rows: existingUsers } = await client.query("SELECT COUNT(*) FROM users");
+      if (parseInt(existingUsers[0].count) === 0) {
+        const pwd1 = process.env.SEED_PWD_OCEANE || "oceane2026";
+        const pwd2 = process.env.SEED_PWD_PIERRE || "pierre2026";
+        const hash1 = bcrypt.hashSync(pwd1, 10);
+        const hash2 = bcrypt.hashSync(pwd2, 10);
+        await client.query(
+          "INSERT INTO users (login, password, full_name) VALUES ($1, $2, $3), ($4, $5, $6)",
+          ["oceane@valo-inno.com", hash1, "Océane Le Goff", "pierre@valo-inno.com", hash2, "Pierre Scelles"]
+        );
+        console.log("Users seeded");
+      }
+      await markSeeded("users");
     }
 
     // Migrate old logins to email format
@@ -231,33 +266,39 @@ async function initDB() {
     await client.query("UPDATE users SET login = 'pierre@valo-inno.com' WHERE login = 'pierre'");
 
     // Seed contacts
-    const { rows: existingContacts } = await client.query("SELECT COUNT(*) FROM contacts");
-    if (parseInt(existingContacts[0].count) === 0) {
-      await client.query(`
-        INSERT INTO contacts (name, company, email, phone, status, sector, revenue, notes, city, skills, salary_expectation, availability, created_at) VALUES
-        ('Sophie Martin', 'TechCorp', 's.martin@techcorp.ca', '(514) 555-1234', 'Client', 'Tech', 24000, 'Partenaire stratégique depuis 2023', 'Montréal', '', 0, '', '2024-01-15'),
-        ('Julien Bernard', 'FinanceHub', 'j.bernard@financehub.ca', '(438) 555-9876', 'Prospect', 'Finance', 0, 'Intéressé par nos services RH', 'Toronto', '', 0, '', '2024-03-10'),
-        ('Emma Durand', 'HealthFirst', 'e.durand@healthfirst.ca', '(418) 555-1122', 'Candidat', 'Santé', 0, 'Profil senior, disponible en mars', 'Québec', 'Gestion de projet, Santé, Leadership', 85000, 'Immédiate', '2024-04-20'),
-        ('Thomas Petit', 'RetailGroup', 't.petit@retailgroup.ca', '(613) 555-4433', 'Client', 'Retail', 38000, 'Contrat annuel renouvelé', 'Ottawa', '', 0, '', '2024-02-01'),
-        ('Camille Moreau', 'IndusPro', 'c.moreau@induspro.ca', '(819) 555-6677', 'Prospect', 'Industrie', 0, 'RDV prévu le 20 avril', 'Sherbrooke', '', 0, '', '2024-05-05'),
-        ('Marc Tremblay', '', 'marc.tremblay@gmail.com', '(514) 555-8899', 'Candidat', 'Tech', 0, 'Développeur Full Stack 5 ans exp', 'Montréal', 'React, Node.js, PostgreSQL, TypeScript', 95000, '2 semaines', '2024-06-01'),
-        ('Isabelle Roy', '', 'i.roy@outlook.com', '(438) 555-2211', 'Candidat', 'Finance', 0, 'Analyste financier CFA', 'Montréal', 'Analyse financière, Excel, Python, CFA', 78000, '1 mois', '2024-06-15'),
-        ('David Chen', 'DataViz Inc', 'd.chen@dataviz.ca', '(514) 555-3344', 'Client', 'Tech', 45000, 'Recherche profils data régulièrement', 'Montréal', '', 0, '', '2024-03-20')
-      `);
-      console.log("Contacts seeded");
+    if (!await alreadySeeded("contacts")) {
+      const { rows: existingContacts } = await client.query("SELECT COUNT(*) FROM contacts");
+      if (parseInt(existingContacts[0].count) === 0) {
+        await client.query(`
+          INSERT INTO contacts (name, company, email, phone, status, sector, revenue, notes, city, skills, salary_expectation, availability, created_at) VALUES
+          ('Sophie Martin', 'TechCorp', 's.martin@techcorp.ca', '(514) 555-1234', 'Client', 'Tech', 24000, 'Partenaire stratégique depuis 2023', 'Montréal', '', 0, '', '2024-01-15'),
+          ('Julien Bernard', 'FinanceHub', 'j.bernard@financehub.ca', '(438) 555-9876', 'Prospect', 'Finance', 0, 'Intéressé par nos services RH', 'Toronto', '', 0, '', '2024-03-10'),
+          ('Emma Durand', 'HealthFirst', 'e.durand@healthfirst.ca', '(418) 555-1122', 'Candidat', 'Santé', 0, 'Profil senior, disponible en mars', 'Québec', 'Gestion de projet, Santé, Leadership', 85000, 'Immédiate', '2024-04-20'),
+          ('Thomas Petit', 'RetailGroup', 't.petit@retailgroup.ca', '(613) 555-4433', 'Client', 'Retail', 38000, 'Contrat annuel renouvelé', 'Ottawa', '', 0, '', '2024-02-01'),
+          ('Camille Moreau', 'IndusPro', 'c.moreau@induspro.ca', '(819) 555-6677', 'Prospect', 'Industrie', 0, 'RDV prévu le 20 avril', 'Sherbrooke', '', 0, '', '2024-05-05'),
+          ('Marc Tremblay', '', 'marc.tremblay@gmail.com', '(514) 555-8899', 'Candidat', 'Tech', 0, 'Développeur Full Stack 5 ans exp', 'Montréal', 'React, Node.js, PostgreSQL, TypeScript', 95000, '2 semaines', '2024-06-01'),
+          ('Isabelle Roy', '', 'i.roy@outlook.com', '(438) 555-2211', 'Candidat', 'Finance', 0, 'Analyste financier CFA', 'Montréal', 'Analyse financière, Excel, Python, CFA', 78000, '1 mois', '2024-06-15'),
+          ('David Chen', 'DataViz Inc', 'd.chen@dataviz.ca', '(514) 555-3344', 'Client', 'Tech', 45000, 'Recherche profils data régulièrement', 'Montréal', '', 0, '', '2024-03-20')
+        `);
+        console.log("Contacts seeded");
+      }
+      await markSeeded("contacts");
     }
 
     // Seed missions
-    const { rows: existingMissions } = await client.query("SELECT COUNT(*) FROM missions");
-    if (parseInt(existingMissions[0].count) === 0) {
-      await client.query(`
-        INSERT INTO missions (title, company, location, contract_type, salary_min, salary_max, description, requirements, status, priority, commission, deadline) VALUES
-        ('Développeur Full Stack Senior', 'TechCorp', 'Montréal', 'CDI', 85000, 105000, 'Développement d''applications web pour clients majeurs', 'React, Node.js, 5+ ans exp', 'Ouverte', 'Haute', 8000, '2024-08-01'),
-        ('Analyste Financier', 'FinanceHub', 'Toronto', 'CDI', 70000, 90000, 'Analyse de portefeuilles et reporting', 'CFA requis, Excel avancé, 3+ ans', 'Ouverte', 'Normale', 6000, '2024-07-15'),
-        ('Chef de Projet Santé', 'HealthFirst', 'Québec', 'Contrat', 75000, 95000, 'Gestion de projets de transformation digitale', 'PMP, expérience santé, bilingue', 'En cours', 'Haute', 7500, '2024-09-01'),
-        ('Data Analyst', 'DataViz Inc', 'Montréal', 'CDI', 65000, 80000, 'Analyse de données et visualisation', 'Python, SQL, Tableau, 2+ ans', 'Ouverte', 'Normale', 5000, '2024-08-15')
-      `);
-      console.log("Missions seeded");
+    if (!await alreadySeeded("missions")) {
+      const { rows: existingMissions } = await client.query("SELECT COUNT(*) FROM missions");
+      if (parseInt(existingMissions[0].count) === 0) {
+        await client.query(`
+          INSERT INTO missions (title, company, location, contract_type, salary_min, salary_max, description, requirements, status, priority, commission, deadline) VALUES
+          ('Développeur Full Stack Senior', 'TechCorp', 'Montréal', 'CDI', 85000, 105000, 'Développement d''applications web pour clients majeurs', 'React, Node.js, 5+ ans exp', 'Ouverte', 'Haute', 8000, '2024-08-01'),
+          ('Analyste Financier', 'FinanceHub', 'Toronto', 'CDI', 70000, 90000, 'Analyse de portefeuilles et reporting', 'CFA requis, Excel avancé, 3+ ans', 'Ouverte', 'Normale', 6000, '2024-07-15'),
+          ('Chef de Projet Santé', 'HealthFirst', 'Québec', 'Contrat', 75000, 95000, 'Gestion de projets de transformation digitale', 'PMP, expérience santé, bilingue', 'En cours', 'Haute', 7500, '2024-09-01'),
+          ('Data Analyst', 'DataViz Inc', 'Montréal', 'CDI', 65000, 80000, 'Analyse de données et visualisation', 'Python, SQL, Tableau, 2+ ans', 'Ouverte', 'Normale', 5000, '2024-08-15')
+        `);
+        console.log("Missions seeded");
+      }
+      await markSeeded("missions");
     }
 
   } finally {
@@ -408,7 +449,7 @@ function fmtMission(r) {
     status: r.status, priority: r.priority || "Normale",
     assignedTo: r.assigned_to, commission: Number(r.commission) || 0,
     createdAt: r.created_at, deadline: r.deadline,
-    fiscalYearId: r.fiscal_year_id || null,
+    fiscalYearId: r.fiscal_year_id || null, workMode: r.work_mode || "",
     clientName: r.client_name || "", assignedName: r.assigned_name || "",
     candidatureCount: parseInt(r.candidature_count) || 0,
     fiscalYearLabel: r.fiscal_year_label || "",
@@ -431,25 +472,25 @@ app.get("/api/missions", async (req, res) => {
 });
 
 app.post("/api/missions", async (req, res) => {
-  const { title, clientContactId, company, location, contractType, salaryMin, salaryMax, description, requirements, status, priority, assignedTo, commission, deadline, fiscalYearId } = req.body;
+  const { title, clientContactId, company, location, contractType, salaryMin, salaryMax, description, requirements, status, priority, assignedTo, commission, deadline, fiscalYearId, workMode } = req.body;
   if (!title || !company) return res.status(400).json({ error: "Titre et entreprise requis" });
   try {
     const { rows } = await pool.query(
-      `INSERT INTO missions (title, client_contact_id, company, location, contract_type, salary_min, salary_max, description, requirements, status, priority, assigned_to, commission, deadline, fiscal_year_id)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) RETURNING *`,
-      [title, clientContactId || null, company, location || "", contractType || "CDI", Number(salaryMin) || 0, Number(salaryMax) || 0, description || "", requirements || "", status || "Ouverte", priority || "Normale", assignedTo || null, Number(commission) || 0, deadline || null, fiscalYearId || null]
+      `INSERT INTO missions (title, client_contact_id, company, location, contract_type, salary_min, salary_max, description, requirements, status, priority, assigned_to, commission, deadline, fiscal_year_id, work_mode)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) RETURNING *`,
+      [title, clientContactId || null, company, location || "", contractType || "CDI", Number(salaryMin) || 0, Number(salaryMax) || 0, description || "", requirements || "", status || "Ouverte", priority || "Normale", assignedTo || null, Number(commission) || 0, deadline || null, fiscalYearId || null, workMode || ""]
     );
     res.json(fmtMission(rows[0]));
   } catch (err) { res.status(500).json({ error: "Erreur serveur" }); }
 });
 
 app.put("/api/missions/:id", async (req, res) => {
-  const { title, clientContactId, company, location, contractType, salaryMin, salaryMax, description, requirements, status, priority, assignedTo, commission, deadline, fiscalYearId } = req.body;
+  const { title, clientContactId, company, location, contractType, salaryMin, salaryMax, description, requirements, status, priority, assignedTo, commission, deadline, fiscalYearId, workMode } = req.body;
   if (!title || !company) return res.status(400).json({ error: "Titre et entreprise requis" });
   try {
     const { rows } = await pool.query(
-      `UPDATE missions SET title=$1, client_contact_id=$2, company=$3, location=$4, contract_type=$5, salary_min=$6, salary_max=$7, description=$8, requirements=$9, status=$10, priority=$11, assigned_to=$12, commission=$13, deadline=$14, fiscal_year_id=$15 WHERE id=$16 RETURNING *`,
-      [title, clientContactId || null, company, location || "", contractType || "CDI", Number(salaryMin) || 0, Number(salaryMax) || 0, description || "", requirements || "", status || "Ouverte", priority || "Normale", assignedTo || null, Number(commission) || 0, deadline || null, fiscalYearId || null, req.params.id]
+      `UPDATE missions SET title=$1, client_contact_id=$2, company=$3, location=$4, contract_type=$5, salary_min=$6, salary_max=$7, description=$8, requirements=$9, status=$10, priority=$11, assigned_to=$12, commission=$13, deadline=$14, fiscal_year_id=$15, work_mode=$16 WHERE id=$17 RETURNING *`,
+      [title, clientContactId || null, company, location || "", contractType || "CDI", Number(salaryMin) || 0, Number(salaryMax) || 0, description || "", requirements || "", status || "Ouverte", priority || "Normale", assignedTo || null, Number(commission) || 0, deadline || null, fiscalYearId || null, workMode || "", req.params.id]
     );
     if (rows.length === 0) return res.status(404).json({ error: "Mission non trouvée" });
     res.json(fmtMission(rows[0]));
@@ -591,6 +632,28 @@ app.get("/api/stats", async (req, res) => {
       totalCommissions: Number(commissions.rows[0].total),
     });
   } catch (err) { res.status(500).json({ error: "Erreur serveur" }); }
+});
+
+// ─── Sectors (default + custom from DB) ─────────────────────────────────────
+app.get("/api/sectors", async (req, res) => {
+  const defaults = ["Tech", "Finance", "Santé", "Retail", "Industrie", "Services", "Médias", "Éducation", "Autre"];
+  try {
+    const { rows } = await pool.query("SELECT DISTINCT sector FROM contacts WHERE sector IS NOT NULL AND sector != '' ORDER BY sector");
+    const fromDb = rows.map(r => r.sector);
+    const all = [...new Set([...defaults, ...fromDb])].sort((a, b) => a.localeCompare(b, "fr"));
+    res.json(all);
+  } catch (err) { res.json(defaults); }
+});
+
+// ─── Work modes (default + custom from DB) ──────────────────────────────────
+app.get("/api/work-modes", async (req, res) => {
+  const defaults = ["Hybride", "Sur site", "100% Remote"];
+  try {
+    const { rows } = await pool.query("SELECT DISTINCT work_mode FROM missions WHERE work_mode IS NOT NULL AND work_mode != '' ORDER BY work_mode");
+    const fromDb = rows.map(r => r.work_mode);
+    const all = [...new Set([...defaults, ...fromDb])].sort((a, b) => a.localeCompare(b, "fr"));
+    res.json(all);
+  } catch (err) { res.json(defaults); }
 });
 
 // ─── Users list (for assignment dropdowns) ───────────────────────────────────
@@ -846,6 +909,244 @@ Réponds UNIQUEMENT en JSON valide avec cette structure exacte (pas de markdown,
   }
 });
 
+// ─── AI Matching candidat-mission ────────────────────────────────────────────
+app.post("/api/matching/mission/:id", async (req, res) => {
+  const missionId = req.params.id;
+  try {
+    const { rows: mRows } = await pool.query("SELECT * FROM missions WHERE id=$1", [missionId]);
+    if (mRows.length === 0) return res.status(404).json({ error: "Mission non trouvée" });
+    const mission = mRows[0];
+
+    const { rows: candidates } = await pool.query("SELECT * FROM contacts WHERE status='Candidat'");
+    if (candidates.length === 0) return res.json([]);
+
+    // Build candidate summaries
+    const candidateList = candidates.map(c =>
+      `ID:${c.id} | ${c.name} | Compétences: ${c.skills || "N/A"} | Ville: ${c.city || "N/A"} | Salaire souhaité: ${c.salary_expectation || "N/A"}$ | Disponibilité: ${c.availability || "N/A"} | Secteur: ${c.sector || "N/A"} | Notes: ${c.notes || "N/A"}`
+    ).join("\n");
+
+    const missionDesc = `Titre: ${mission.title} | Entreprise: ${mission.company} | Lieu: ${mission.location || "N/A"} | Contrat: ${mission.contract_type || "N/A"} | Salaire: ${mission.salary_min || 0}-${mission.salary_max || 0}$ | Description: ${mission.description || "N/A"} | Pré-requis: ${mission.requirements || "N/A"}`;
+
+    if (!process.env.ANTHROPIC_API_KEY) return res.status(400).json({ error: "Clé API Anthropic manquante" });
+    const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+    const message = await anthropic.messages.create({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 1500,
+      messages: [{ role: "user", content: `Tu es un expert en recrutement. Analyse cette mission et classe les candidats par compatibilité.
+
+MISSION:
+${missionDesc}
+
+CANDIDATS DISPONIBLES:
+${candidateList}
+
+Réponds UNIQUEMENT en JSON valide (pas de markdown) :
+[{"id": <id du candidat>, "score": <0-100>, "reason": "<explication courte en 1 phrase>"}]
+
+Retourne maximum 5 candidats, triés par score décroissant. Ne retourne que les candidats avec un score >= 30.` }]
+    });
+
+    let results;
+    const text = message.content[0].text.trim();
+    try { results = JSON.parse(text); }
+    catch { const m = text.match(/\[[\s\S]*\]/); results = m ? JSON.parse(m[0]) : []; }
+
+    // Enrich with candidate names
+    const enriched = results.map(r => {
+      const c = candidates.find(c => c.id === r.id);
+      return { ...r, name: c?.name || "Inconnu", skills: c?.skills || "", city: c?.city || "" };
+    });
+
+    res.json(enriched);
+  } catch (err) {
+    console.error("Matching error:", err);
+    res.status(500).json({ error: err.message || "Erreur lors du matching" });
+  }
+});
+
+app.post("/api/matching/candidate/:id", async (req, res) => {
+  const candidateId = req.params.id;
+  try {
+    const { rows: cRows } = await pool.query("SELECT * FROM contacts WHERE id=$1 AND status='Candidat'", [candidateId]);
+    if (cRows.length === 0) return res.status(404).json({ error: "Candidat non trouvé" });
+    const candidate = cRows[0];
+
+    const { rows: openMissions } = await pool.query("SELECT * FROM missions WHERE status IN ('Ouverte', 'En cours')");
+    if (openMissions.length === 0) return res.json([]);
+
+    const candidateDesc = `Nom: ${candidate.name} | Compétences: ${candidate.skills || "N/A"} | Ville: ${candidate.city || "N/A"} | Salaire souhaité: ${candidate.salary_expectation || "N/A"}$ | Disponibilité: ${candidate.availability || "N/A"} | Secteur: ${candidate.sector || "N/A"} | Notes: ${candidate.notes || "N/A"}`;
+
+    const missionList = openMissions.map(m =>
+      `ID:${m.id} | ${m.title} chez ${m.company} | Lieu: ${m.location || "N/A"} | Contrat: ${m.contract_type || "N/A"} | Salaire: ${m.salary_min || 0}-${m.salary_max || 0}$ | Pré-requis: ${m.requirements || "N/A"}`
+    ).join("\n");
+
+    if (!process.env.ANTHROPIC_API_KEY) return res.status(400).json({ error: "Clé API Anthropic manquante" });
+    const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+    const message = await anthropic.messages.create({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 1500,
+      messages: [{ role: "user", content: `Tu es un expert en recrutement. Analyse ce candidat et classe les missions par compatibilité.
+
+CANDIDAT:
+${candidateDesc}
+
+MISSIONS OUVERTES:
+${missionList}
+
+Réponds UNIQUEMENT en JSON valide (pas de markdown) :
+[{"id": <id de la mission>, "score": <0-100>, "reason": "<explication courte en 1 phrase>"}]
+
+Retourne maximum 5 missions, triées par score décroissant. Ne retourne que les missions avec un score >= 30.` }]
+    });
+
+    let results;
+    const text = message.content[0].text.trim();
+    try { results = JSON.parse(text); }
+    catch { const m = text.match(/\[[\s\S]*\]/); results = m ? JSON.parse(m[0]) : []; }
+
+    const enriched = results.map(r => {
+      const m = openMissions.find(m => m.id === r.id);
+      return { ...r, title: m?.title || "Inconnue", company: m?.company || "" };
+    });
+
+    res.json(enriched);
+  } catch (err) {
+    console.error("Matching error:", err);
+    res.status(500).json({ error: err.message || "Erreur lors du matching" });
+  }
+});
+
+// ─── Relances automatiques ──────────────────────────────────────────────────
+app.get("/api/auto-reminders", async (req, res) => {
+  try {
+    const reminders = [];
+
+    // Prospects not contacted in 7+ days
+    const { rows: staleProspects } = await pool.query(`
+      SELECT c.id, c.name, c.company, c.created_at,
+        (SELECT MAX(a.created_at) FROM activities a WHERE a.contact_id = c.id) as last_activity
+      FROM contacts c WHERE c.status = 'Prospect'
+    `);
+    for (const p of staleProspects) {
+      const lastDate = p.last_activity || p.created_at;
+      const daysSince = Math.floor((Date.now() - new Date(lastDate).getTime()) / (1000 * 60 * 60 * 24));
+      if (daysSince >= 7) {
+        reminders.push({ type: "prospect", contactId: p.id, name: p.company || p.name, days: daysSince, message: `Prospect "${p.company || p.name}" sans contact depuis ${daysSince} jours` });
+      }
+    }
+
+    // Candidats in process (Soumis/Entretien/Finaliste) without activity in 5+ days
+    const { rows: activeCandidatures } = await pool.query(`
+      SELECT cd.id, cd.candidate_id, cd.mission_id, cd.stage, cd.updated_at,
+        c.name as candidate_name, m.title as mission_title,
+        (SELECT MAX(a.created_at) FROM activities a WHERE a.contact_id = cd.candidate_id) as last_activity
+      FROM candidatures cd
+      JOIN contacts c ON cd.candidate_id = c.id
+      JOIN missions m ON cd.mission_id = m.id
+      WHERE cd.stage IN ('Soumis', 'Entretien', 'Finaliste')
+    `);
+    for (const cd of activeCandidatures) {
+      const lastDate = cd.last_activity || cd.updated_at;
+      const daysSince = Math.floor((Date.now() - new Date(lastDate).getTime()) / (1000 * 60 * 60 * 24));
+      if (daysSince >= 5) {
+        reminders.push({ type: "candidature", contactId: cd.candidate_id, missionId: cd.mission_id, name: cd.candidate_name, missionTitle: cd.mission_title, stage: cd.stage, days: daysSince, message: `${cd.candidate_name} (${cd.stage} pour "${cd.mission_title}") sans suivi depuis ${daysSince} jours` });
+      }
+    }
+
+    // Missions without candidates for 10+ days
+    const { rows: emptyMissions } = await pool.query(`
+      SELECT m.id, m.title, m.company, m.created_at,
+        (SELECT COUNT(*) FROM candidatures cd WHERE cd.mission_id = m.id) as candidate_count
+      FROM missions m WHERE m.status IN ('Ouverte', 'En cours')
+    `);
+    for (const m of emptyMissions) {
+      if (parseInt(m.candidate_count) === 0) {
+        const daysSince = Math.floor((Date.now() - new Date(m.created_at).getTime()) / (1000 * 60 * 60 * 24));
+        if (daysSince >= 10) {
+          reminders.push({ type: "mission", missionId: m.id, name: m.title, company: m.company, days: daysSince, message: `Mission "${m.title}" (${m.company}) sans candidat depuis ${daysSince} jours` });
+        }
+      }
+    }
+
+    reminders.sort((a, b) => b.days - a.days);
+    res.json(reminders);
+  } catch (err) {
+    console.error("Reminders error:", err);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
+// ─── AI CV Summary ──────────────────────────────────────────────────────────
+app.post("/api/cv-summary/generate", async (req, res) => {
+  const { candidateId } = req.body;
+  if (!candidateId) return res.status(400).json({ error: "Candidat requis" });
+
+  try {
+    const { rows: candidates } = await pool.query("SELECT * FROM contacts WHERE id=$1", [candidateId]);
+    if (candidates.length === 0) return res.status(404).json({ error: "Candidat non trouvé" });
+    const candidate = candidates[0];
+
+    const { rows: cvFiles } = await pool.query(
+      "SELECT * FROM files WHERE contact_id=$1 AND file_type='cv' ORDER BY created_at DESC LIMIT 1", [candidateId]
+    );
+    if (cvFiles.length === 0) return res.status(400).json({ error: "Aucun CV uploadé pour ce candidat" });
+
+    let cvText = "";
+    try {
+      const buffer = Buffer.from(cvFiles[0].file_data, "base64");
+      const pdfData = await pdf(buffer);
+      cvText = pdfData.text || "";
+    } catch (pdfErr) {
+      return res.status(400).json({ error: "Impossible de lire le fichier PDF" });
+    }
+
+    if (!cvText.trim()) return res.status(400).json({ error: "Le PDF ne contient pas de texte exploitable" });
+
+    if (!process.env.ANTHROPIC_API_KEY) return res.status(400).json({ error: "Clé API Anthropic manquante" });
+    const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+    const message = await anthropic.messages.create({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 1500,
+      messages: [{ role: "user", content: `Tu es un expert en recrutement. Analyse ce CV et produis un résumé structuré.
+
+CONTENU DU CV:
+${cvText}
+
+Réponds UNIQUEMENT en JSON valide (pas de markdown) :
+{
+  "summary": "<résumé professionnel en 2-3 phrases>",
+  "experience_years": <nombre estimé d'années d'expérience ou null>,
+  "key_skills": ["<compétence 1>", "<compétence 2>", ...],
+  "languages": ["<langue 1>", ...],
+  "education": "<formation principale>",
+  "current_role": "<poste actuel ou dernier poste>",
+  "strengths": ["<point fort 1>", "<point fort 2>", ...],
+  "salary_estimate": "<estimation salariale en $ CAD si possible, sinon null>"
+}` }]
+    });
+
+    let result;
+    const text = message.content[0].text.trim();
+    try { result = JSON.parse(text); }
+    catch { const m = text.match(/\{[\s\S]*\}/); result = m ? JSON.parse(m[0]) : null; }
+
+    if (!result) return res.status(500).json({ error: "Réponse IA invalide" });
+
+    // Auto-update candidate skills if empty
+    if ((!candidate.skills || candidate.skills.trim() === "") && result.key_skills?.length > 0) {
+      await pool.query("UPDATE contacts SET skills = $1 WHERE id = $2", [result.key_skills.join(", "), candidateId]);
+    }
+
+    res.json(result);
+  } catch (err) {
+    console.error("CV Summary error:", err);
+    res.status(500).json({ error: err.message || "Erreur lors de l'analyse du CV" });
+  }
+});
+
 // ─── Fiscal Years ───────────────────────────────────────────────────────────
 app.get("/api/fiscal-years", async (req, res) => {
   try {
@@ -869,6 +1170,65 @@ app.post("/api/fiscal-years", async (req, res) => {
 
 app.delete("/api/fiscal-years/:id", async (req, res) => {
   try { await pool.query("DELETE FROM fiscal_years WHERE id=$1", [req.params.id]); res.json({ ok: true }); }
+  catch (err) { res.status(500).json({ error: "Erreur serveur" }); }
+});
+
+// ─── Placements (Suivi des candidats placés) ────────────────────────────────
+function fmtPlacement(r) {
+  return {
+    id: r.id, candidatureId: r.candidature_id, candidateId: r.candidate_id,
+    missionId: r.mission_id, company: r.company || "",
+    startDate: r.start_date, probationDate: r.probation_date,
+    startInvoiceSent: r.start_invoice_sent || false,
+    startInvoiceName: r.start_invoice_name || "",
+    probationInvoiceSent: r.probation_invoice_sent || false,
+    probationInvoiceName: r.probation_invoice_name || "",
+    notes: r.notes || "", createdAt: r.created_at,
+    candidateName: r.candidate_name || "", missionTitle: r.mission_title || "",
+    missionCompany: r.mission_company || "",
+  };
+}
+
+app.get("/api/placements", async (req, res) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT p.*, c.name as candidate_name, m.title as mission_title, m.company as mission_company
+      FROM placements p
+      LEFT JOIN contacts c ON p.candidate_id = c.id
+      LEFT JOIN missions m ON p.mission_id = m.id
+      ORDER BY p.created_at DESC
+    `);
+    res.json(rows.map(fmtPlacement));
+  } catch (err) { res.status(500).json({ error: "Erreur serveur" }); }
+});
+
+app.post("/api/placements", async (req, res) => {
+  const { candidatureId, candidateId, missionId, company, startDate, probationDate, startInvoiceSent, startInvoiceName, probationInvoiceSent, probationInvoiceName, notes } = req.body;
+  if (!candidateId || !missionId) return res.status(400).json({ error: "Candidat et mission requis" });
+  try {
+    const { rows } = await pool.query(
+      `INSERT INTO placements (candidature_id, candidate_id, mission_id, company, start_date, probation_date, start_invoice_sent, start_invoice_name, probation_invoice_sent, probation_invoice_name, notes)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
+      [candidatureId || null, candidateId, missionId, company || "", startDate || null, probationDate || null, startInvoiceSent || false, startInvoiceName || "", probationInvoiceSent || false, probationInvoiceName || "", notes || ""]
+    );
+    res.json(fmtPlacement(rows[0]));
+  } catch (err) { res.status(500).json({ error: "Erreur serveur" }); }
+});
+
+app.put("/api/placements/:id", async (req, res) => {
+  const { startDate, probationDate, startInvoiceSent, startInvoiceName, probationInvoiceSent, probationInvoiceName, notes } = req.body;
+  try {
+    const { rows } = await pool.query(
+      `UPDATE placements SET start_date=$1, probation_date=$2, start_invoice_sent=$3, start_invoice_name=$4, probation_invoice_sent=$5, probation_invoice_name=$6, notes=$7 WHERE id=$8 RETURNING *`,
+      [startDate || null, probationDate || null, startInvoiceSent || false, startInvoiceName || "", probationInvoiceSent || false, probationInvoiceName || "", notes || "", req.params.id]
+    );
+    if (rows.length === 0) return res.status(404).json({ error: "Placement non trouvé" });
+    res.json(fmtPlacement(rows[0]));
+  } catch (err) { res.status(500).json({ error: "Erreur serveur" }); }
+});
+
+app.delete("/api/placements/:id", async (req, res) => {
+  try { await pool.query("DELETE FROM placements WHERE id=$1", [req.params.id]); res.json({ ok: true }); }
   catch (err) { res.status(500).json({ error: "Erreur serveur" }); }
 });
 

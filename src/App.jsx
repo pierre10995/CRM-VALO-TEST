@@ -16,6 +16,7 @@ import PipelinePage from "./components/pages/PipelinePage";
 import ActivitesPage from "./components/pages/ActivitesPage";
 import EvaluationPage from "./components/pages/EvaluationPage";
 import RevenuePage from "./components/pages/RevenuePage";
+import PlacementsPage from "./components/pages/PlacementsPage";
 
 // Forms
 import ClientForm from "./components/forms/ClientForm";
@@ -40,6 +41,8 @@ export default function CRM() {
   const [users, setUsers] = useState([]);
   const [stats, setStats] = useState(null);
   const [fiscalYears, setFiscalYears] = useState([]);
+  const [sectors, setSectors] = useState([]);
+  const [workModes, setWorkModes] = useState([]);
 
   // UI state
   const [modal, setModal] = useState(null);
@@ -52,7 +55,7 @@ export default function CRM() {
   const clients = contacts.filter(c => c.status === "Client" || c.status === "Prospect");
 
   const loadAll = async () => {
-    const [c, m, cd, a, u, s, fy] = await Promise.all([
+    const [c, m, cd, a, u, s, fy, sec, wm] = await Promise.all([
       api.get("/api/contacts"),
       api.get("/api/missions"),
       api.get("/api/candidatures"),
@@ -60,8 +63,10 @@ export default function CRM() {
       api.get("/api/users"),
       api.get("/api/stats"),
       api.get("/api/fiscal-years"),
+      api.get("/api/sectors"),
+      api.get("/api/work-modes"),
     ]);
-    setContacts(c); setMissions(m); setCandidatures(cd); setActivities(a); setUsers(u); setStats(s); setFiscalYears(fy);
+    setContacts(c); setMissions(m); setCandidatures(cd); setActivities(a); setUsers(u); setStats(s); setFiscalYears(fy); setSectors(sec); setWorkModes(wm);
   };
 
   useEffect(() => {
@@ -95,7 +100,7 @@ export default function CRM() {
 
   // CRUD helpers
   const saveContact = async () => {
-    if (!form.name) return;
+    if (!form.company && !form.name) return;
     if (form.id) await api.put(`/api/contacts/${form.id}`, form);
     else await api.post("/api/contacts", form);
     await loadAll(); setModal(null);
@@ -167,23 +172,24 @@ export default function CRM() {
         {activeTab === "pipeline" && <PipelinePage candidatures={candidatures} candidates={candidates} missions={missions} onEdit={cd => { setModal("candidature"); setForm({ ...cd }); }} onAdd={() => { setModal("candidature"); setForm({ stage: "Présélectionné", rating: 0 }); }} onDelete={deleteCandidature} />}
         {activeTab === "activites" && <ActivitesPage activities={activities} contacts={contacts} missions={missions} users={users} currentUser={currentUser} onAdd={() => { setModal("activity"); setForm({ type: "Appel" }); }} onToggle={toggleActivity} onDelete={deleteActivity} />}
         {activeTab === "evaluation" && <EvaluationPage candidates={candidates} missions={missions} loadAll={loadAll} />}
+        {activeTab === "placements" && <PlacementsPage candidatures={candidatures} candidates={candidates} missions={missions} />}
         {activeTab === "revenue" && <RevenuePage contacts={contacts} missions={missions} candidatures={candidatures} users={users} fiscalYears={fiscalYears} loadAll={loadAll} />}
       </main>
 
       {/* Modals */}
       {modal === "client" && (
         <ModalWrapper onClose={() => setModal(null)} title={form.id ? "Modifier le client" : "Nouveau client"}>
-          <ClientForm form={form} setForm={setForm} onSave={saveContact} onCancel={() => setModal(null)} />
+          <ClientForm form={form} setForm={setForm} onSave={saveContact} onCancel={() => setModal(null)} sectors={sectors} />
         </ModalWrapper>
       )}
       {modal === "candidat" && (
         <ModalWrapper onClose={() => setModal(null)} title={form.id ? "Modifier le candidat" : "Nouveau candidat"}>
-          <CandidatForm form={form} setForm={setForm} onSave={saveContact} onCancel={() => setModal(null)} />
+          <CandidatForm form={form} setForm={setForm} onSave={saveContact} onCancel={() => setModal(null)} sectors={sectors} />
         </ModalWrapper>
       )}
       {modal === "mission" && (
         <ModalWrapper onClose={() => setModal(null)} title={form.id ? "Modifier le poste" : "Nouveau poste"}>
-          <MissionForm form={form} setForm={setForm} onSave={saveMission} onCancel={() => setModal(null)} contacts={contacts} users={users} fiscalYears={fiscalYears} />
+          <MissionForm form={form} setForm={setForm} onSave={saveMission} onCancel={() => setModal(null)} contacts={contacts} users={users} fiscalYears={fiscalYears} workModes={workModes} />
         </ModalWrapper>
       )}
       {modal === "candidature" && (

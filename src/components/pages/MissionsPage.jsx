@@ -31,6 +31,7 @@ export default function MissionsPage({ missions, contacts, users, candidatures, 
               </div>
               <div style={{ display: "flex", gap: 16, fontSize: 12.5, color: "#64748b", marginBottom: 10 }}>
                 <span>{m.contractType}</span>
+                {m.workMode && <span>{m.workMode}</span>}
                 <span>{m.salaryMin > 0 ? `${fmtCAD(m.salaryMin)} - ${fmtCAD(m.salaryMax)}` : "—"}</span>
               </div>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -45,7 +46,7 @@ export default function MissionsPage({ missions, contacts, users, candidatures, 
               </div>
               <div style={{ display: "flex", gap: 6, marginTop: 12 }} onClick={e => e.stopPropagation()}>
                 <button className="btn btn-ghost" style={{ padding: "5px 12px", fontSize: 12 }} onClick={() => onEdit(m)}>Modifier</button>
-                <button className="btn btn-danger" style={{ padding: "5px 12px", fontSize: 12 }} onClick={() => onDelete(m.id)}>Suppr.</button>
+                <button className="btn btn-danger" style={{ padding: "5px 12px", fontSize: 12 }} onClick={() => window.confirm("Attention : cette suppression est définitive. Voulez-vous continuer ?") && onDelete(m.id)}>Suppr.</button>
               </div>
             </div>
           );

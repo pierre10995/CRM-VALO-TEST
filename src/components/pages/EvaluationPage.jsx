@@ -96,7 +96,7 @@ export default function EvaluationPage({ candidates, missions, loadAll }) {
                   <div style={{ fontSize: 11, color: "#94a3b8" }}>{new Date(ev.createdAt).toLocaleDateString("fr-CA")}</div>
                 </div>
               </div>
-              <button className="btn btn-danger" style={{ padding: "6px 10px", fontSize: 11 }} onClick={() => deleteEvaluation(ev.id)}>Suppr.</button>
+              <button className="btn btn-danger" style={{ padding: "6px 10px", fontSize: 11 }} onClick={() => window.confirm("Attention : cette suppression est définitive. Voulez-vous continuer ?") && deleteEvaluation(ev.id)}>Suppr.</button>
             </div>
 
             {ev.summary && <div style={{ fontSize: 13, color: "#374151", marginBottom: 14, lineHeight: 1.6, fontStyle: "italic", background: "#f8fafc", borderRadius: 8, padding: 12 }}>{ev.summary}</div>}

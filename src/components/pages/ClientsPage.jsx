@@ -27,31 +27,30 @@ export default function ClientsPage({ contacts, search, setSearch, filterStatus,
       <div className="card" style={{ padding: 0, overflow: "hidden" }}>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead><tr style={{ borderBottom: "1px solid #f1f5f9" }}>
-            {["Contact", "Entreprise", "Secteur", "Statut", "CA ($ CAD)", "Actions"].map(h => (
+            {["Entreprise", "Secteur", "Statut", "CA ($ CAD)", "Actions"].map(h => (
               <th key={h} style={{ padding: "14px 20px", textAlign: "left", fontSize: 11.5, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase" }}>{h}</th>
             ))}
           </tr></thead>
           <tbody>
-            {filtered.length === 0 && <tr><td colSpan={6} style={{ padding: 40, textAlign: "center", color: "#94a3b8" }}>Aucun contact</td></tr>}
+            {filtered.length === 0 && <tr><td colSpan={5} style={{ padding: 40, textAlign: "center", color: "#94a3b8" }}>Aucune entreprise</td></tr>}
             {filtered.map(c => (
               <tr key={c.id} className="row-hover" style={{ borderBottom: "1px solid #f8fafc" }} onClick={() => onDetail(c.id)}>
                 <td style={{ padding: "14px 20px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <div style={{ width: 34, height: 34, background: "#dbeafe", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: "#1d4ed8" }}>{c.name[0]}</div>
+                    <div style={{ width: 34, height: 34, background: "#dbeafe", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: "#1d4ed8" }}>{(c.company || c.name)[0]}</div>
                     <div>
-                      <div style={{ fontSize: 13.5, fontWeight: 600, color: "#0f172a" }}>{c.name}</div>
-                      <div style={{ fontSize: 12, color: "#94a3b8" }}>{c.email}</div>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>{c.company}</div>
+                      {c.name && <div style={{ fontSize: 12, color: "#94a3b8" }}>{c.name}{c.email ? ` · ${c.email}` : ""}</div>}
                     </div>
                   </div>
                 </td>
-                <td style={{ padding: "14px 20px", fontSize: 13.5, color: "#374151" }}>{c.company}</td>
                 <td style={{ padding: "14px 20px" }}><span style={{ fontSize: 12, color: "#64748b", background: "#f1f5f9", padding: "3px 9px", borderRadius: 6 }}>{c.sector}</span></td>
                 <td style={{ padding: "14px 20px" }}><span className="tag" style={{ background: c.status === "Client" ? "#d1fae5" : "#dbeafe", color: c.status === "Client" ? "#059669" : "#2563eb" }}>{c.status}</span></td>
                 <td style={{ padding: "14px 20px", fontSize: 13.5, fontWeight: 700, color: c.revenue > 0 ? "#0f172a" : "#cbd5e1" }}>{c.revenue > 0 ? fmtCAD(c.revenue) : "—"}</td>
                 <td style={{ padding: "14px 20px" }} onClick={e => e.stopPropagation()}>
                   <div style={{ display: "flex", gap: 6 }}>
                     <button className="btn btn-ghost" style={{ padding: "6px 10px", fontSize: 12 }} onClick={() => onEdit(c)}>Modifier</button>
-                    <button className="btn btn-danger" style={{ padding: "6px 10px", fontSize: 12 }} onClick={() => onDelete(c.id)}>Suppr.</button>
+                    <button className="btn btn-danger" style={{ padding: "6px 10px", fontSize: 12 }} onClick={() => window.confirm("Attention : cette suppression est définitive. Voulez-vous continuer ?") && onDelete(c.id)}>Suppr.</button>
                   </div>
                 </td>
               </tr>
@@ -64,12 +63,14 @@ export default function ClientsPage({ contacts, search, setSearch, filterStatus,
         <div className="modal-bg" onClick={e => e.target === e.currentTarget && setDetailId(null)}>
           <div className="card" style={{ width: 420, padding: 28 }}>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 20 }}>
-              <h2 style={{ fontSize: 16, fontWeight: 700, color: "#0f172a" }}>{detail.name}</h2>
+              <div>
+                <h2 style={{ fontSize: 18, fontWeight: 800, color: "#0f172a" }}>{detail.company}</h2>
+                {detail.name && <p style={{ fontSize: 13, color: "#64748b", marginTop: 4 }}>{detail.name}</p>}
+              </div>
               <button className="btn btn-ghost" style={{ padding: "6px 8px" }} onClick={() => setDetailId(null)}>X</button>
             </div>
             <span className="tag" style={{ background: detail.status === "Client" ? "#d1fae5" : "#dbeafe", color: detail.status === "Client" ? "#059669" : "#2563eb", marginBottom: 16, display: "inline-flex" }}>{detail.status}</span>
             <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 12 }}>
-              <div style={{ fontSize: 13.5, color: "#374151" }}>Entreprise: <strong>{detail.company}</strong></div>
               {detail.email && <div style={{ fontSize: 13.5, color: "#374151" }}>Email: {detail.email}</div>}
               {detail.phone && <div style={{ fontSize: 13.5, color: "#374151" }}>Tel: {detail.phone}</div>}
               {detail.city && <div style={{ fontSize: 13.5, color: "#374151" }}>Ville: {detail.city}</div>}
@@ -79,7 +80,7 @@ export default function ClientsPage({ contacts, search, setSearch, filterStatus,
             </div>
             <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
               <button className="btn btn-ghost" style={{ flex: 1, justifyContent: "center" }} onClick={() => { onEdit(detail); setDetailId(null); }}>Modifier</button>
-              <button className="btn btn-danger" style={{ flex: 1, justifyContent: "center" }} onClick={() => onDelete(detail.id)}>Supprimer</button>
+              <button className="btn btn-danger" style={{ flex: 1, justifyContent: "center" }} onClick={() => window.confirm("Attention : cette suppression est définitive. Voulez-vous continuer ?") && onDelete(detail.id)}>Supprimer</button>
             </div>
           </div>
         </div>
