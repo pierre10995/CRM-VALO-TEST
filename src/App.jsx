@@ -43,6 +43,7 @@ export default function CRM() {
   const [fiscalYears, setFiscalYears] = useState([]);
   const [sectors, setSectors] = useState([]);
   const [workModes, setWorkModes] = useState([]);
+  const [validationStatuses, setValidationStatuses] = useState([]);
 
   // UI state
   const [modal, setModal] = useState(null);
@@ -55,7 +56,7 @@ export default function CRM() {
   const clients = contacts.filter(c => c.status === "Client" || c.status === "Prospect");
 
   const loadAll = async () => {
-    const [c, m, cd, a, u, s, fy, sec, wm] = await Promise.all([
+    const [c, m, cd, a, u, s, fy, sec, wm, vs] = await Promise.all([
       api.get("/api/contacts"),
       api.get("/api/missions"),
       api.get("/api/candidatures"),
@@ -65,8 +66,9 @@ export default function CRM() {
       api.get("/api/fiscal-years"),
       api.get("/api/sectors"),
       api.get("/api/work-modes"),
+      api.get("/api/validation-statuses"),
     ]);
-    setContacts(c); setMissions(m); setCandidatures(cd); setActivities(a); setUsers(u); setStats(s); setFiscalYears(fy); setSectors(sec); setWorkModes(wm);
+    setContacts(c); setMissions(m); setCandidatures(cd); setActivities(a); setUsers(u); setStats(s); setFiscalYears(fy); setSectors(sec); setWorkModes(wm); setValidationStatuses(vs);
   };
 
   useEffect(() => {
@@ -167,7 +169,7 @@ export default function CRM() {
       <main style={{ flex: 1, overflow: "auto", padding: 28 }}>
         {activeTab === "dashboard" && <DashboardPage stats={stats} activities={activities} contacts={contacts} missions={missions} candidatures={candidatures} />}
         {activeTab === "clients" && <ClientsPage contacts={clients} missions={missions} candidatures={candidatures} search={search} setSearch={setSearch} filterStatus={filterStatus} setFilterStatus={setFilterStatus} onAdd={() => { setModal("client"); setForm({ status: "Prospect", sector: "Tech", revenue: 0 }); }} onEdit={c => { setModal("client"); setForm({ ...c }); }} onDelete={deleteContact} onDetail={id => setDetailId(id)} detailId={detailId} setDetailId={setDetailId} />}
-        {activeTab === "candidats" && <CandidatsPage contacts={candidates} search={search} setSearch={setSearch} onAdd={() => { setModal("candidat"); setForm({ status: "Candidat", sector: "Tech", salaryExpectation: 0 }); }} onEdit={c => { setModal("candidat"); setForm({ ...c }); }} onDelete={deleteContact} onDetail={id => setDetailId(id)} detailId={detailId} setDetailId={setDetailId} candidatures={candidatures} missions={missions} loadAll={loadAll} />}
+        {activeTab === "candidats" && <CandidatsPage contacts={candidates} search={search} setSearch={setSearch} onAdd={() => { setModal("candidat"); setForm({ status: "Candidat", sector: "Tech", salaryExpectation: 0 }); }} onEdit={c => { setModal("candidat"); setForm({ ...c }); }} onDelete={deleteContact} onDetail={id => setDetailId(id)} detailId={detailId} setDetailId={setDetailId} candidatures={candidatures} missions={missions} loadAll={loadAll} validationStatuses={validationStatuses} />}
         {activeTab === "missions" && <MissionsPage missions={missions} contacts={contacts} users={users} candidatures={candidatures} onAdd={() => { setModal("mission"); setForm({ status: "Ouverte", priority: "Normale", contractType: "CDI" }); }} onEdit={m => { setModal("mission"); setForm({ ...m }); }} onDelete={deleteMission} />}
         {activeTab === "pipeline" && <PipelinePage candidatures={candidatures} candidates={candidates} missions={missions} onEdit={cd => { setModal("candidature"); setForm({ ...cd }); }} onAdd={() => { setModal("candidature"); setForm({ stage: "Présélectionné", rating: 0 }); }} onDelete={deleteCandidature} />}
         {activeTab === "activites" && <ActivitesPage activities={activities} contacts={contacts} missions={missions} users={users} currentUser={currentUser} onAdd={() => { setModal("activity"); setForm({ type: "Appel" }); }} onToggle={toggleActivity} onDelete={deleteActivity} />}
@@ -184,7 +186,7 @@ export default function CRM() {
       )}
       {modal === "candidat" && (
         <ModalWrapper onClose={() => setModal(null)} title={form.id ? "Modifier le candidat" : "Nouveau candidat"}>
-          <CandidatForm form={form} setForm={setForm} onSave={saveContact} onCancel={() => setModal(null)} sectors={sectors} />
+          <CandidatForm form={form} setForm={setForm} onSave={saveContact} onCancel={() => setModal(null)} sectors={sectors} validationStatuses={validationStatuses} />
         </ModalWrapper>
       )}
       {modal === "mission" && (

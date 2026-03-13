@@ -1,7 +1,6 @@
-import { VALIDATION_STATUSES } from "../../utils/constants";
 import Field from "../common/Field";
 
-export default function CandidatForm({ form, setForm, onSave, onCancel, sectors = [] }) {
+export default function CandidatForm({ form, setForm, onSave, onCancel, sectors = [], validationStatuses = [] }) {
   const f = (k, v) => setForm(p => ({ ...p, [k]: v }));
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -27,7 +26,7 @@ export default function CandidatForm({ form, setForm, onSave, onCancel, sectors 
       <Field label="Statut de validation">
         <select className="input" value={form.validationStatus || ""} onChange={e => f("validationStatus", e.target.value)}>
           <option value="">— Non défini —</option>
-          {VALIDATION_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+          {validationStatuses.map(s => <option key={s.id} value={s.label}>{s.label}</option>)}
         </select>
       </Field>
       <Field label="Notes"><textarea className="input" style={{ resize: "vertical", minHeight: 72 }} value={form.notes || ""} onChange={e => f("notes", e.target.value)} placeholder="Informations..." /></Field>

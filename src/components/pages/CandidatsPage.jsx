@@ -1,10 +1,48 @@
 import { useState } from "react";
-import { fmtCAD, VALIDATION_STATUSES, VALIDATION_COLORS } from "../../utils/constants";
+import { fmtCAD } from "../../utils/constants";
+import api from "../../services/api";
 import FicheCandidat from "./FicheCandidat";
 
-export default function CandidatsPage({ contacts, search, setSearch, onAdd, onEdit, onDelete, onDetail, detailId, setDetailId, candidatures, missions, loadAll }) {
+const COLOR_PRESETS = [
+  { bg: "#d1fae5", color: "#059669", name: "Vert" },
+  { bg: "#fef3c7", color: "#d97706", name: "Orange" },
+  { bg: "#e0e7ff", color: "#4f46e5", name: "Indigo" },
+  { bg: "#fee2e2", color: "#dc2626", name: "Rouge" },
+  { bg: "#fce7f3", color: "#be185d", name: "Rose" },
+  { bg: "#dbeafe", color: "#2563eb", name: "Bleu" },
+  { bg: "#f1f5f9", color: "#64748b", name: "Gris" },
+];
+
+export default function CandidatsPage({ contacts, search, setSearch, onAdd, onEdit, onDelete, onDetail, detailId, setDetailId, candidatures, missions, loadAll, validationStatuses = [] }) {
   const [filterSkill, setFilterSkill] = useState("");
   const [filterValidation, setFilterValidation] = useState("");
+  const [showStatusManager, setShowStatusManager] = useState(false);
+  const [newStatusLabel, setNewStatusLabel] = useState("");
+  const [newStatusColorIdx, setNewStatusColorIdx] = useState(0);
+
+  // Build color map from dynamic statuses
+  const VALIDATION_COLORS = {};
+  validationStatuses.forEach(s => { VALIDATION_COLORS[s.label] = { bg: s.bg, color: s.color }; });
+
+  const addStatus = async () => {
+    if (!newStatusLabel.trim()) return;
+    const preset = COLOR_PRESETS[newStatusColorIdx];
+    const res = await api.post("/api/validation-statuses", { label: newStatusLabel.trim(), bg: preset.bg, color: preset.color });
+    if (res.ok) {
+      setNewStatusLabel("");
+      setNewStatusColorIdx(0);
+      if (loadAll) await loadAll();
+    } else {
+      const err = await res.json();
+      alert(err.error || "Erreur");
+    }
+  };
+
+  const deleteStatus = async (id) => {
+    if (!window.confirm("Supprimer ce statut de validation ?")) return;
+    await api.del(`/api/validation-statuses/${id}`);
+    if (loadAll) await loadAll();
+  };
 
   const allSkills = [...new Set(contacts.flatMap(c => (c.skills || "").split(",").map(s => s.trim()).filter(Boolean)))].sort();
 
@@ -34,10 +72,47 @@ export default function CandidatsPage({ contacts, search, setSearch, onAdd, onEd
         </select>
         <select className="input" style={{ width: "auto", minWidth: 200 }} value={filterValidation} onChange={e => setFilterValidation(e.target.value)}>
           <option value="">Tous les statuts validation</option>
-          {VALIDATION_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+          {validationStatuses.map(s => <option key={s.id} value={s.label}>{s.label}</option>)}
         </select>
         {(filterSkill || filterValidation) && <button className="btn btn-ghost" style={{ fontSize: 12, padding: "6px 12px" }} onClick={() => { setFilterSkill(""); setFilterValidation(""); }}>Réinitialiser filtres</button>}
+        <button className="btn btn-ghost" style={{ fontSize: 12, padding: "6px 12px", marginLeft: "auto" }} onClick={() => setShowStatusManager(!showStatusManager)}>
+          {showStatusManager ? "Fermer" : "Gérer les statuts"}
+        </button>
       </div>
+
+      {/* Status Manager */}
+      {showStatusManager && (
+        <div className="card" style={{ marginBottom: 20, padding: 16 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", marginBottom: 12 }}>Gestion des statuts de validation</div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
+            {validationStatuses.map(s => (
+              <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", borderRadius: 10, background: s.bg, border: `1px solid ${s.color}20` }}>
+                <span style={{ fontSize: 12, fontWeight: 600, color: s.color }}>{s.label}</span>
+                <button onClick={() => deleteStatus(s.id)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 14, color: s.color, opacity: 0.6, padding: 0, lineHeight: 1 }} title="Supprimer">×</button>
+              </div>
+            ))}
+            {validationStatuses.length === 0 && <span style={{ fontSize: 12, color: "#94a3b8" }}>Aucun statut défini</span>}
+          </div>
+          <div style={{ display: "flex", gap: 10, alignItems: "end" }}>
+            <div style={{ flex: 1 }}>
+              <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", marginBottom: 4, display: "block" }}>Nouveau statut</label>
+              <input className="input" value={newStatusLabel} onChange={e => setNewStatusLabel(e.target.value)} placeholder="Ex: En attente, Approuvé..." onKeyDown={e => e.key === "Enter" && addStatus()} />
+            </div>
+            <div>
+              <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", marginBottom: 4, display: "block" }}>Couleur</label>
+              <div style={{ display: "flex", gap: 4 }}>
+                {COLOR_PRESETS.map((cp, i) => (
+                  <button key={i} onClick={() => setNewStatusColorIdx(i)} style={{
+                    width: 28, height: 28, borderRadius: 6, background: cp.bg, border: newStatusColorIdx === i ? `2px solid ${cp.color}` : "2px solid transparent",
+                    cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, color: cp.color,
+                  }} title={cp.name}>{cp.name[0]}</button>
+                ))}
+              </div>
+            </div>
+            <button className="btn btn-primary" style={{ padding: "8px 16px", fontSize: 12 }} onClick={addStatus}>Ajouter</button>
+          </div>
+        </div>
+      )}
       <div className="card" style={{ padding: 0, overflow: "hidden" }}>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead><tr style={{ borderBottom: "1px solid #f1f5f9" }}>
@@ -87,7 +162,7 @@ export default function CandidatsPage({ contacts, search, setSearch, onAdd, onEd
 
       {detail && (
         <div className="modal-bg" onClick={e => e.target === e.currentTarget && setDetailId(null)}>
-          <FicheCandidat contact={detail} onClose={() => setDetailId(null)} onEdit={() => { onEdit(detail); setDetailId(null); }} onDelete={() => onDelete(detail.id)} candidatures={candidatures} missions={missions} loadAll={loadAll} />
+          <FicheCandidat contact={detail} onClose={() => setDetailId(null)} onEdit={() => { onEdit(detail); setDetailId(null); }} onDelete={() => onDelete(detail.id)} candidatures={candidatures} missions={missions} loadAll={loadAll} validationStatuses={validationStatuses} />
         </div>
       )}
     </div>

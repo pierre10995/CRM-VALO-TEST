@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import api from "../../services/api";
-import { fmtCAD, VALIDATION_COLORS } from "../../utils/constants";
+import { fmtCAD } from "../../utils/constants";
 
-export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, candidatures, missions, loadAll }) {
+export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, candidatures, missions, loadAll, validationStatuses = [] }) {
   const [files, setFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [evaluations, setEvaluations] = useState([]);
@@ -142,7 +142,8 @@ export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, c
       <div style={{ marginBottom: 20 }}>
         <div style={{ fontSize: 12, fontWeight: 700, color: "#94a3b8", marginBottom: 8 }}>STATUT VALIDATION</div>
         {c.validationStatus ? (() => {
-          const vc = VALIDATION_COLORS[c.validationStatus] || { bg: "#f1f5f9", color: "#64748b" };
+          const vs = validationStatuses.find(s => s.label === c.validationStatus);
+          const vc = vs ? { bg: vs.bg, color: vs.color } : { bg: "#f1f5f9", color: "#64748b" };
           return <span style={{ fontSize: 13, fontWeight: 600, padding: "5px 14px", borderRadius: 16, background: vc.bg, color: vc.color }}>{c.validationStatus}</span>;
         })() : <span style={{ fontSize: 13, color: "#cbd5e1" }}>Non défini</span>}
       </div>

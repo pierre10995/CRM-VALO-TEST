@@ -228,6 +228,16 @@ async function initDB() {
       );
     `);
 
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS validation_statuses (
+        id SERIAL PRIMARY KEY,
+        label VARCHAR(100) NOT NULL UNIQUE,
+        bg_color VARCHAR(20) DEFAULT '#f1f5f9',
+        text_color VARCHAR(20) DEFAULT '#64748b',
+        sort_order INTEGER DEFAULT 0
+      );
+    `);
+
     // Seed tracking table — prevents re-seeding after user deletes data
     await client.query(`CREATE TABLE IF NOT EXISTS seed_log (key VARCHAR(50) PRIMARY KEY, done_at TIMESTAMP DEFAULT NOW())`);
     const alreadySeeded = async (key) => {
@@ -307,6 +317,22 @@ async function initDB() {
         console.log("Missions seeded");
       }
       await markSeeded("missions");
+    }
+
+    // Seed validation statuses
+    if (!await alreadySeeded("validation_statuses")) {
+      const { rows: existingVS } = await client.query("SELECT COUNT(*) FROM validation_statuses");
+      if (parseInt(existingVS[0].count) === 0) {
+        await client.query(`
+          INSERT INTO validation_statuses (label, bg_color, text_color, sort_order) VALUES
+          ('Validé', '#d1fae5', '#059669', 1),
+          ('À moitié Validé', '#fef3c7', '#d97706', 2),
+          ('Doute', '#e0e7ff', '#4f46e5', 3),
+          ('Refusé par VALO', '#fee2e2', '#dc2626', 4),
+          ('Refusé par le client', '#fce7f3', '#be185d', 5)
+        `);
+      }
+      await markSeeded("validation_statuses");
     }
 
   } finally {
@@ -698,6 +724,37 @@ app.get("/api/work-modes", async (req, res) => {
     const all = [...new Set([...defaults, ...fromDb])].sort((a, b) => a.localeCompare(b, "fr"));
     res.json(all);
   } catch (err) { res.json(defaults); }
+});
+
+// ─── Validation Statuses CRUD ────────────────────────────────────────────────
+app.get("/api/validation-statuses", async (req, res) => {
+  try {
+    const { rows } = await pool.query("SELECT * FROM validation_statuses ORDER BY sort_order ASC, id ASC");
+    res.json(rows.map(r => ({ id: r.id, label: r.label, bg: r.bg_color, color: r.text_color, sortOrder: r.sort_order })));
+  } catch (err) { res.status(500).json({ error: "Erreur serveur" }); }
+});
+
+app.post("/api/validation-statuses", async (req, res) => {
+  const { label, bg, color } = req.body;
+  if (!label) return res.status(400).json({ error: "Libellé requis" });
+  try {
+    const { rows: maxRows } = await pool.query("SELECT COALESCE(MAX(sort_order), 0) + 1 as next FROM validation_statuses");
+    const nextOrder = maxRows[0].next;
+    const { rows } = await pool.query(
+      "INSERT INTO validation_statuses (label, bg_color, text_color, sort_order) VALUES ($1,$2,$3,$4) RETURNING *",
+      [label, bg || "#f1f5f9", color || "#64748b", nextOrder]
+    );
+    const r = rows[0];
+    res.json({ id: r.id, label: r.label, bg: r.bg_color, color: r.text_color, sortOrder: r.sort_order });
+  } catch (err) {
+    if (err.code === "23505") return res.status(409).json({ error: "Ce statut existe déjà" });
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
+app.delete("/api/validation-statuses/:id", async (req, res) => {
+  try { await pool.query("DELETE FROM validation_statuses WHERE id=$1", [req.params.id]); res.json({ ok: true }); }
+  catch (err) { res.status(500).json({ error: "Erreur serveur" }); }
 });
 
 // ─── Users list (for assignment dropdowns) ───────────────────────────────────
