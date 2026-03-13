@@ -192,10 +192,13 @@ async function initDB() {
         target_ca NUMERIC DEFAULT 0,
         target_total NUMERIC DEFAULT 0,
         notes TEXT DEFAULT '',
+        fiscal_year_id INTEGER REFERENCES fiscal_years(id) ON DELETE SET NULL,
         created_at TIMESTAMP DEFAULT NOW(),
         UNIQUE(user_id, period, year, month)
       );
     `);
+
+    await client.query(`ALTER TABLE objectives ADD COLUMN IF NOT EXISTS fiscal_year_id INTEGER REFERENCES fiscal_years(id) ON DELETE SET NULL`);
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS validation_statuses (

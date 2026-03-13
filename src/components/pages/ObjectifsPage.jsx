@@ -11,44 +11,68 @@ import ObjectiveForm from "../objectifs/ObjectiveForm";
 const PERIODS = [
   { id: "mensuel", label: "Mensuel" },
   { id: "trimestriel", label: "Trimestriel" },
-  { id: "semestriel", label: "Semestriel" },
   { id: "annuel", label: "Annuel" },
 ];
 
 const MONTH_NAMES = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
 
-function periodSubOptions(period, year) {
-  if (period === "annuel") return [{ month: null, label: `${year}` }];
-  if (period === "semestriel") return [{ month: 1, label: `S1 ${year} (Jan-Juin)` }, { month: 7, label: `S2 ${year} (Juil-Déc)` }];
-  if (period === "trimestriel") return [
-    { month: 1, label: `T1 (Jan-Mars)` }, { month: 4, label: `T2 (Avr-Juin)` },
-    { month: 7, label: `T3 (Juil-Sept)` }, { month: 10, label: `T4 (Oct-Déc)` },
-  ];
-  return MONTH_NAMES.map((n, i) => ({ month: i + 1, label: n }));
+function fySubPeriods(fy, period) {
+  if (!fy || period === "annuel") return [{ value: null, label: fy ? `${fy.label} — Année complète` : "Année complète" }];
+
+  const start = new Date(fy.startDate);
+  const end = new Date(fy.endDate);
+  const months = [];
+  const d = new Date(start.getFullYear(), start.getMonth(), 1);
+  while (d <= end) {
+    months.push({ year: d.getFullYear(), month: d.getMonth() + 1, label: `${MONTH_NAMES[d.getMonth()]} ${d.getFullYear()}` });
+    d.setMonth(d.getMonth() + 1);
+  }
+
+  if (period === "mensuel") {
+    return months.map(m => ({ value: m.month, year: m.year, label: m.label }));
+  }
+
+  if (period === "trimestriel") {
+    const quarters = [];
+    for (let i = 0; i < months.length; i += 3) {
+      const chunk = months.slice(i, i + 3);
+      if (chunk.length === 0) continue;
+      const qNum = Math.floor(i / 3) + 1;
+      quarters.push({ value: qNum, label: `T${qNum} — ${chunk[0].label} à ${chunk[chunk.length - 1].label}`, months: chunk });
+    }
+    return quarters;
+  }
+
+  return [{ value: null, label: "Année complète" }];
 }
 
-function periodLabel(period, month, year) {
-  if (period === "annuel") return `${year}`;
-  if (period === "semestriel") return `${month <= 6 ? "S1" : "S2"} ${year}`;
-  if (period === "trimestriel") return `T${Math.ceil(month / 3)} ${year}`;
-  return `${MONTH_NAMES[month - 1]} ${year}`;
-}
+function missionInSubPeriod(m, fy, period, sp) {
+  if (!m.createdAt || !fy) return false;
+  const d = new Date(m.createdAt);
+  const fyStart = new Date(fy.startDate);
+  const fyEnd = new Date(fy.endDate);
+  if (d < fyStart || d > fyEnd) return false;
 
-function dateInSubPeriod(dateStr, period, year, month) {
-  if (!dateStr) return false;
-  const d = new Date(dateStr);
-  const dy = d.getFullYear();
-  const dm = d.getMonth() + 1;
-  if (period === "annuel") return dy === year;
-  if (period === "semestriel") return dy === year && (month <= 6 ? dm >= 1 && dm <= 6 : dm >= 7 && dm <= 12);
-  if (period === "trimestriel") return dy === year && dm >= month && dm < month + 3;
-  return dy === year && dm === month;
+  if (period === "annuel") return true;
+
+  if (period === "mensuel") {
+    return d.getFullYear() === sp.year && (d.getMonth() + 1) === sp.value;
+  }
+
+  if (period === "trimestriel" && sp.months) {
+    const first = sp.months[0];
+    const last = sp.months[sp.months.length - 1];
+    const startQ = new Date(first.year, first.month - 1, 1);
+    const endQ = new Date(last.year, last.month, 0, 23, 59, 59);
+    return d >= startQ && d <= endQ;
+  }
+
+  return true;
 }
 
 export default function ObjectifsPage({ contacts, missions, candidatures, users, fiscalYears = [], loadAll }) {
   const [selectedPeriod, setSelectedPeriod] = useState("annuel");
   const [selectedFY, setSelectedFY] = useState("all");
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [showAddForm, setShowAddForm] = useState(false);
   const [addForm, setAddForm] = useState({});
   const [editingId, setEditingId] = useState(null);
@@ -57,32 +81,39 @@ export default function ObjectifsPage({ contacts, missions, candidatures, users,
   const { objectives, add, update, remove } = useObjectives();
   const { wonMissions, activeFY, globalCA, caByUser } = useRevenue(missions, users, fiscalYears, selectedFY);
 
-  const clients = contacts.filter(c => c.status === "Client" || c.status === "Prospect");
+  const clients = contacts.filter(c => c.status === "Client");
 
-  const getActuals = (userId, period, year, month) => {
+  const getActuals = (userId, period, sp) => {
     let userWonMissions = wonMissions.filter(m => !userId || m.assignedTo === userId);
     if (activeFY) {
       userWonMissions = userWonMissions.filter(m => String(m.fiscalYearId) === String(activeFY.id));
-    }
-    if (period !== "annuel" || !activeFY) {
-      userWonMissions = userWonMissions.filter(m => dateInSubPeriod(m.createdAt, period, year, month));
+      if (period !== "annuel" && sp) {
+        userWonMissions = userWonMissions.filter(m => missionInSubPeriod(m, activeFY, period, sp));
+      }
     }
     const caRealized = userWonMissions.reduce((s, m) => s + (m.commission || 0), 0);
-    const newClients = clients.filter(c => dateInSubPeriod(c.createdAt, period, year, month)).length;
+    const newClients = activeFY ? clients.filter(c => {
+      if (!c.createdAt) return false;
+      const d = new Date(c.createdAt);
+      return d >= new Date(activeFY.startDate) && d <= new Date(activeFY.endDate);
+    }).length : clients.length;
     return { newClients, caRealized, totalRealized: caRealized, missionsCount: userWonMissions.length };
   };
 
   const handleAdd = async () => {
-    if (!addForm.userId || !addForm.period) return;
+    if (!addForm.userId || !addForm.fiscalYearId) return;
+    const period = addForm.period || selectedPeriod;
+    const fyObj = fiscalYears.find(fy => String(fy.id) === String(addForm.fiscalYearId));
     await add({
       userId: Number(addForm.userId),
-      period: addForm.period,
-      year: Number(addForm.year) || selectedYear,
+      period,
+      year: fyObj ? new Date(fyObj.startDate).getFullYear() : new Date().getFullYear(),
       month: addForm.month != null ? Number(addForm.month) : null,
       targetNewClients: Number(addForm.targetNewClients) || 0,
       targetCA: Number(addForm.targetCA) || 0,
       targetTotal: Number(addForm.targetTotal) || 0,
       notes: addForm.notes || "",
+      fiscalYearId: Number(addForm.fiscalYearId),
     });
     setShowAddForm(false);
     setAddForm({});
@@ -93,9 +124,13 @@ export default function ObjectifsPage({ contacts, missions, candidatures, users,
     setEditForm({ targetNewClients: obj.targetNewClients, targetCA: obj.targetCA, targetTotal: obj.targetTotal, notes: obj.notes });
   };
 
-  const filteredObjectives = objectives.filter(o => o.period === selectedPeriod && o.year === selectedYear);
-  const subPeriods = periodSubOptions(selectedPeriod, selectedYear);
-  const years = [selectedYear - 1, selectedYear, selectedYear + 1];
+  const filteredObjectives = objectives.filter(o => {
+    if (o.period !== selectedPeriod) return false;
+    if (activeFY) return String(o.fiscalYearId) === String(activeFY.id);
+    return true;
+  });
+
+  const subPeriods = fySubPeriods(activeFY, selectedPeriod);
 
   return (
     <div>
@@ -104,7 +139,7 @@ export default function ObjectifsPage({ contacts, missions, candidatures, users,
           <h1 style={{ fontSize: 26, fontWeight: 800, color: "#0f172a" }}>Objectifs</h1>
           <p style={{ fontSize: 13.5, color: "#64748b", marginTop: 3 }}>Suivi des objectifs par utilisateur, connecté au chiffre d'affaires</p>
         </div>
-        <button className="btn btn-primary" onClick={() => { setShowAddForm(!showAddForm); setAddForm({ period: selectedPeriod, year: selectedYear }); }}>
+        <button className="btn btn-primary" onClick={() => { setShowAddForm(!showAddForm); setAddForm({ period: selectedPeriod, fiscalYearId: activeFY?.id || "" }); }}>
           {showAddForm ? "Annuler" : "+ Définir un objectif"}
         </button>
       </div>
@@ -130,9 +165,9 @@ export default function ObjectifsPage({ contacts, missions, candidatures, users,
       {/* Fiscal year selector */}
       <FiscalYearSelector fiscalYears={fiscalYears} selectedFY={selectedFY} onSelect={setSelectedFY} wonMissions={wonMissions} />
 
-      {/* Period + year selector */}
+      {/* Period selector */}
       <div className="card" style={{ marginBottom: 24 }}>
-        <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+        <div style={{ display: "flex", gap: 8 }}>
           {PERIODS.map(p => (
             <button key={p.id} onClick={() => setSelectedPeriod(p.id)} className="btn" style={{
               padding: "8px 16px", fontSize: 13,
@@ -141,16 +176,6 @@ export default function ObjectifsPage({ contacts, missions, candidatures, users,
               border: selectedPeriod === p.id ? "none" : "1.5px solid #e2e8f0",
               boxShadow: selectedPeriod === p.id ? "0 4px 12px rgba(37,99,235,0.3)" : "none",
             }}>{p.label}</button>
-          ))}
-        </div>
-        <div style={{ display: "flex", gap: 8 }}>
-          {years.map(y => (
-            <button key={y} onClick={() => setSelectedYear(y)} className="btn" style={{
-              padding: "6px 16px", fontSize: 13,
-              background: selectedYear === y ? "#0f172a" : "white",
-              color: selectedYear === y ? "white" : "#64748b",
-              border: selectedYear === y ? "none" : "1.5px solid #e2e8f0",
-            }}>{y}</button>
           ))}
         </div>
       </div>
@@ -162,20 +187,20 @@ export default function ObjectifsPage({ contacts, missions, candidatures, users,
       {showAddForm && (
         <ObjectiveForm
           form={addForm} setForm={setAddForm} users={users}
-          selectedPeriod={selectedPeriod} selectedYear={selectedYear}
+          fiscalYears={fiscalYears} selectedPeriod={selectedPeriod} activeFY={activeFY}
           onSubmit={handleAdd} onCancel={() => setShowAddForm(false)}
         />
       )}
 
       {/* Objectives by sub-period */}
-      {subPeriods.map(sp => {
+      {activeFY ? subPeriods.map(sp => {
         const periodObjs = filteredObjectives.filter(o => {
           if (selectedPeriod === "annuel") return true;
-          return o.month === sp.month;
+          return o.month === sp.value;
         });
 
         return (
-          <div key={sp.month ?? "year"} style={{ marginBottom: 24 }}>
+          <div key={sp.value ?? "year"} style={{ marginBottom: 24 }}>
             <div style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", marginBottom: 12, padding: "8px 0", borderBottom: "2px solid #e2e8f0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <span>{sp.label}</span>
               {periodObjs.length > 0 && (
@@ -196,9 +221,9 @@ export default function ObjectifsPage({ contacts, missions, candidatures, users,
                 <ObjectiveCard
                   key={obj.id}
                   obj={obj}
-                  actuals={getActuals(obj.userId, selectedPeriod, selectedYear, sp.month)}
+                  actuals={getActuals(obj.userId, selectedPeriod, sp)}
                   userCA={caByUser.find(u => u.id === obj.userId)}
-                  periodLabel={periodLabel(obj.period, obj.month, obj.year)}
+                  periodLabel={sp.label}
                   onEdit={() => startEdit(obj)}
                   onDelete={() => remove(obj.id)}
                   isEditing={editingId === obj.id}
@@ -212,11 +237,16 @@ export default function ObjectifsPage({ contacts, missions, candidatures, users,
             </div>
           </div>
         );
-      })}
-
-      {filteredObjectives.length === 0 && !showAddForm && (
+      }) : (
         <div className="card" style={{ padding: 40, textAlign: "center" }}>
-          <p style={{ fontSize: 14, color: "#94a3b8" }}>Aucun objectif défini pour {selectedYear} en mode {PERIODS.find(p => p.id === selectedPeriod)?.label.toLowerCase()}</p>
+          <p style={{ fontSize: 14, color: "#94a3b8" }}>Sélectionnez une année fiscale pour voir les objectifs</p>
+          <p style={{ fontSize: 12, color: "#cbd5e1", marginTop: 6 }}>Les années fiscales sont créées dans la page Chiffre d'affaires</p>
+        </div>
+      )}
+
+      {activeFY && filteredObjectives.length === 0 && !showAddForm && (
+        <div className="card" style={{ padding: 40, textAlign: "center" }}>
+          <p style={{ fontSize: 14, color: "#94a3b8" }}>Aucun objectif défini pour {activeFY.label} en mode {PERIODS.find(p => p.id === selectedPeriod)?.label.toLowerCase()}</p>
           <p style={{ fontSize: 12, color: "#cbd5e1", marginTop: 6 }}>Cliquez sur « + Définir un objectif » pour commencer</p>
         </div>
       )}

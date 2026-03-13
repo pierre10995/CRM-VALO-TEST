@@ -1,23 +1,44 @@
 const PERIODS = [
   { id: "mensuel", label: "Mensuel" },
   { id: "trimestriel", label: "Trimestriel" },
-  { id: "semestriel", label: "Semestriel" },
   { id: "annuel", label: "Annuel" },
 ];
 
 const MONTH_NAMES = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
 
-function periodSubOptions(period, year) {
-  if (period === "annuel") return [{ month: null, label: `${year}` }];
-  if (period === "semestriel") return [{ month: 1, label: `S1 ${year} (Jan-Juin)` }, { month: 7, label: `S2 ${year} (Juil-Déc)` }];
-  if (period === "trimestriel") return [
-    { month: 1, label: `T1 (Jan-Mars)` }, { month: 4, label: `T2 (Avr-Juin)` },
-    { month: 7, label: `T3 (Juil-Sept)` }, { month: 10, label: `T4 (Oct-Déc)` },
-  ];
-  return MONTH_NAMES.map((n, i) => ({ month: i + 1, label: n }));
+function fySubOptions(fy, period) {
+  if (!fy || period === "annuel") return [{ value: null, label: "Année complète" }];
+
+  const start = new Date(fy.startDate);
+  const end = new Date(fy.endDate);
+  const months = [];
+  const d = new Date(start.getFullYear(), start.getMonth(), 1);
+  while (d <= end) {
+    months.push({ year: d.getFullYear(), month: d.getMonth() + 1, label: `${MONTH_NAMES[d.getMonth()]} ${d.getFullYear()}` });
+    d.setMonth(d.getMonth() + 1);
+  }
+
+  if (period === "mensuel") {
+    return months.map(m => ({ value: m.month, label: m.label }));
+  }
+
+  if (period === "trimestriel") {
+    const quarters = [];
+    for (let i = 0; i < months.length; i += 3) {
+      const chunk = months.slice(i, i + 3);
+      if (chunk.length === 0) continue;
+      const qNum = Math.floor(i / 3) + 1;
+      quarters.push({ value: qNum, label: `T${qNum} — ${chunk[0].label} à ${chunk[chunk.length - 1].label}` });
+    }
+    return quarters;
+  }
+
+  return [{ value: null, label: "Année complète" }];
 }
 
-export default function ObjectiveForm({ form, setForm, users, selectedPeriod, selectedYear, onSubmit, onCancel }) {
+export default function ObjectiveForm({ form, setForm, users, fiscalYears, selectedPeriod, activeFY, onSubmit, onCancel }) {
+  const selectedFYObj = fiscalYears.find(fy => String(fy.id) === String(form.fiscalYearId)) || activeFY;
+
   return (
     <div className="card" style={{ marginBottom: 20, padding: 20, background: "#f0fdf4", border: "1px solid #bbf7d0" }}>
       <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", marginBottom: 14 }}>Nouvel objectif</div>
@@ -30,20 +51,23 @@ export default function ObjectiveForm({ form, setForm, users, selectedPeriod, se
           </select>
         </div>
         <div>
+          <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", marginBottom: 4, display: "block" }}>Année fiscale *</label>
+          <select className="input" value={form.fiscalYearId || ""} onChange={e => setForm(p => ({ ...p, fiscalYearId: e.target.value, month: null }))}>
+            <option value="">— Sélectionner —</option>
+            {fiscalYears.map(fy => <option key={fy.id} value={fy.id}>{fy.label}</option>)}
+          </select>
+        </div>
+        <div>
           <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", marginBottom: 4, display: "block" }}>Période</label>
           <select className="input" value={form.period || selectedPeriod} onChange={e => setForm(p => ({ ...p, period: e.target.value, month: null }))}>
             {PERIODS.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}
           </select>
         </div>
         <div>
-          <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", marginBottom: 4, display: "block" }}>Année</label>
-          <input className="input" type="number" value={form.year || selectedYear} onChange={e => setForm(p => ({ ...p, year: e.target.value }))} />
-        </div>
-        <div>
           <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", marginBottom: 4, display: "block" }}>Sous-période</label>
           <select className="input" value={form.month ?? ""} onChange={e => setForm(p => ({ ...p, month: e.target.value === "" ? null : Number(e.target.value) }))}>
-            {periodSubOptions(form.period || selectedPeriod, form.year || selectedYear).map(sp => (
-              <option key={sp.month ?? "null"} value={sp.month ?? ""}>{sp.label}</option>
+            {fySubOptions(selectedFYObj, form.period || selectedPeriod).map((sp, i) => (
+              <option key={sp.value ?? `null-${i}`} value={sp.value ?? ""}>{sp.label}</option>
             ))}
           </select>
         </div>

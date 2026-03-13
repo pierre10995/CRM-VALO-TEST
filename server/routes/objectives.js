@@ -7,24 +7,26 @@ const router = Router();
 router.get("/", async (req, res) => {
   try {
     const { rows } = await pool.query(`
-      SELECT o.*, u.full_name as user_name FROM objectives o
+      SELECT o.*, u.full_name as user_name, fy.label as fiscal_year_label
+      FROM objectives o
       LEFT JOIN users u ON o.user_id = u.id
-      ORDER BY o.year DESC, o.month ASC NULLS FIRST, o.user_id
+      LEFT JOIN fiscal_years fy ON o.fiscal_year_id = fy.id
+      ORDER BY o.fiscal_year_id DESC NULLS LAST, o.year DESC, o.month ASC NULLS FIRST, o.user_id
     `);
     res.json(rows.map(fmtObjective));
   } catch (err) { res.status(500).json({ error: "Erreur serveur" }); }
 });
 
 router.post("/", async (req, res) => {
-  const { userId, period, year, month, targetNewClients, targetCA, targetTotal, notes } = req.body;
-  if (!userId || !period || !year) return res.status(400).json({ error: "Utilisateur, période et année requis" });
+  const { userId, period, year, month, targetNewClients, targetCA, targetTotal, notes, fiscalYearId } = req.body;
+  if (!userId || !period) return res.status(400).json({ error: "Utilisateur et période requis" });
   try {
     const { rows } = await pool.query(
-      `INSERT INTO objectives (user_id, period, year, month, target_new_clients, target_ca, target_total, notes)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
-       ON CONFLICT (user_id, period, year, month) DO UPDATE SET target_new_clients=$5, target_ca=$6, target_total=$7, notes=$8
+      `INSERT INTO objectives (user_id, period, year, month, target_new_clients, target_ca, target_total, notes, fiscal_year_id)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+       ON CONFLICT (user_id, period, year, month) DO UPDATE SET target_new_clients=$5, target_ca=$6, target_total=$7, notes=$8, fiscal_year_id=$9
        RETURNING *`,
-      [userId, period, year, month || null, targetNewClients || 0, Number(targetCA) || 0, Number(targetTotal) || 0, notes || ""]
+      [userId, period, year || 0, month || null, targetNewClients || 0, Number(targetCA) || 0, Number(targetTotal) || 0, notes || "", fiscalYearId || null]
     );
     res.json(fmtObjective(rows[0]));
   } catch (err) { res.status(500).json({ error: err.message }); }

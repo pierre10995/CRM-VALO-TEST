@@ -49,9 +49,10 @@ export function fmtActivity(r) {
 export function fmtObjective(r) {
   return {
     id: r.id, userId: r.user_id, period: r.period, year: r.year, month: r.month,
+    fiscalYearId: r.fiscal_year_id || null,
     targetNewClients: r.target_new_clients || 0, targetCA: Number(r.target_ca) || 0,
     targetTotal: Number(r.target_total) || 0, notes: r.notes || "", createdAt: r.created_at,
-    userName: r.user_name || "",
+    userName: r.user_name || "", fiscalYearLabel: r.fiscal_year_label || "",
   };
 }
 
