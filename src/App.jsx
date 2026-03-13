@@ -95,7 +95,7 @@ export default function CRM() {
 
   // CRUD helpers
   const saveContact = async () => {
-    if (!form.name) return;
+    if (!form.company) return;
     if (form.id) await api.put(`/api/contacts/${form.id}`, form);
     else await api.post("/api/contacts", form);
     await loadAll(); setModal(null);
