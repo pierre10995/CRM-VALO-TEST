@@ -188,6 +188,24 @@ async function initDB() {
     await client.query(`ALTER TABLE files ADD COLUMN IF NOT EXISTS mission_id INTEGER REFERENCES missions(id) ON DELETE CASCADE`);
 
     await client.query(`
+      CREATE TABLE IF NOT EXISTS placements (
+        id SERIAL PRIMARY KEY,
+        candidature_id INTEGER REFERENCES candidatures(id) ON DELETE CASCADE,
+        candidate_id INTEGER REFERENCES contacts(id) ON DELETE CASCADE,
+        mission_id INTEGER REFERENCES missions(id) ON DELETE CASCADE,
+        company VARCHAR(100) DEFAULT '',
+        start_date DATE,
+        probation_date DATE,
+        start_invoice_sent BOOLEAN DEFAULT FALSE,
+        start_invoice_name VARCHAR(200) DEFAULT '',
+        probation_invoice_sent BOOLEAN DEFAULT FALSE,
+        probation_invoice_name VARCHAR(200) DEFAULT '',
+        notes TEXT DEFAULT '',
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+    `);
+
+    await client.query(`
       CREATE TABLE IF NOT EXISTS evaluations (
         id SERIAL PRIMARY KEY,
         candidate_id INTEGER REFERENCES contacts(id) ON DELETE CASCADE,
@@ -1152,6 +1170,65 @@ app.post("/api/fiscal-years", async (req, res) => {
 
 app.delete("/api/fiscal-years/:id", async (req, res) => {
   try { await pool.query("DELETE FROM fiscal_years WHERE id=$1", [req.params.id]); res.json({ ok: true }); }
+  catch (err) { res.status(500).json({ error: "Erreur serveur" }); }
+});
+
+// ─── Placements (Suivi des candidats placés) ────────────────────────────────
+function fmtPlacement(r) {
+  return {
+    id: r.id, candidatureId: r.candidature_id, candidateId: r.candidate_id,
+    missionId: r.mission_id, company: r.company || "",
+    startDate: r.start_date, probationDate: r.probation_date,
+    startInvoiceSent: r.start_invoice_sent || false,
+    startInvoiceName: r.start_invoice_name || "",
+    probationInvoiceSent: r.probation_invoice_sent || false,
+    probationInvoiceName: r.probation_invoice_name || "",
+    notes: r.notes || "", createdAt: r.created_at,
+    candidateName: r.candidate_name || "", missionTitle: r.mission_title || "",
+    missionCompany: r.mission_company || "",
+  };
+}
+
+app.get("/api/placements", async (req, res) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT p.*, c.name as candidate_name, m.title as mission_title, m.company as mission_company
+      FROM placements p
+      LEFT JOIN contacts c ON p.candidate_id = c.id
+      LEFT JOIN missions m ON p.mission_id = m.id
+      ORDER BY p.created_at DESC
+    `);
+    res.json(rows.map(fmtPlacement));
+  } catch (err) { res.status(500).json({ error: "Erreur serveur" }); }
+});
+
+app.post("/api/placements", async (req, res) => {
+  const { candidatureId, candidateId, missionId, company, startDate, probationDate, startInvoiceSent, startInvoiceName, probationInvoiceSent, probationInvoiceName, notes } = req.body;
+  if (!candidateId || !missionId) return res.status(400).json({ error: "Candidat et mission requis" });
+  try {
+    const { rows } = await pool.query(
+      `INSERT INTO placements (candidature_id, candidate_id, mission_id, company, start_date, probation_date, start_invoice_sent, start_invoice_name, probation_invoice_sent, probation_invoice_name, notes)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
+      [candidatureId || null, candidateId, missionId, company || "", startDate || null, probationDate || null, startInvoiceSent || false, startInvoiceName || "", probationInvoiceSent || false, probationInvoiceName || "", notes || ""]
+    );
+    res.json(fmtPlacement(rows[0]));
+  } catch (err) { res.status(500).json({ error: "Erreur serveur" }); }
+});
+
+app.put("/api/placements/:id", async (req, res) => {
+  const { startDate, probationDate, startInvoiceSent, startInvoiceName, probationInvoiceSent, probationInvoiceName, notes } = req.body;
+  try {
+    const { rows } = await pool.query(
+      `UPDATE placements SET start_date=$1, probation_date=$2, start_invoice_sent=$3, start_invoice_name=$4, probation_invoice_sent=$5, probation_invoice_name=$6, notes=$7 WHERE id=$8 RETURNING *`,
+      [startDate || null, probationDate || null, startInvoiceSent || false, startInvoiceName || "", probationInvoiceSent || false, probationInvoiceName || "", notes || "", req.params.id]
+    );
+    if (rows.length === 0) return res.status(404).json({ error: "Placement non trouvé" });
+    res.json(fmtPlacement(rows[0]));
+  } catch (err) { res.status(500).json({ error: "Erreur serveur" }); }
+});
+
+app.delete("/api/placements/:id", async (req, res) => {
+  try { await pool.query("DELETE FROM placements WHERE id=$1", [req.params.id]); res.json({ ok: true }); }
   catch (err) { res.status(500).json({ error: "Erreur serveur" }); }
 });
 
