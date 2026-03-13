@@ -51,7 +51,7 @@ export default function ClientsPage({ contacts, search, setSearch, filterStatus,
                 <td style={{ padding: "14px 20px" }} onClick={e => e.stopPropagation()}>
                   <div style={{ display: "flex", gap: 6 }}>
                     <button className="btn btn-ghost" style={{ padding: "6px 10px", fontSize: 12 }} onClick={() => onEdit(c)}>Modifier</button>
-                    <button className="btn btn-danger" style={{ padding: "6px 10px", fontSize: 12 }} onClick={() => onDelete(c.id)}>Suppr.</button>
+                    <button className="btn btn-danger" style={{ padding: "6px 10px", fontSize: 12 }} onClick={() => window.confirm("Attention : cette suppression est définitive. Voulez-vous continuer ?") && onDelete(c.id)}>Suppr.</button>
                   </div>
                 </td>
               </tr>
@@ -79,7 +79,7 @@ export default function ClientsPage({ contacts, search, setSearch, filterStatus,
             </div>
             <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
               <button className="btn btn-ghost" style={{ flex: 1, justifyContent: "center" }} onClick={() => { onEdit(detail); setDetailId(null); }}>Modifier</button>
-              <button className="btn btn-danger" style={{ flex: 1, justifyContent: "center" }} onClick={() => onDelete(detail.id)}>Supprimer</button>
+              <button className="btn btn-danger" style={{ flex: 1, justifyContent: "center" }} onClick={() => window.confirm("Attention : cette suppression est définitive. Voulez-vous continuer ?") && onDelete(detail.id)}>Supprimer</button>
             </div>
           </div>
         </div>

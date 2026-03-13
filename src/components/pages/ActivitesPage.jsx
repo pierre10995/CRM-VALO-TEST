@@ -29,7 +29,7 @@ export default function ActivitesPage({ activities, contacts, missions, users, c
               <button className={`btn ${a.completed ? "btn-ghost" : "btn-success"}`} style={{ padding: "5px 10px", fontSize: 11 }} onClick={() => onToggle(a)}>
                 {a.completed ? "Réactiver" : "Terminer"}
               </button>
-              <button className="btn btn-danger" style={{ padding: "5px 10px", fontSize: 11 }} onClick={() => onDelete(a.id)}>Suppr.</button>
+              <button className="btn btn-danger" style={{ padding: "5px 10px", fontSize: 11 }} onClick={() => window.confirm("Attention : cette suppression est définitive. Voulez-vous continuer ?") && onDelete(a.id)}>Suppr.</button>
             </div>
           </div>
         ))}

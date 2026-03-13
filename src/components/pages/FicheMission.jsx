@@ -108,7 +108,7 @@ export default function FicheMission({ mission: m, onClose, onEdit, onDelete, ca
             <span style={{ fontSize: 13, color: "#0f172a", flex: 1 }}>{f.file_name}</span>
             <span style={{ fontSize: 11, color: "#94a3b8" }}>{new Date(f.created_at).toLocaleDateString("fr-CA")}</span>
             <button className="btn btn-ghost" style={{ padding: "4px 10px", fontSize: 11 }} onClick={() => downloadFile(f.id)}>Télécharger</button>
-            <button className="btn btn-danger" style={{ padding: "4px 10px", fontSize: 11 }} onClick={() => deleteFile(f.id)}>Suppr.</button>
+            <button className="btn btn-danger" style={{ padding: "4px 10px", fontSize: 11 }} onClick={() => window.confirm("Attention : cette suppression est définitive. Voulez-vous continuer ?") && deleteFile(f.id)}>Suppr.</button>
           </div>
         ))}
         <p style={{ fontSize: 11, color: "#94a3b8", marginTop: 6, fontStyle: "italic" }}>Ce document sera utilisé par l'IA lors de l'évaluation des candidats.</p>
@@ -127,7 +127,7 @@ export default function FicheMission({ mission: m, onClose, onEdit, onDelete, ca
 
       <div style={{ display: "flex", gap: 10 }}>
         <button className="btn btn-ghost" style={{ flex: 1, justifyContent: "center" }} onClick={onEdit}>Modifier</button>
-        <button className="btn btn-danger" style={{ flex: 1, justifyContent: "center" }} onClick={onDelete}>Supprimer</button>
+        <button className="btn btn-danger" style={{ flex: 1, justifyContent: "center" }} onClick={() => window.confirm("Attention : cette suppression est définitive. Voulez-vous continuer ?") && onDelete()}>Supprimer</button>
       </div>
     </div>
   );

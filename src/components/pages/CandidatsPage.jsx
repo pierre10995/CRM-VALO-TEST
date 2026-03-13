@@ -75,7 +75,7 @@ export default function CandidatsPage({ contacts, search, setSearch, onAdd, onEd
                 <td style={{ padding: "14px 20px" }} onClick={e => e.stopPropagation()}>
                   <div style={{ display: "flex", gap: 6 }}>
                     <button className="btn btn-ghost" style={{ padding: "6px 10px", fontSize: 12 }} onClick={() => onEdit(c)}>Modifier</button>
-                    <button className="btn btn-danger" style={{ padding: "6px 10px", fontSize: 12 }} onClick={() => onDelete(c.id)}>Suppr.</button>
+                    <button className="btn btn-danger" style={{ padding: "6px 10px", fontSize: 12 }} onClick={() => window.confirm("Attention : cette suppression est définitive. Voulez-vous continuer ?") && onDelete(c.id)}>Suppr.</button>
                   </div>
                 </td>
               </tr>
