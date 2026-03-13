@@ -752,6 +752,23 @@ app.post("/api/validation-statuses", async (req, res) => {
   }
 });
 
+app.put("/api/validation-statuses/:id", async (req, res) => {
+  const { label, bg, color } = req.body;
+  if (!label) return res.status(400).json({ error: "Libellé requis" });
+  try {
+    const { rows } = await pool.query(
+      "UPDATE validation_statuses SET label=$1, bg_color=$2, text_color=$3 WHERE id=$4 RETURNING *",
+      [label, bg || "#f1f5f9", color || "#64748b", req.params.id]
+    );
+    if (rows.length === 0) return res.status(404).json({ error: "Statut non trouvé" });
+    const r = rows[0];
+    res.json({ id: r.id, label: r.label, bg: r.bg_color, color: r.text_color, sortOrder: r.sort_order });
+  } catch (err) {
+    if (err.code === "23505") return res.status(409).json({ error: "Ce statut existe déjà" });
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
 app.delete("/api/validation-statuses/:id", async (req, res) => {
   try { await pool.query("DELETE FROM validation_statuses WHERE id=$1", [req.params.id]); res.json({ ok: true }); }
   catch (err) { res.status(500).json({ error: "Erreur serveur" }); }

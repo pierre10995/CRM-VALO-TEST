@@ -186,7 +186,7 @@ export default function CRM() {
       )}
       {modal === "candidat" && (
         <ModalWrapper onClose={() => setModal(null)} title={form.id ? "Modifier le candidat" : "Nouveau candidat"}>
-          <CandidatForm form={form} setForm={setForm} onSave={saveContact} onCancel={() => setModal(null)} sectors={sectors} validationStatuses={validationStatuses} />
+          <CandidatForm form={form} setForm={setForm} onSave={saveContact} onCancel={() => setModal(null)} sectors={sectors} validationStatuses={validationStatuses} onStatusesChanged={loadAll} />
         </ModalWrapper>
       )}
       {modal === "mission" && (
