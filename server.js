@@ -200,10 +200,17 @@ async function initDB() {
         start_invoice_name VARCHAR(200) DEFAULT '',
         probation_invoice_sent BOOLEAN DEFAULT FALSE,
         probation_invoice_name VARCHAR(200) DEFAULT '',
+        start_invoice_paid BOOLEAN DEFAULT FALSE,
+        probation_invoice_paid BOOLEAN DEFAULT FALSE,
+        probation_validated BOOLEAN DEFAULT FALSE,
         notes TEXT DEFAULT '',
         created_at TIMESTAMP DEFAULT NOW()
       );
     `);
+
+    await client.query(`ALTER TABLE placements ADD COLUMN IF NOT EXISTS start_invoice_paid BOOLEAN DEFAULT FALSE`);
+    await client.query(`ALTER TABLE placements ADD COLUMN IF NOT EXISTS probation_invoice_paid BOOLEAN DEFAULT FALSE`);
+    await client.query(`ALTER TABLE placements ADD COLUMN IF NOT EXISTS probation_validated BOOLEAN DEFAULT FALSE`);
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS evaluations (
@@ -1216,8 +1223,11 @@ function fmtPlacement(r) {
     startDate: r.start_date, probationDate: r.probation_date,
     startInvoiceSent: r.start_invoice_sent || false,
     startInvoiceName: r.start_invoice_name || "",
+    startInvoicePaid: r.start_invoice_paid || false,
     probationInvoiceSent: r.probation_invoice_sent || false,
     probationInvoiceName: r.probation_invoice_name || "",
+    probationInvoicePaid: r.probation_invoice_paid || false,
+    probationValidated: r.probation_validated || false,
     notes: r.notes || "", createdAt: r.created_at,
     candidateName: r.candidate_name || "", missionTitle: r.mission_title || "",
     missionCompany: r.mission_company || "",
@@ -1238,24 +1248,24 @@ app.get("/api/placements", async (req, res) => {
 });
 
 app.post("/api/placements", async (req, res) => {
-  const { candidatureId, candidateId, missionId, company, startDate, probationDate, startInvoiceSent, startInvoiceName, probationInvoiceSent, probationInvoiceName, notes } = req.body;
+  const { candidatureId, candidateId, missionId, company, startDate, probationDate, startInvoiceSent, startInvoiceName, startInvoicePaid, probationInvoiceSent, probationInvoiceName, probationInvoicePaid, probationValidated, notes } = req.body;
   if (!candidateId || !missionId) return res.status(400).json({ error: "Candidat et mission requis" });
   try {
     const { rows } = await pool.query(
-      `INSERT INTO placements (candidature_id, candidate_id, mission_id, company, start_date, probation_date, start_invoice_sent, start_invoice_name, probation_invoice_sent, probation_invoice_name, notes)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
-      [candidatureId || null, candidateId, missionId, company || "", startDate || null, probationDate || null, startInvoiceSent || false, startInvoiceName || "", probationInvoiceSent || false, probationInvoiceName || "", notes || ""]
+      `INSERT INTO placements (candidature_id, candidate_id, mission_id, company, start_date, probation_date, start_invoice_sent, start_invoice_name, start_invoice_paid, probation_invoice_sent, probation_invoice_name, probation_invoice_paid, probation_validated, notes)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING *`,
+      [candidatureId || null, candidateId, missionId, company || "", startDate || null, probationDate || null, startInvoiceSent || false, startInvoiceName || "", startInvoicePaid || false, probationInvoiceSent || false, probationInvoiceName || "", probationInvoicePaid || false, probationValidated || false, notes || ""]
     );
     res.json(fmtPlacement(rows[0]));
   } catch (err) { res.status(500).json({ error: "Erreur serveur" }); }
 });
 
 app.put("/api/placements/:id", async (req, res) => {
-  const { startDate, probationDate, startInvoiceSent, startInvoiceName, probationInvoiceSent, probationInvoiceName, notes } = req.body;
+  const { startDate, probationDate, startInvoiceSent, startInvoiceName, startInvoicePaid, probationInvoiceSent, probationInvoiceName, probationInvoicePaid, probationValidated, notes } = req.body;
   try {
     const { rows } = await pool.query(
-      `UPDATE placements SET start_date=$1, probation_date=$2, start_invoice_sent=$3, start_invoice_name=$4, probation_invoice_sent=$5, probation_invoice_name=$6, notes=$7 WHERE id=$8 RETURNING *`,
-      [startDate || null, probationDate || null, startInvoiceSent || false, startInvoiceName || "", probationInvoiceSent || false, probationInvoiceName || "", notes || "", req.params.id]
+      `UPDATE placements SET start_date=$1, probation_date=$2, start_invoice_sent=$3, start_invoice_name=$4, start_invoice_paid=$5, probation_invoice_sent=$6, probation_invoice_name=$7, probation_invoice_paid=$8, probation_validated=$9, notes=$10 WHERE id=$11 RETURNING *`,
+      [startDate || null, probationDate || null, startInvoiceSent || false, startInvoiceName || "", startInvoicePaid || false, probationInvoiceSent || false, probationInvoiceName || "", probationInvoicePaid || false, probationValidated || false, notes || "", req.params.id]
     );
     if (rows.length === 0) return res.status(404).json({ error: "Placement non trouvé" });
     res.json(fmtPlacement(rows[0]));
