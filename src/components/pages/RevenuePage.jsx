@@ -8,6 +8,8 @@ export default function RevenuePage({ contacts, missions, candidatures, users, f
   const [selectedYear, setSelectedYear] = useState("all");
   const [showAddYear, setShowAddYear] = useState(false);
   const [newYear, setNewYear] = useState({ label: "", startDate: "", endDate: "", target: 0 });
+  const [editingYear, setEditingYear] = useState(null);
+  const [editYearForm, setEditYearForm] = useState({});
 
   useEffect(() => { setFiscalYears(propFiscalYears || []); }, [propFiscalYears]);
 
@@ -21,10 +23,31 @@ export default function RevenuePage({ contacts, missions, candidatures, users, f
     }
   };
 
+  const updateFiscalYear = async () => {
+    if (!editYearForm.label || !editYearForm.startDate || !editYearForm.endDate) return;
+    const res = await api.put(`/api/fiscal-years/${editingYear}`, editYearForm);
+    if (res.ok) {
+      setEditingYear(null);
+      setEditYearForm({});
+      if (loadAll) await loadAll();
+    }
+  };
+
   const deleteFiscalYear = async (id) => {
+    if (!window.confirm("Supprimer cette année fiscale ?")) return;
     await api.del(`/api/fiscal-years/${id}`);
     if (selectedYear === String(id)) setSelectedYear("all");
     if (loadAll) await loadAll();
+  };
+
+  const startEditYear = (fy) => {
+    setEditingYear(fy.id);
+    setEditYearForm({
+      label: fy.label,
+      startDate: fy.startDate ? fy.startDate.split("T")[0] : "",
+      endDate: fy.endDate ? fy.endDate.split("T")[0] : "",
+      target: fy.target,
+    });
   };
 
   const wonMissions = missions.filter(m => m.status === "Gagné");
@@ -33,6 +56,14 @@ export default function RevenuePage({ contacts, missions, candidatures, users, f
     if (!fyId) return missionList;
     return missionList.filter(m => String(m.fiscalYearId) === String(fyId));
   };
+
+  // Compute CA per fiscal year for display
+  const fyWithCA = fiscalYears.map(fy => {
+    const fyMissions = filterByYear(wonMissions, fy.id);
+    const ca = fyMissions.reduce((s, m) => s + (m.commission || 0), 0);
+    const count = fyMissions.length;
+    return { ...fy, ca, count };
+  });
 
   const activeFY = selectedYear !== "all" ? fiscalYears.find(fy => String(fy.id) === selectedYear) : null;
   const filteredWonMissions = activeFY ? filterByYear(wonMissions, activeFY.id) : wonMissions;
@@ -65,11 +96,7 @@ export default function RevenuePage({ contacts, missions, candidatures, users, f
     currentLabel = userData?.fullName || "";
   }
 
-  const chartData = fiscalYears.map(fy => {
-    const fyMissions = filterByYear(wonMissions, fy.id);
-    const ca = fyMissions.reduce((s, m) => s + (m.commission || 0), 0);
-    return { label: fy.label, ca, target: fy.target };
-  });
+  const chartData = fyWithCA.map(fy => ({ label: fy.label, ca: fy.ca, target: fy.target }));
   const chartMax = Math.max(...chartData.map(d => Math.max(d.ca, d.target)), 1);
 
   return (
@@ -135,17 +162,18 @@ export default function RevenuePage({ contacts, missions, candidatures, users, f
         </div>
       )}
 
-      {/* Sélecteur d'année + gestion */}
+      {/* Gestion des années fiscales */}
       <div className="card" style={{ marginBottom: 24 }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>Années fiscales</div>
-          <button className="btn btn-primary" style={{ padding: "6px 14px", fontSize: 12 }} onClick={() => setShowAddYear(!showAddYear)}>
+          <button className="btn btn-primary" style={{ padding: "6px 14px", fontSize: 12 }} onClick={() => { setShowAddYear(!showAddYear); setEditingYear(null); }}>
             {showAddYear ? "Annuler" : "+ Ajouter une année"}
           </button>
         </div>
 
+        {/* Add form */}
         {showAddYear && (
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr auto", gap: 10, marginBottom: 14, padding: 14, background: "#f8fafc", borderRadius: 10 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr auto", gap: 10, marginBottom: 16, padding: 14, background: "#f0fdf4", borderRadius: 10, border: "1px solid #bbf7d0" }}>
             <div>
               <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", marginBottom: 4, display: "block" }}>Libellé</label>
               <input className="input" placeholder="2027-2028" value={newYear.label} onChange={e => setNewYear(p => ({ ...p, label: e.target.value }))} />
@@ -162,11 +190,12 @@ export default function RevenuePage({ contacts, missions, candidatures, users, f
               <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", marginBottom: 4, display: "block" }}>Objectif ($)</label>
               <input className="input" type="number" value={newYear.target || ""} onChange={e => setNewYear(p => ({ ...p, target: e.target.value }))} />
             </div>
-            <button className="btn btn-success" style={{ alignSelf: "end", padding: "10px 16px" }} onClick={addFiscalYear}>Ajouter</button>
+            <button className="btn btn-primary" style={{ alignSelf: "end", padding: "10px 16px" }} onClick={addFiscalYear}>Ajouter</button>
           </div>
         )}
 
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        {/* Year selector buttons */}
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
           <button onClick={() => setSelectedYear("all")} className="btn" style={{
             padding: "8px 16px",
             background: selectedYear === "all" ? "linear-gradient(135deg, #2563eb, #3b82f6)" : "white",
@@ -175,20 +204,104 @@ export default function RevenuePage({ contacts, missions, candidatures, users, f
             boxShadow: selectedYear === "all" ? "0 4px 12px rgba(37,99,235,0.3)" : "none",
             fontSize: 13,
           }}>Toutes les années</button>
-          {fiscalYears.map(fy => (
-            <div key={fy.id} style={{ display: "flex", alignItems: "center", gap: 4 }}>
-              <button onClick={() => setSelectedYear(String(fy.id))} className="btn" style={{
-                padding: "8px 16px",
-                background: selectedYear === String(fy.id) ? "linear-gradient(135deg, #2563eb, #3b82f6)" : "white",
-                color: selectedYear === String(fy.id) ? "white" : "#64748b",
-                border: selectedYear === String(fy.id) ? "none" : "1.5px solid #e2e8f0",
-                boxShadow: selectedYear === String(fy.id) ? "0 4px 12px rgba(37,99,235,0.3)" : "none",
-                fontSize: 13,
-              }}>{fy.label}</button>
-              <button className="btn btn-danger" style={{ padding: "4px 8px", fontSize: 10 }} onClick={() => deleteFiscalYear(fy.id)}>X</button>
-            </div>
+          {fyWithCA.map(fy => (
+            <button key={fy.id} onClick={() => setSelectedYear(String(fy.id))} className="btn" style={{
+              padding: "8px 16px",
+              background: selectedYear === String(fy.id) ? "linear-gradient(135deg, #2563eb, #3b82f6)" : "white",
+              color: selectedYear === String(fy.id) ? "white" : "#64748b",
+              border: selectedYear === String(fy.id) ? "none" : "1.5px solid #e2e8f0",
+              boxShadow: selectedYear === String(fy.id) ? "0 4px 12px rgba(37,99,235,0.3)" : "none",
+              fontSize: 13,
+            }}>
+              {fy.label}
+              <span style={{ marginLeft: 8, fontSize: 11, opacity: 0.8 }}>{fmtCAD(fy.ca)}</span>
+            </button>
           ))}
         </div>
+
+        {/* Years table with CA, target, progress, edit/delete */}
+        {fyWithCA.length > 0 && (
+          <div style={{ borderRadius: 10, overflow: "hidden", border: "1px solid #e2e8f0" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+              <thead>
+                <tr style={{ background: "#f8fafc" }}>
+                  <th style={{ padding: "10px 14px", textAlign: "left", fontWeight: 700, color: "#64748b", fontSize: 11 }}>ANNÉE</th>
+                  <th style={{ padding: "10px 14px", textAlign: "left", fontWeight: 700, color: "#64748b", fontSize: 11 }}>PÉRIODE</th>
+                  <th style={{ padding: "10px 14px", textAlign: "right", fontWeight: 700, color: "#64748b", fontSize: 11 }}>OBJECTIF</th>
+                  <th style={{ padding: "10px 14px", textAlign: "right", fontWeight: 700, color: "#64748b", fontSize: 11 }}>CA RÉALISÉ</th>
+                  <th style={{ padding: "10px 14px", textAlign: "center", fontWeight: 700, color: "#64748b", fontSize: 11 }}>PROGRESSION</th>
+                  <th style={{ padding: "10px 14px", textAlign: "right", fontWeight: 700, color: "#64748b", fontSize: 11 }}>POSTES</th>
+                  <th style={{ padding: "10px 14px", textAlign: "right", fontWeight: 700, color: "#64748b", fontSize: 11 }}>ACTIONS</th>
+                </tr>
+              </thead>
+              <tbody>
+                {fyWithCA.map(fy => {
+                  const pct = fy.target > 0 ? Math.round((fy.ca / fy.target) * 100) : 0;
+                  const isEditing = editingYear === fy.id;
+
+                  if (isEditing) {
+                    return (
+                      <tr key={fy.id} style={{ background: "#fffbeb", borderTop: "1px solid #e2e8f0" }}>
+                        <td style={{ padding: "10px 14px" }}>
+                          <input className="input" style={{ fontSize: 12, padding: "6px 8px" }} value={editYearForm.label || ""} onChange={e => setEditYearForm(p => ({ ...p, label: e.target.value }))} />
+                        </td>
+                        <td style={{ padding: "10px 14px" }}>
+                          <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                            <input className="input" type="date" style={{ fontSize: 11, padding: "6px 6px" }} value={editYearForm.startDate || ""} onChange={e => setEditYearForm(p => ({ ...p, startDate: e.target.value }))} />
+                            <span style={{ color: "#94a3b8" }}>→</span>
+                            <input className="input" type="date" style={{ fontSize: 11, padding: "6px 6px" }} value={editYearForm.endDate || ""} onChange={e => setEditYearForm(p => ({ ...p, endDate: e.target.value }))} />
+                          </div>
+                        </td>
+                        <td style={{ padding: "10px 14px" }}>
+                          <input className="input" type="number" style={{ fontSize: 12, padding: "6px 8px", textAlign: "right" }} value={editYearForm.target || ""} onChange={e => setEditYearForm(p => ({ ...p, target: e.target.value }))} />
+                        </td>
+                        <td style={{ padding: "10px 14px", textAlign: "right", fontWeight: 700, color: "#059669" }}>{fmtCAD(fy.ca)}</td>
+                        <td style={{ padding: "10px 14px", textAlign: "center" }}>—</td>
+                        <td style={{ padding: "10px 14px", textAlign: "right" }}>{fy.count}</td>
+                        <td style={{ padding: "10px 14px", textAlign: "right" }}>
+                          <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
+                            <button className="btn btn-primary" style={{ padding: "4px 10px", fontSize: 11 }} onClick={updateFiscalYear}>Sauver</button>
+                            <button className="btn btn-ghost" style={{ padding: "4px 10px", fontSize: 11 }} onClick={() => setEditingYear(null)}>Annuler</button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  }
+
+                  return (
+                    <tr key={fy.id} style={{ borderTop: "1px solid #e2e8f0" }}>
+                      <td style={{ padding: "10px 14px", fontWeight: 600, color: "#0f172a" }}>{fy.label}</td>
+                      <td style={{ padding: "10px 14px", color: "#64748b", fontSize: 12 }}>
+                        {fy.startDate ? new Date(fy.startDate).toLocaleDateString("fr-CA") : "—"} → {fy.endDate ? new Date(fy.endDate).toLocaleDateString("fr-CA") : "—"}
+                      </td>
+                      <td style={{ padding: "10px 14px", textAlign: "right", fontWeight: 600, color: "#64748b" }}>{fmtCAD(fy.target)}</td>
+                      <td style={{ padding: "10px 14px", textAlign: "right", fontWeight: 700, color: "#059669" }}>{fmtCAD(fy.ca)}</td>
+                      <td style={{ padding: "10px 14px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, justifyContent: "center" }}>
+                          <div style={{ flex: 1, height: 6, background: "#f1f5f9", borderRadius: 3, maxWidth: 80 }}>
+                            <div style={{ width: `${Math.min(pct, 100)}%`, height: "100%", background: pct >= 100 ? "linear-gradient(90deg, #059669, #34d399)" : "linear-gradient(90deg, #3b82f6, #93c5fd)", borderRadius: 3 }} />
+                          </div>
+                          <span style={{ fontSize: 12, fontWeight: 700, color: pct >= 100 ? "#059669" : pct >= 50 ? "#2563eb" : "#d97706" }}>{pct}%</span>
+                        </div>
+                      </td>
+                      <td style={{ padding: "10px 14px", textAlign: "right", color: "#0f172a" }}>{fy.count}</td>
+                      <td style={{ padding: "10px 14px", textAlign: "right" }}>
+                        <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
+                          <button className="btn btn-ghost" style={{ padding: "4px 10px", fontSize: 11 }} onClick={() => { startEditYear(fy); setShowAddYear(false); }}>Modifier</button>
+                          <button className="btn btn-danger" style={{ padding: "4px 10px", fontSize: 11 }} onClick={() => deleteFiscalYear(fy.id)}>Suppr.</button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {fyWithCA.length === 0 && !showAddYear && (
+          <p style={{ fontSize: 13, color: "#94a3b8", textAlign: "center", padding: 20 }}>Aucune année fiscale. Cliquez sur « + Ajouter une année » pour commencer.</p>
+        )}
       </div>
 
       {/* Onglets utilisateurs */}

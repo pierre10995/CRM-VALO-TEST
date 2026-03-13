@@ -21,6 +21,7 @@ export default function CandidatForm({ form, setForm, onSave, onCancel, sectors 
         <input className="input" list="sectors-candidat-list" value={form.sector || ""} onChange={e => f("sector", e.target.value)} placeholder="Taper ou choisir..." />
         <datalist id="sectors-candidat-list">{sectors.map(s => <option key={s} value={s} />)}</datalist>
       </Field>
+      <Field label="Poste ciblé"><input className="input" value={form.targetPosition || ""} onChange={e => f("targetPosition", e.target.value)} placeholder="Développeur Full Stack, Chef de projet..." /></Field>
       <Field label="Compétences (séparées par virgules)"><input className="input" value={form.skills || ""} onChange={e => f("skills", e.target.value)} placeholder="React, Node.js, PostgreSQL..." /></Field>
       <Field label="Statut de validation">
         <select className="input" value={form.validationStatus || ""} onChange={e => f("validationStatus", e.target.value)}>
