@@ -127,6 +127,12 @@ export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, c
           <div style={{ fontSize: 13, color: "#0f172a" }}>{c.sector || "—"}</div>
         </div>
         <div style={{ background: "#f8fafc", borderRadius: 10, padding: 12, gridColumn: "1 / -1" }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", marginBottom: 4 }}>LINKEDIN</div>
+          <div style={{ fontSize: 13 }}>
+            {c.linkedin ? <a href={c.linkedin} target="_blank" rel="noopener noreferrer" style={{ color: "#2563eb", textDecoration: "none" }}>{c.linkedin}</a> : <span style={{ color: "#0f172a" }}>—</span>}
+          </div>
+        </div>
+        <div style={{ background: "#f8fafc", borderRadius: 10, padding: 12, gridColumn: "1 / -1" }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", marginBottom: 4 }}>POSTE CIBLÉ</div>
           <div style={{ fontSize: 13, color: "#0f172a", fontWeight: 600 }}>{c.targetPosition || "—"}</div>
         </div>
