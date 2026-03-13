@@ -1,6 +1,17 @@
 import { fmtCAD } from "../../utils/constants";
 
-export default function ClientsPage({ contacts, search, setSearch, filterStatus, setFilterStatus, onAdd, onEdit, onDelete, onDetail, detailId, setDetailId }) {
+export default function ClientsPage({ contacts, missions, candidatures, search, setSearch, filterStatus, setFilterStatus, onAdd, onEdit, onDelete, onDetail, detailId, setDetailId }) {
+  // Compute total commissions from placed candidates per company
+  const companyRevenue = {};
+  (candidatures || []).filter(cd => cd.stage === "Placé").forEach(cd => {
+    const mission = (missions || []).find(m => m.id === cd.missionId);
+    if (mission && mission.company) {
+      const key = mission.company.toLowerCase();
+      companyRevenue[key] = (companyRevenue[key] || 0) + (mission.commission || 0);
+    }
+  });
+  const getRevenue = (c) => companyRevenue[c.company?.toLowerCase()] || 0;
+
   const filtered = contacts.filter(c => {
     const q = search.toLowerCase();
     const matchSearch = !search || c.name.toLowerCase().includes(q) || c.company.toLowerCase().includes(q) || c.email.toLowerCase().includes(q);
@@ -46,7 +57,7 @@ export default function ClientsPage({ contacts, search, setSearch, filterStatus,
                 </td>
                 <td style={{ padding: "14px 20px" }}><span style={{ fontSize: 12, color: "#64748b", background: "#f1f5f9", padding: "3px 9px", borderRadius: 6 }}>{c.sector}</span></td>
                 <td style={{ padding: "14px 20px" }}><span className="tag" style={{ background: c.status === "Client" ? "#d1fae5" : "#dbeafe", color: c.status === "Client" ? "#059669" : "#2563eb" }}>{c.status}</span></td>
-                <td style={{ padding: "14px 20px", fontSize: 13.5, fontWeight: 700, color: c.revenue > 0 ? "#0f172a" : "#cbd5e1" }}>{c.revenue > 0 ? fmtCAD(c.revenue) : "—"}</td>
+                <td style={{ padding: "14px 20px", fontSize: 13.5, fontWeight: 700, color: getRevenue(c) > 0 ? "#0f172a" : "#cbd5e1" }}>{getRevenue(c) > 0 ? fmtCAD(getRevenue(c)) : "—"}</td>
                 <td style={{ padding: "14px 20px" }} onClick={e => e.stopPropagation()}>
                   <div style={{ display: "flex", gap: 6 }}>
                     <button className="btn btn-ghost" style={{ padding: "6px 10px", fontSize: 12 }} onClick={() => onEdit(c)}>Modifier</button>
@@ -75,7 +86,7 @@ export default function ClientsPage({ contacts, search, setSearch, filterStatus,
               {detail.phone && <div style={{ fontSize: 13.5, color: "#374151" }}>Tel: {detail.phone}</div>}
               {detail.city && <div style={{ fontSize: 13.5, color: "#374151" }}>Ville: {detail.city}</div>}
               <div style={{ fontSize: 13.5, color: "#374151" }}>Secteur: {detail.sector}</div>
-              {detail.revenue > 0 && <div style={{ fontSize: 15, fontWeight: 700, color: "#059669", marginTop: 8 }}>CA: {fmtCAD(detail.revenue)}</div>}
+              {getRevenue(detail) > 0 && <div style={{ fontSize: 15, fontWeight: 700, color: "#059669", marginTop: 8 }}>CA (placements): {fmtCAD(getRevenue(detail))}</div>}
               {detail.notes && <div style={{ background: "#f8fafc", borderRadius: 10, padding: "10px 12px", marginTop: 8 }}><p style={{ fontSize: 12, fontWeight: 600, color: "#94a3b8", marginBottom: 4 }}>NOTES</p><p style={{ fontSize: 13, color: "#374151", lineHeight: 1.5 }}>{detail.notes}</p></div>}
             </div>
             <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
