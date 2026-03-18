@@ -19,6 +19,13 @@ const api = {
   post: async (url, data) => { return handleAuthResponse(await fetch(url, { method: "POST", headers: getAuthHeaders(), body: JSON.stringify(data) })); },
   put: async (url, data) => { return handleAuthResponse(await fetch(url, { method: "PUT", headers: getAuthHeaders(), body: JSON.stringify(data) })); },
   del: async (url) => { return handleAuthResponse(await fetch(url, { method: "DELETE", headers: getAuthHeaders() })); },
+  getBlob: async (url) => {
+    const headers = getAuthHeaders();
+    delete headers["Content-Type"];
+    const r = await handleAuthResponse(await fetch(url, { headers }));
+    if (!r.ok) throw new Error("Erreur téléchargement");
+    return r.blob();
+  },
 };
 
 export default api;

@@ -10,6 +10,8 @@ export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, c
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const [cvSummary, setCvSummary] = useState(null);
   const [loadingSummary, setLoadingSummary] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [previewName, setPreviewName] = useState("");
 
   const loadFiles = async () => {
     const data = await api.get(`/api/files/contact/${c.id}`);
@@ -59,8 +61,31 @@ export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, c
     await loadFiles();
   };
 
-  const downloadFile = (id, name) => {
-    window.open(`/api/files/${id}`, "_blank");
+  const downloadFile = async (id, name) => {
+    try {
+      const blob = await api.getBlob(`/api/files/${id}`);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = name || "fichier.pdf";
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch { alert("Erreur lors du téléchargement"); }
+  };
+
+  const previewFile = async (id, name) => {
+    try {
+      const blob = await api.getBlob(`/api/files/${id}`);
+      const url = URL.createObjectURL(blob);
+      setPreviewUrl(url);
+      setPreviewName(name || "Document");
+    } catch { alert("Erreur lors de la prévisualisation"); }
+  };
+
+  const closePreview = () => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(null);
+    setPreviewName("");
   };
 
   const findSuggestions = async () => {
@@ -181,6 +206,7 @@ export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, c
           <div key={f.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "#f8fafc", borderRadius: 8, marginBottom: 6 }}>
             <span style={{ fontSize: 13, color: "#0f172a", flex: 1 }}>{f.file_name}</span>
             <span style={{ fontSize: 11, color: "#94a3b8" }}>{new Date(f.created_at).toLocaleDateString("fr-CA")}</span>
+            <button className="btn btn-primary" style={{ padding: "4px 10px", fontSize: 11 }} onClick={() => previewFile(f.id, f.file_name)}>Voir</button>
             <button className="btn btn-ghost" style={{ padding: "4px 10px", fontSize: 11 }} onClick={() => downloadFile(f.id, f.file_name)}>Télécharger</button>
             <button className="btn btn-danger" style={{ padding: "4px 10px", fontSize: 11 }} onClick={() => window.confirm("Attention : cette suppression est définitive. Voulez-vous continuer ?") && deleteFile(f.id)}>Suppr.</button>
           </div>
@@ -246,6 +272,7 @@ export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, c
           <div key={f.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "#f8fafc", borderRadius: 8, marginBottom: 6 }}>
             <span style={{ fontSize: 13, color: "#0f172a", flex: 1 }}>{f.file_name}</span>
             <span style={{ fontSize: 11, color: "#94a3b8" }}>{new Date(f.created_at).toLocaleDateString("fr-CA")}</span>
+            <button className="btn btn-primary" style={{ padding: "4px 10px", fontSize: 11 }} onClick={() => previewFile(f.id, f.file_name)}>Voir</button>
             <button className="btn btn-ghost" style={{ padding: "4px 10px", fontSize: 11 }} onClick={() => downloadFile(f.id, f.file_name)}>Télécharger</button>
             <button className="btn btn-danger" style={{ padding: "4px 10px", fontSize: 11 }} onClick={() => window.confirm("Attention : cette suppression est définitive. Voulez-vous continuer ?") && deleteFile(f.id)}>Suppr.</button>
           </div>
@@ -309,6 +336,19 @@ export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, c
         <button className="btn btn-ghost" style={{ flex: 1, justifyContent: "center" }} onClick={onEdit}>Modifier</button>
         <button className="btn btn-danger" style={{ flex: 1, justifyContent: "center" }} onClick={() => window.confirm("Attention : cette suppression est définitive. Voulez-vous continuer ?") && onDelete()}>Supprimer</button>
       </div>
+
+      {/* PDF Preview Modal */}
+      {previewUrl && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={closePreview}>
+          <div style={{ background: "#fff", borderRadius: 12, width: "80vw", height: "85vh", display: "flex", flexDirection: "column", overflow: "hidden" }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 20px", borderBottom: "1px solid #e2e8f0" }}>
+              <span style={{ fontSize: 14, fontWeight: 600, color: "#0f172a" }}>{previewName}</span>
+              <button className="btn btn-ghost" style={{ padding: "4px 10px", fontSize: 12 }} onClick={closePreview}>Fermer</button>
+            </div>
+            <iframe src={previewUrl} style={{ flex: 1, border: "none" }} title="Prévisualisation PDF" />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
