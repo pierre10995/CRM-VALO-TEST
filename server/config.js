@@ -28,7 +28,7 @@ export const config = {
 
   db: {
     connectionString: process.env.DATABASE_URL,
-    ssl: isProduction ? { rejectUnauthorized: true } : false,
+    ssl: isProduction ? { rejectUnauthorized: false } : false,
   },
 
   cors: {
