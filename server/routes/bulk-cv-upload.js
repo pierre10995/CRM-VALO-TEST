@@ -6,7 +6,16 @@ import Anthropic from "@anthropic-ai/sdk";
 
 const router = Router();
 
-async function extractInfoFromCV(text) {
+// Extract name from filename pattern "VALO - Prénom Nom - CV" or similar
+function extractNameFromFileName(fileName) {
+  const base = fileName.replace(/\.pdf$/i, "").trim();
+  // Pattern: "VALO - Prénom Nom - CV" or "VALO - Prénom Nom"
+  const match = base.match(/VALO\s*[-–]\s*(.+?)\s*(?:[-–]\s*CV)?$/i);
+  if (match) return match[1].trim();
+  return "";
+}
+
+async function extractInfoFromCV(text, fileNameHint) {
   if (!process.env.ANTHROPIC_API_KEY) {
     throw new Error("Clé API Anthropic manquante");
   }
@@ -17,7 +26,7 @@ async function extractInfoFromCV(text) {
     model: "claude-sonnet-4-20250514",
     max_tokens: 500,
     messages: [{ role: "user", content: `Extrais les informations suivantes de ce CV. Réponds UNIQUEMENT en JSON valide (pas de markdown, pas de backticks).
-
+${fileNameHint ? `\nINDICE - Le fichier s'appelle "${fileNameHint}", ce qui peut aider à identifier le nom du candidat.\n` : ""}
 CONTENU DU CV:
 ${text.slice(0, 4000)}
 
@@ -63,14 +72,17 @@ router.post("/bulk-cv-upload", async (req, res) => {
           continue;
         }
 
+        // Extract name hint from filename (e.g. "VALO - Prénom Nom - CV.pdf")
+        const fileNameHint = extractNameFromFileName(fileName);
+
         // Use AI to extract info
-        const info = await extractInfoFromCV(text);
-        if (!info || !info.name) {
+        const info = await extractInfoFromCV(text, fileName);
+        if (!info || (!info.name && !fileNameHint)) {
           results.push({ fileName, status: "error", error: "Impossible d'extraire les informations" });
           continue;
         }
 
-        const name = info.name;
+        const name = info.name || fileNameHint || fileName.replace(/\.pdf$/i, "");
         const email = info.email || "";
         const phone = info.phone || "";
         const city = info.city || "";
