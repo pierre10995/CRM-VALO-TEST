@@ -20,6 +20,7 @@ import evaluationRoutes from "./server/routes/evaluations.js";
 import matchingRoutes from "./server/routes/matching.js";
 import statsRoutes from "./server/routes/stats.js";
 import cvParserRoutes from "./server/routes/cv-parser.js";
+import bulkCvRoutes from "./server/routes/bulk-cv-upload.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -48,6 +49,7 @@ app.use("/api/evaluations", evaluationRoutes);
 app.use("/api/matching", matchingRoutes);
 app.use("/api", statsRoutes);
 app.use("/api", cvParserRoutes);
+app.use("/api", bulkCvRoutes);
 
 // Serve frontend
 app.use(express.static(path.join(__dirname, "dist")));

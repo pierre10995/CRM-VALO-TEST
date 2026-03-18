@@ -2,6 +2,7 @@ import { useState } from "react";
 import { fmtCAD } from "../../utils/constants";
 import api from "../../services/api";
 import FicheCandidat from "./FicheCandidat";
+import BulkCvUpload from "../BulkCvUpload";
 
 const COLOR_PRESETS = [
   { bg: "#d1fae5", color: "#059669", name: "Vert" },
@@ -19,6 +20,7 @@ export default function CandidatsPage({ contacts, search, setSearch, onAdd, onEd
   const [showStatusManager, setShowStatusManager] = useState(false);
   const [newStatusLabel, setNewStatusLabel] = useState("");
   const [newStatusColorIdx, setNewStatusColorIdx] = useState(0);
+  const [showBulkUpload, setShowBulkUpload] = useState(false);
 
   // Build color map from dynamic statuses
   const VALIDATION_COLORS = {};
@@ -62,8 +64,20 @@ export default function CandidatsPage({ contacts, search, setSearch, onAdd, onEd
           <h1 style={{ fontSize: 26, fontWeight: 800, color: "#0f172a" }}>Candidats</h1>
           <p style={{ fontSize: 13.5, color: "#64748b", marginTop: 3 }}>{filtered.length} candidat{filtered.length > 1 ? "s" : ""}</p>
         </div>
-        <button className="btn btn-primary" onClick={onAdd}>+ Ajouter un candidat</button>
+        <div style={{ display: "flex", gap: 10 }}>
+          <button
+            className={`btn ${showBulkUpload ? "btn-ghost" : "btn-primary"}`}
+            style={{ fontSize: 13 }}
+            onClick={() => setShowBulkUpload(!showBulkUpload)}
+          >
+            {showBulkUpload ? "Fermer l'import CV" : "Import CV en masse"}
+          </button>
+          <button className="btn btn-primary" onClick={onAdd}>+ Ajouter un candidat</button>
+        </div>
       </div>
+      {showBulkUpload && (
+        <BulkCvUpload onComplete={() => { if (loadAll) loadAll(); }} />
+      )}
       <input className="input" style={{ marginBottom: 12 }} placeholder="Rechercher par nom, competences, ville..." value={search} onChange={e => setSearch(e.target.value)} />
       <div style={{ display: "flex", gap: 10, marginBottom: 20, flexWrap: "wrap" }}>
         <select className="input" style={{ width: "auto", minWidth: 180 }} value={filterSkill} onChange={e => setFilterSkill(e.target.value)}>
