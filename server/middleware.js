@@ -1,8 +1,11 @@
 import jwt from "jsonwebtoken";
 import rateLimit from "express-rate-limit";
 
-const JWT_SECRET = process.env.JWT_SECRET || "valo-crm-secret-change-me-in-production";
-const JWT_EXPIRES_IN = "8h";
+if (!process.env.JWT_SECRET) {
+  console.warn("ATTENTION: JWT_SECRET non défini. Utilisation d'un secret par défaut (NON SÉCURISÉ en production).");
+}
+const JWT_SECRET = process.env.JWT_SECRET || "valo-crm-dev-only-secret-" + Date.now();
+const JWT_EXPIRES_IN = "4h";
 
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -27,4 +30,20 @@ function authMiddleware(req, res, next) {
   }
 }
 
-export { JWT_SECRET, JWT_EXPIRES_IN, loginLimiter, authMiddleware };
+const aiLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  message: { error: "Trop de requêtes IA. Réessayez dans 1 minute." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const uploadLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 20,
+  message: { error: "Trop d'uploads. Réessayez dans 1 minute." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+export { JWT_SECRET, JWT_EXPIRES_IN, loginLimiter, aiLimiter, uploadLimiter, authMiddleware };

@@ -10,6 +10,10 @@ export default function FicheMission({ mission: m, onClose, onEdit, onDelete, ca
   const [previewUrl, setPreviewUrl] = useState(null);
   const [previewName, setPreviewName] = useState("");
 
+  useEffect(() => {
+    return () => { if (previewUrl) URL.revokeObjectURL(previewUrl); };
+  }, [previewUrl]);
+
   const loadFiles = async () => {
     const data = await api.get(`/api/files/mission/${m.id}`);
     setFiles(data);

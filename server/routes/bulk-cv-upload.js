@@ -57,6 +57,9 @@ router.post("/bulk-cv-upload", async (req, res) => {
     if (!files || !Array.isArray(files) || files.length === 0) {
       return res.status(400).json({ error: "Aucun fichier fourni" });
     }
+    if (files.length > 50) {
+      return res.status(400).json({ error: "Maximum 50 fichiers par import" });
+    }
 
     const results = [];
 
@@ -120,7 +123,7 @@ router.post("/bulk-cv-upload", async (req, res) => {
         results.push({ fileName, status: "created", contact: fmtContact(contact) });
       } catch (fileErr) {
         console.error(`Error processing ${fileName}:`, fileErr.message);
-        results.push({ fileName, status: "error", error: fileErr.message });
+        results.push({ fileName, status: "error", error: "Erreur lors du traitement du fichier" });
       }
     }
 

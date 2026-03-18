@@ -13,6 +13,10 @@ export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, c
   const [previewUrl, setPreviewUrl] = useState(null);
   const [previewName, setPreviewName] = useState("");
 
+  useEffect(() => {
+    return () => { if (previewUrl) URL.revokeObjectURL(previewUrl); };
+  }, [previewUrl]);
+
   const loadFiles = async () => {
     const data = await api.get(`/api/files/contact/${c.id}`);
     setFiles(data);

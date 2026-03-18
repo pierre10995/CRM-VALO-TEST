@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { fmtContact, fmtMission, fmtCandidature, fmtActivity, fmtPlacement, fmtEvaluation } from "../server/formatters.js";
+import { fmtContact, fmtMission, fmtCandidature, fmtActivity, fmtPlacement, fmtEvaluation, fmtObjective } from "../server/formatters.js";
 
 describe("fmtContact", () => {
   it("formats a full contact row", () => {
@@ -31,6 +31,27 @@ describe("fmtContact", () => {
     expect(result.salaryExpectation).toBe(0);
     expect(result.validationStatus).toBe("");
     expect(result.targetPosition).toBe("");
+  });
+
+  it("converts string numbers correctly", () => {
+    const row = {
+      id: 3, name: "X", company: "", email: "", phone: "", status: "Candidat",
+      sector: "", revenue: "0", notes: "", salary_expectation: "abc",
+      created_at: "2025-01-01",
+    };
+    const result = fmtContact(row);
+    expect(result.revenue).toBe(0);
+    expect(result.salaryExpectation).toBe(0); // NaN -> 0 via || 0
+  });
+
+  it("does not mutate original row", () => {
+    const row = {
+      id: 4, name: "Original", company: "", email: "", phone: "", status: "Candidat",
+      sector: "", revenue: "100", notes: "", created_at: "2025-01-01",
+    };
+    const original = { ...row };
+    fmtContact(row);
+    expect(row).toEqual(original);
   });
 });
 
@@ -66,6 +87,16 @@ describe("fmtMission", () => {
     expect(result.workMode).toBe("");
     expect(result.candidatureCount).toBe(0);
   });
+
+  it("handles non-numeric candidature_count", () => {
+    const row = {
+      id: 12, title: "T", client_contact_id: 1, company: "X",
+      status: "N", assigned_to: 1, created_at: "2025-01-01",
+      candidature_count: "abc",
+    };
+    const result = fmtMission(row);
+    expect(result.candidatureCount).toBe(0);
+  });
 });
 
 describe("fmtCandidature", () => {
@@ -83,6 +114,18 @@ describe("fmtCandidature", () => {
     expect(result.candidateName).toBe("Jean");
     expect(result.missionTitle).toBe("Dev");
   });
+
+  it("handles missing optional fields", () => {
+    const row = {
+      id: 2, candidate_id: 1, mission_id: 1, stage: "Nouveau",
+      created_at: "2025-01-01", updated_at: "2025-01-01",
+    };
+    const result = fmtCandidature(row);
+    expect(result.rating).toBe(0);
+    expect(result.notes).toBe("");
+    expect(result.candidateName).toBe("");
+    expect(result.missionTitle).toBe("");
+  });
 });
 
 describe("fmtActivity", () => {
@@ -96,6 +139,48 @@ describe("fmtActivity", () => {
     expect(result.type).toBe("Appel");
     expect(result.contactName).toBe("Jean");
     expect(result.completed).toBe(false);
+  });
+
+  it("handles missing optional fields", () => {
+    const row = {
+      id: 2, contact_id: 1, user_id: 1, type: "Email",
+      subject: "Test", due_date: null, completed: true, created_at: "2025-01-01",
+    };
+    const result = fmtActivity(row);
+    expect(result.description).toBe("");
+    expect(result.contactName).toBe("");
+    expect(result.userName).toBe("");
+  });
+});
+
+describe("fmtObjective", () => {
+  it("formats an objective row", () => {
+    const row = {
+      id: 1, user_id: 2, period: "mensuel", year: 2025, month: 3,
+      fiscal_year_id: 1, target_new_clients: 5, target_ca: "50000",
+      target_total: "100000", notes: "Q1", created_at: "2025-01-01",
+      user_name: "Pierre", fiscal_year_label: "2025",
+    };
+    const result = fmtObjective(row);
+    expect(result.period).toBe("mensuel");
+    expect(result.targetNewClients).toBe(5);
+    expect(result.targetCA).toBe(50000);
+    expect(result.targetTotal).toBe(100000);
+    expect(result.userName).toBe("Pierre");
+  });
+
+  it("handles missing optional fields", () => {
+    const row = {
+      id: 2, user_id: 1, period: "annuel", year: 2025, month: null,
+      created_at: "2025-01-01",
+    };
+    const result = fmtObjective(row);
+    expect(result.targetNewClients).toBe(0);
+    expect(result.targetCA).toBe(0);
+    expect(result.targetTotal).toBe(0);
+    expect(result.notes).toBe("");
+    expect(result.userName).toBe("");
+    expect(result.fiscalYearLabel).toBe("");
   });
 });
 
@@ -115,6 +200,20 @@ describe("fmtPlacement", () => {
     expect(result.probationValidated).toBe(false);
     expect(result.candidateName).toBe("Jean");
   });
+
+  it("handles missing boolean fields", () => {
+    const row = {
+      id: 2, candidature_id: 1, candidate_id: 1, mission_id: 1,
+      start_date: "2025-01-01", probation_date: "2025-04-01",
+      created_at: "2025-01-01",
+    };
+    const result = fmtPlacement(row);
+    expect(result.startInvoiceSent).toBe(false);
+    expect(result.startInvoicePaid).toBe(false);
+    expect(result.probationValidated).toBe(false);
+    expect(result.company).toBe("");
+    expect(result.notes).toBe("");
+  });
 });
 
 describe("fmtEvaluation", () => {
@@ -129,5 +228,18 @@ describe("fmtEvaluation", () => {
     expect(result.score).toBe(85);
     expect(result.positives).toBe("Bon profil");
     expect(result.candidateName).toBe("Jean");
+  });
+
+  it("handles missing optional fields", () => {
+    const row = {
+      id: 2, candidate_id: 1, mission_id: 1, score: 0,
+      created_at: "2025-01-01",
+    };
+    const result = fmtEvaluation(row);
+    expect(result.score).toBe(0);
+    expect(result.positives).toBe("");
+    expect(result.negatives).toBe("");
+    expect(result.summary).toBe("");
+    expect(result.candidateName).toBe("");
   });
 });
