@@ -2,57 +2,44 @@ import { Router } from "express";
 import { pool } from "../db.js";
 import { fmtContact } from "../formatters.js";
 import pdfParse from "pdf-parse/lib/pdf-parse.js";
+import Anthropic from "@anthropic-ai/sdk";
 
 const router = Router();
 
-function extractEmail(text) {
-  const match = text.match(/[\w.+-]+@[\w.-]+\.\w{2,}/);
-  return match ? match[0] : "";
-}
+async function extractInfoFromCV(text) {
+  if (!process.env.ANTHROPIC_API_KEY) {
+    throw new Error("Clé API Anthropic manquante");
+  }
 
-function extractPhone(text) {
-  const patterns = [
-    /\+?\d[\d\s\-().]{7,}\d/,
-    /\(\d{3}\)\s?\d{3}[.-]\d{4}/,
-  ];
-  for (const p of patterns) {
-    const match = text.match(p);
-    if (match) return match[0].trim();
-  }
-  return "";
-}
+  const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-function extractName(text) {
-  const lines = text.split(/\n/).map(l => l.trim()).filter(Boolean);
-  for (const line of lines.slice(0, 5)) {
-    if (line.includes("@") || line.match(/\d{3}/) || line.includes("http") || line.includes("www")) continue;
-    const cleaned = line.replace(/[,|·•:]/g, " ").trim();
-    const words = cleaned.split(/\s+/).filter(w => /^[A-Za-zÀ-ÖØ-öø-ÿ'-]+$/.test(w));
-    if (words.length >= 2 && words.length <= 4) {
-      return words.join(" ");
-    }
-  }
-  return "";
-}
+  const message = await anthropic.messages.create({
+    model: "claude-sonnet-4-20250514",
+    max_tokens: 500,
+    messages: [{ role: "user", content: `Extrais les informations suivantes de ce CV. Réponds UNIQUEMENT en JSON valide (pas de markdown, pas de backticks).
 
-function formatName(name) {
-  const parts = name.split(/\s+/);
-  let firstName = "", lastName = "";
-  if (parts.length >= 2) {
-    if (parts[0] === parts[0].toUpperCase() && parts[0].length > 1) {
-      lastName = parts[0];
-      firstName = parts.slice(1).join(" ");
-    } else {
-      firstName = parts[0];
-      lastName = parts.slice(1).join(" ");
-    }
-  } else {
-    firstName = name;
+CONTENU DU CV:
+${text.slice(0, 4000)}
+
+Réponds avec ce format exact:
+{
+  "name": "<Prénom Nom complet>",
+  "email": "<adresse email ou vide>",
+  "phone": "<numéro de téléphone ou vide>",
+  "city": "<ville de résidence ou vide>",
+  "target_position": "<poste actuel ou recherché ou vide>",
+  "skills": "<liste de compétences clés séparées par des virgules, max 8>",
+  "linkedin": "<URL LinkedIn si présente ou vide>"
+}` }]
+  });
+
+  const text2 = message.content[0].text.trim();
+  try {
+    return JSON.parse(text2);
+  } catch {
+    const m = text2.match(/\{[\s\S]*\}/);
+    return m ? JSON.parse(m[0]) : null;
   }
-  if (firstName && lastName) {
-    return `${firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase()} ${lastName.charAt(0).toUpperCase() + lastName.slice(1).toLowerCase()}`;
-  }
-  return name;
 }
 
 router.post("/bulk-cv-upload", async (req, res) => {
@@ -71,12 +58,27 @@ router.post("/bulk-cv-upload", async (req, res) => {
         const pdf = await pdfParse(buffer);
         const text = pdf.text || "";
 
-        const rawName = extractName(text);
-        const name = formatName(rawName) || fileName.replace(/\.pdf$/i, "");
-        const email = extractEmail(text);
-        const phone = extractPhone(text);
+        if (!text.trim()) {
+          results.push({ fileName, status: "error", error: "PDF sans texte exploitable" });
+          continue;
+        }
 
-        // Check for duplicate by email (if we found one)
+        // Use AI to extract info
+        const info = await extractInfoFromCV(text);
+        if (!info || !info.name) {
+          results.push({ fileName, status: "error", error: "Impossible d'extraire les informations" });
+          continue;
+        }
+
+        const name = info.name;
+        const email = info.email || "";
+        const phone = info.phone || "";
+        const city = info.city || "";
+        const targetPosition = info.target_position || "";
+        const skills = info.skills || "";
+        const linkedin = info.linkedin || "";
+
+        // Check for duplicate by email
         if (email) {
           const { rows: existing } = await pool.query(
             "SELECT id FROM contacts WHERE LOWER(email) = LOWER($1)",
@@ -92,7 +94,7 @@ router.post("/bulk-cv-upload", async (req, res) => {
         const { rows: contactRows } = await pool.query(
           `INSERT INTO contacts (name, company, email, phone, status, sector, revenue, notes, city, linkedin, skills, salary_expectation, availability, validation_status, target_position)
            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) RETURNING *`,
-          [name, "", email, phone, "Candidat", "Tech", 0, "", "", "", "", 0, "", "", ""]
+          [name, "", email, phone, "Candidat", "", 0, "", city, linkedin, skills, 0, "", "", targetPosition]
         );
         const contact = contactRows[0];
 
