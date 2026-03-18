@@ -1,11 +1,15 @@
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
+import cookieParser from "cookie-parser";
 import path from "path";
 import { fileURLToPath } from "url";
 
+import { config } from "./server/config.js";
 import { initDB } from "./server/db.js";
 import { authMiddleware, aiLimiter, uploadLimiter } from "./server/middleware.js";
+import { errorMiddleware } from "./server/helpers/errors.js";
+import { logger } from "./server/helpers/logger.js";
 
 // Route modules
 import authRoutes from "./server/routes/auth.js";
@@ -25,19 +29,28 @@ import bulkCvRoutes from "./server/routes/bulk-cv-upload.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
-const PORT = process.env.PORT || 3000;
+
+// ─── Security & parsing middleware ───────────────────────────────────────────
 
 app.use(helmet({ contentSecurityPolicy: false }));
-app.use(cors());
-app.use(express.json({ limit: "10mb" }));
+app.use(cors({
+  origin: config.cors.origins.length > 0 ? config.cors.origins : true,
+  credentials: true,
+}));
+app.use(cookieParser());
+app.use(express.json({ limit: config.limits.jsonPayload }));
 
-// Protect all /api/ routes except auth endpoints
+// ─── Auth guard for /api routes ──────────────────────────────────────────────
+
+const publicPaths = ["/login", "/logout", "/forgot-password", "/reset-password"];
+
 app.use("/api", (req, res, next) => {
-  if (req.path === "/login" || req.path === "/forgot-password" || req.path === "/reset-password") return next();
+  if (publicPaths.includes(req.path)) return next();
   authMiddleware(req, res, next);
 });
 
-// Mount route modules
+// ─── Routes ──────────────────────────────────────────────────────────────────
+
 app.use("/api", authRoutes);
 app.use("/api/contacts", contactRoutes);
 app.use("/api/missions", missionRoutes);
@@ -53,20 +66,26 @@ app.use("/api", statsRoutes);
 app.use("/api", cvParserRoutes);
 app.use("/api", uploadLimiter, bulkCvRoutes);
 
-// Serve frontend
+// ─── Serve frontend ──────────────────────────────────────────────────────────
+
 app.use(express.static(path.join(__dirname, "dist")));
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "dist", "index.html"));
 });
 
-// Start
+// ─── Global error handler (must be last) ─────────────────────────────────────
+
+app.use(errorMiddleware);
+
+// ─── Start ───────────────────────────────────────────────────────────────────
+
 initDB()
   .then(() => {
-    app.listen(PORT, "0.0.0.0", () => {
-      console.log(`VALO Recrutement CRM running on port ${PORT}`);
+    app.listen(config.port, "0.0.0.0", () => {
+      logger.info(`VALO CRM running`, { port: config.port, env: config.env });
     });
   })
   .catch((err) => {
-    console.error("DB init failed:", err);
+    logger.error("DB init failed", { error: err.message });
     process.exit(1);
   });

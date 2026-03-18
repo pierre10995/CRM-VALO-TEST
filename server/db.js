@@ -1,9 +1,10 @@
 import pg from "pg";
 import bcrypt from "bcryptjs";
+import { config } from "./config.js";
 
 const pool = new pg.Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
+  connectionString: config.db.connectionString,
+  ssl: config.db.ssl,
 });
 
 async function initDB() {
