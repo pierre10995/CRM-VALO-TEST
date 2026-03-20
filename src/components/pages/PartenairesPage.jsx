@@ -7,15 +7,22 @@ export default function PartenairesPage({ missions }) {
   const [form, setForm] = useState({});
   const [selectedPartner, setSelectedPartner] = useState(null);
   const [affiliatedMissions, setAffiliatedMissions] = useState([]);
+  const [submissions, setSubmissions] = useState([]);
   const [search, setSearch] = useState("");
   const [error, setError] = useState("");
+  const [tab, setTab] = useState("notifications"); // "notifications" | "partners"
 
   const loadPartners = async () => {
     const data = await api.get("/api/partners");
     setPartners(data);
   };
 
-  useEffect(() => { loadPartners(); }, []);
+  const loadSubmissions = async () => {
+    const data = await api.get("/api/partners/submissions");
+    setSubmissions(data);
+  };
+
+  useEffect(() => { loadPartners(); loadSubmissions(); }, []);
 
   const handleSave = async () => {
     setError("");
@@ -70,19 +77,146 @@ export default function PartenairesPage({ missions }) {
     !affiliatedMissions.some(am => am.id === m.id)
   );
 
+  const handleDownloadCv = async (fileId, candidateName) => {
+    try {
+      const blob = await api.getBlob(`/api/files/${fileId}`);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `CV-${candidateName}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch { /* ignore */ }
+  };
+
+  const newSubmissionsCount = submissions.filter(s => s.stage === "Soumis").length;
+
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
         <div>
           <h2 style={{ fontSize: 20, fontWeight: 700, color: "#0f172a", margin: 0 }}>Partenaires externes</h2>
-          <p style={{ fontSize: 13, color: "#64748b", margin: "4px 0 0" }}>Gérez les recruteurs partenaires et leurs missions affiliées.</p>
+          <p style={{ fontSize: 13, color: "#64748b", margin: "4px 0 0" }}>Gérez les recruteurs partenaires et consultez les candidats proposés.</p>
         </div>
-        <button onClick={() => { setModal("create"); setForm({ name: "", email: "", password: "", company: "", phone: "" }); setError(""); }}
-          className="btn btn-primary" style={{ padding: "10px 20px", fontSize: 13.5 }}>
-          Nouveau partenaire
+        {tab === "partners" && (
+          <button onClick={() => { setModal("create"); setForm({ name: "", email: "", password: "", company: "", phone: "" }); setError(""); }}
+            className="btn btn-primary" style={{ padding: "10px 20px", fontSize: 13.5 }}>
+            Nouveau partenaire
+          </button>
+        )}
+      </div>
+
+      {/* Tabs */}
+      <div style={{ display: "flex", gap: 4, marginBottom: 20, background: "#f1f5f9", borderRadius: 12, padding: 4, width: "fit-content" }}>
+        <button
+          onClick={() => setTab("notifications")}
+          style={{
+            padding: "8px 18px", borderRadius: 10, border: "none", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit",
+            background: tab === "notifications" ? "white" : "transparent",
+            color: tab === "notifications" ? "#0f172a" : "#64748b",
+            boxShadow: tab === "notifications" ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
+            position: "relative",
+          }}
+        >
+          Candidats proposés
+          {newSubmissionsCount > 0 && (
+            <span style={{ position: "absolute", top: -4, right: -4, background: "#dc2626", color: "white", fontSize: 10, fontWeight: 700, borderRadius: 10, padding: "1px 6px", minWidth: 18, textAlign: "center" }}>
+              {newSubmissionsCount}
+            </span>
+          )}
+        </button>
+        <button
+          onClick={() => setTab("partners")}
+          style={{
+            padding: "8px 18px", borderRadius: 10, border: "none", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit",
+            background: tab === "partners" ? "white" : "transparent",
+            color: tab === "partners" ? "#0f172a" : "#64748b",
+            boxShadow: tab === "partners" ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
+          }}
+        >
+          Gestion partenaires ({partners.length})
         </button>
       </div>
 
+      {/* ─── Notifications tab ─── */}
+      {tab === "notifications" && (
+        <div>
+          {submissions.length === 0 ? (
+            <div className="card" style={{ textAlign: "center", padding: 40 }}>
+              <div style={{ fontSize: 16, fontWeight: 600, color: "#475569" }}>Aucune soumission de partenaire</div>
+              <div style={{ fontSize: 13, color: "#94a3b8", marginTop: 6 }}>Les candidats proposés par vos partenaires apparaitront ici.</div>
+            </div>
+          ) : (
+            <div style={{ display: "grid", gap: 12 }}>
+              {submissions.map(s => (
+                <div key={s.id} className="card" style={{ padding: "18px 20px", borderLeft: s.stage === "Soumis" ? "4px solid #f59e0b" : "4px solid #10b981" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <div style={{ width: 38, height: 38, borderRadius: 10, background: "#f0fdf4", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: 700, color: "#059669" }}>
+                        {s.candidateName?.[0] || "?"}
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 15, fontWeight: 700, color: "#0f172a" }}>{s.candidateName}</div>
+                        <div style={{ fontSize: 12, color: "#64748b" }}>
+                          Proposé par <span style={{ fontWeight: 600, color: "#059669" }}>{s.partnerName}</span>
+                          {s.partnerCompany ? ` (${s.partnerCompany})` : ""}
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{
+                        padding: "3px 10px", borderRadius: 8, fontSize: 11, fontWeight: 600,
+                        background: s.stage === "Soumis" ? "#fef3c7" : s.stage === "Placé" ? "#d1fae5" : "#dbeafe",
+                        color: s.stage === "Soumis" ? "#d97706" : s.stage === "Placé" ? "#059669" : "#2563eb",
+                      }}>
+                        {s.stage}
+                      </span>
+                      <span style={{ fontSize: 11, color: "#94a3b8" }}>
+                        {new Date(s.createdAt).toLocaleDateString("fr-CA")} à {new Date(s.createdAt).toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Info grid */}
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 8, marginBottom: 10, padding: "10px 12px", background: "#f8fafc", borderRadius: 10 }}>
+                    {s.candidateEmail && <InfoField label="Email" value={s.candidateEmail} />}
+                    {s.candidatePhone && <InfoField label="Téléphone" value={s.candidatePhone} />}
+                    {s.candidateCity && <InfoField label="Ville" value={s.candidateCity} />}
+                    {s.candidateSkills && <InfoField label="Compétences" value={s.candidateSkills} />}
+                    <InfoField label="Mission" value={`${s.missionTitle} — ${s.missionCompany}`} />
+                  </div>
+
+                  {/* Notes / summary */}
+                  {s.notes && (
+                    <div style={{ padding: "10px 12px", background: "#fffbeb", borderRadius: 10, marginBottom: 10 }}>
+                      <div style={{ fontSize: 11, fontWeight: 600, color: "#92400e", textTransform: "uppercase", marginBottom: 3 }}>Résumé du partenaire</div>
+                      <div style={{ fontSize: 13, color: "#451a03", lineHeight: 1.5, whiteSpace: "pre-wrap" }}>{s.notes}</div>
+                    </div>
+                  )}
+
+                  {/* CV download */}
+                  {s.cvFileId && (
+                    <button
+                      onClick={() => handleDownloadCv(s.cvFileId, s.candidateName)}
+                      style={{
+                        display: "inline-flex", alignItems: "center", gap: 6,
+                        padding: "7px 14px", background: "#dbeafe", border: "none", borderRadius: 10,
+                        fontSize: 12.5, fontWeight: 600, color: "#1d4ed8", cursor: "pointer", fontFamily: "inherit",
+                      }}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                      Télécharger le CV
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ─── Partners management tab ─── */}
+      {tab === "partners" && (<>
       <input
         value={search} onChange={e => setSearch(e.target.value)}
         placeholder="Rechercher un partenaire..."
@@ -203,6 +337,16 @@ export default function PartenairesPage({ missions }) {
           </div>
         </div>
       )}
+      </>)}
+    </div>
+  );
+}
+
+function InfoField({ label, value }) {
+  return (
+    <div>
+      <div style={{ fontSize: 10.5, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase" }}>{label}</div>
+      <div style={{ fontSize: 13, color: "#0f172a", marginTop: 1 }}>{value}</div>
     </div>
   );
 }

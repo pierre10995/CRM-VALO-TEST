@@ -55,6 +55,35 @@ router.delete("/:id", asyncHandler(async (req, res) => {
   res.json({ ok: true });
 }));
 
+// ─── Partner submissions (notifications) ────────────────────────────────────
+
+router.get("/submissions", asyncHandler(async (req, res) => {
+  const { rows } = await pool.query(`
+    SELECT cd.id, cd.candidate_id, cd.mission_id, cd.stage, cd.notes, cd.created_at,
+           c.name as candidate_name, c.email as candidate_email, c.phone as candidate_phone,
+           c.skills as candidate_skills, c.city as candidate_city,
+           m.title as mission_title, m.company as mission_company,
+           p.id as partner_id, p.name as partner_name, p.company as partner_company,
+           (SELECT f.id FROM files f WHERE f.contact_id = cd.candidate_id AND f.file_type = 'cv' ORDER BY f.created_at DESC LIMIT 1) as cv_file_id
+    FROM candidatures cd
+    INNER JOIN partners p ON cd.partner_id = p.id
+    LEFT JOIN contacts c ON cd.candidate_id = c.id
+    LEFT JOIN missions m ON cd.mission_id = m.id
+    ORDER BY cd.created_at DESC
+    LIMIT 100
+  `);
+  res.json(rows.map(r => ({
+    id: r.id, candidateId: r.candidate_id, missionId: r.mission_id,
+    stage: r.stage, notes: r.notes || "", createdAt: r.created_at,
+    candidateName: r.candidate_name || "", candidateEmail: r.candidate_email || "",
+    candidatePhone: r.candidate_phone || "", candidateSkills: r.candidate_skills || "",
+    candidateCity: r.candidate_city || "",
+    missionTitle: r.mission_title || "", missionCompany: r.mission_company || "",
+    partnerId: r.partner_id, partnerName: r.partner_name || "", partnerCompany: r.partner_company || "",
+    cvFileId: r.cv_file_id || null,
+  })));
+}));
+
 // ─── Mission affiliations ───────────────────────────────────────────────────
 
 router.get("/:id/missions", asyncHandler(async (req, res) => {
