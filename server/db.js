@@ -211,6 +211,32 @@ async function initDB() {
       );
     `);
 
+    // ─── Partners ───────────────────────────────────────────────────────────────
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS partners (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        email VARCHAR(100) UNIQUE NOT NULL,
+        password VARCHAR(100) NOT NULL,
+        company VARCHAR(100) DEFAULT '',
+        phone VARCHAR(50) DEFAULT '',
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS partner_missions (
+        id SERIAL PRIMARY KEY,
+        partner_id INTEGER REFERENCES partners(id) ON DELETE CASCADE,
+        mission_id INTEGER REFERENCES missions(id) ON DELETE CASCADE,
+        created_at TIMESTAMP DEFAULT NOW(),
+        UNIQUE(partner_id, mission_id)
+      );
+    `);
+
+    await client.query(`ALTER TABLE candidatures ADD COLUMN IF NOT EXISTS partner_id INTEGER REFERENCES partners(id) ON DELETE SET NULL`);
+
     // Seed tracking
     await client.query(`CREATE TABLE IF NOT EXISTS seed_log (key VARCHAR(50) PRIMARY KEY, done_at TIMESTAMP DEFAULT NOW())`);
     const alreadySeeded = async (key) => {

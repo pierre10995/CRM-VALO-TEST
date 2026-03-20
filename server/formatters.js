@@ -34,6 +34,15 @@ export function fmtCandidature(r) {
     candidateName: r.candidate_name || "", candidateEmail: r.candidate_email || "",
     candidatePhone: r.candidate_phone || "", candidateSkills: r.candidate_skills || "",
     missionTitle: r.mission_title || "", missionCompany: r.mission_company || "",
+    partnerId: r.partner_id || null, partnerName: r.partner_name || "",
+  };
+}
+
+export function fmtPartner(r) {
+  return {
+    id: r.id, name: r.name, email: r.email, company: r.company || "",
+    phone: r.phone || "", createdAt: r.created_at,
+    missionCount: parseInt(r.mission_count) || 0,
   };
 }
 

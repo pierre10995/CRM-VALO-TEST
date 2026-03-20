@@ -194,3 +194,40 @@ export const validationStatusSchema = z.object({
 export const cvSummarySchema = z.object({
   candidateId: z.coerce.number().int().positive("Candidat requis"),
 });
+
+// ─── Partners ────────────────────────────────────────────────────────────
+
+export const partnerCreateSchema = z.object({
+  name: z.string().min(1, "Nom requis").max(100),
+  email: z.string().email("Email invalide").max(100),
+  password: z.string().min(6, "Mot de passe min. 6 caractères").max(200),
+  company: z.string().max(100).default(""),
+  phone: z.string().max(50).default(""),
+});
+
+export const partnerUpdateSchema = z.object({
+  name: z.string().min(1, "Nom requis").max(100),
+  email: z.string().email("Email invalide").max(100),
+  company: z.string().max(100).default(""),
+  phone: z.string().max(50).default(""),
+  password: z.string().min(6).max(200).optional(),
+});
+
+export const partnerLoginSchema = z.object({
+  email: z.string().email("Email requis").max(100),
+  password: z.string().min(1, "Mot de passe requis").max(200),
+});
+
+export const partnerSubmitSchema = z.object({
+  missionId: z.coerce.number().int().positive("Mission requise"),
+  name: z.string().min(1, "Nom du candidat requis").max(100),
+  email: z.string().max(100).default(""),
+  phone: z.string().max(50).default(""),
+  summary: z.string().max(5000).default(""),
+  fileName: z.string().min(1, "Nom du fichier requis").max(200),
+  fileData: z.string().min(1, "CV requis"),
+});
+
+export const partnerMissionSchema = z.object({
+  missionId: z.coerce.number().int().positive("Mission requise"),
+});

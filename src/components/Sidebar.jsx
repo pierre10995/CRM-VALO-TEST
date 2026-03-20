@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { id: "placements", label: "Suivi Placements", icon: "M9 12l2 2 4-4M20 12a8 8 0 1 1-16 0 8 8 0 0 1 16 0z" },
   { id: "revenue", label: "Chiffre d'affaires", icon: "M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" },
   { id: "objectifs", label: "Objectifs", icon: "M13 10V3L4 14h7v7l9-11h-7z" },
+  { id: "partenaires", label: "Partenaires", icon: "M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M20 8v6M23 11h-6M12.5 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0z" },
 ];
 
 export default function Sidebar({ activeTab, setActiveTab, currentUser, onLogout, setDetailId, setSearch, setFilterStatus }) {

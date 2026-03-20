@@ -18,6 +18,10 @@ import EvaluationPage from "./components/pages/EvaluationPage";
 import RevenuePage from "./components/pages/RevenuePage";
 import PlacementsPage from "./components/pages/PlacementsPage";
 import ObjectifsPage from "./components/pages/ObjectifsPage";
+import PartenairesPage from "./components/pages/PartenairesPage";
+
+// Partner portal
+import PartnerPortal from "./components/partner/PartnerPortal";
 
 // Forms
 import ClientForm from "./components/forms/ClientForm";
@@ -81,6 +85,7 @@ export default function CRM() {
   useEffect(() => { if (authed) loadAll(); }, [authed]);
 
   const handleLogin = async () => {
+    // Try internal user login first
     const res = await fetch("/api/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(loginForm) });
     if (res.ok) {
       const user = await res.json();
@@ -88,10 +93,20 @@ export default function CRM() {
       setCurrentUser(user); setAuthed(true);
       localStorage.setItem("crm_user", JSON.stringify(user));
       setLoginError("");
-    } else {
-      const err = await res.json();
-      setLoginError(err.error);
+      return;
     }
+    // Try partner login (using login field as email)
+    const partnerRes = await fetch("/api/partner/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: loginForm.login, password: loginForm.password }) });
+    if (partnerRes.ok) {
+      const partner = await partnerRes.json();
+      localStorage.setItem("crm_token", partner.token);
+      setCurrentUser(partner); setAuthed(true);
+      localStorage.setItem("crm_user", JSON.stringify(partner));
+      setLoginError("");
+      return;
+    }
+    const err = await res.json().catch(() => ({ error: "Identifiant ou mot de passe incorrect." }));
+    setLoginError(err.error);
   };
 
   const handleLogout = () => {
@@ -180,6 +195,16 @@ export default function CRM() {
 
   if (!authed) return <LoginScreen form={loginForm} setForm={setLoginForm} showPwd={showPwd} setShowPwd={setShowPwd} error={loginError} onLogin={handleLogin} />;
 
+  // Partner portal
+  if (currentUser?.role === "partner") {
+    return (
+      <>
+        <style>{GLOBAL_STYLES}</style>
+        <PartnerPortal partner={currentUser} onLogout={handleLogout} />
+      </>
+    );
+  }
+
   return (
     <div style={{ display: "flex", height: "100vh", fontFamily: "'Sora', sans-serif", background: "#f0f4ff", overflow: "hidden" }}>
       <style>{GLOBAL_STYLES}</style>
@@ -198,6 +223,7 @@ export default function CRM() {
         {activeTab === "placements" && <PlacementsPage candidatures={candidatures} candidates={candidates} missions={missions} />}
         {activeTab === "revenue" && <RevenuePage contacts={contacts} missions={missions} candidatures={candidatures} users={users} fiscalYears={fiscalYears} loadAll={loadAll} />}
         {activeTab === "objectifs" && <ObjectifsPage contacts={contacts} missions={missions} candidatures={candidatures} users={users} fiscalYears={fiscalYears} loadAll={loadAll} />}
+        {activeTab === "partenaires" && <PartenairesPage missions={missions} />}
       </main>
 
       {/* Modals */}

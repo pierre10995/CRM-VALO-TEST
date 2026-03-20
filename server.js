@@ -26,6 +26,9 @@ import matchingRoutes from "./server/routes/matching.js";
 import statsRoutes from "./server/routes/stats.js";
 import cvParserRoutes from "./server/routes/cv-parser.js";
 import bulkCvRoutes from "./server/routes/bulk-cv-upload.js";
+import partnerAuthRoutes from "./server/routes/partner-auth.js";
+import partnerRoutes from "./server/routes/partner.js";
+import partnersAdminRoutes from "./server/routes/partners-admin.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -42,16 +45,21 @@ app.use(express.json({ limit: config.limits.jsonPayload }));
 
 // ─── Auth guard for /api routes ──────────────────────────────────────────────
 
-const publicPaths = ["/login", "/logout", "/forgot-password", "/reset-password"];
+const publicPaths = ["/login", "/logout", "/forgot-password", "/reset-password", "/partner/login", "/partner/logout"];
 
 app.use("/api", (req, res, next) => {
   if (publicPaths.includes(req.path)) return next();
+  // Partner-facing routes handle their own auth via partnerAuthMiddleware
+  if (req.path.startsWith("/partner/") && !req.path.startsWith("/partners")) return next();
   authMiddleware(req, res, next);
 });
 
 // ─── Routes ──────────────────────────────────────────────────────────────────
 
 app.use("/api", authRoutes);
+app.use("/api", partnerAuthRoutes);
+app.use("/api/partner", partnerRoutes);
+app.use("/api/partners", partnersAdminRoutes);
 app.use("/api/contacts", contactRoutes);
 app.use("/api/missions", missionRoutes);
 app.use("/api/candidatures", candidatureRoutes);

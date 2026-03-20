@@ -10,10 +10,12 @@ const router = Router();
 router.get("/", asyncHandler(async (req, res) => {
   const { missionId, candidateId } = req.query;
   let q = `SELECT cd.*, c.name as candidate_name, c.email as candidate_email, c.phone as candidate_phone, c.skills as candidate_skills,
-           m.title as mission_title, m.company as mission_company
+           m.title as mission_title, m.company as mission_company,
+           p.name as partner_name
            FROM candidatures cd
            LEFT JOIN contacts c ON cd.candidate_id = c.id
-           LEFT JOIN missions m ON cd.mission_id = m.id`;
+           LEFT JOIN missions m ON cd.mission_id = m.id
+           LEFT JOIN partners p ON cd.partner_id = p.id`;
   const params = [];
   if (missionId) { q += " WHERE cd.mission_id = $1"; params.push(missionId); }
   else if (candidateId) { q += " WHERE cd.candidate_id = $1"; params.push(candidateId); }

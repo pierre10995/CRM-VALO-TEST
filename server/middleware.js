@@ -70,6 +70,27 @@ function signTokenAndSetCookie(res, payload) {
   return token;
 }
 
+function partnerAuthMiddleware(req, res, next) {
+  const token = req.cookies?.[COOKIE_NAME]
+    || (req.headers.authorization?.startsWith("Bearer ") ? req.headers.authorization.split(" ")[1] : null);
+
+  if (!token) {
+    return res.status(401).json({ error: "Non autorisé" });
+  }
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    if (decoded.role !== "partner") {
+      return res.status(403).json({ error: "Accès réservé aux partenaires" });
+    }
+    req.partner = decoded;
+    next();
+  } catch {
+    res.clearCookie(COOKIE_NAME);
+    return res.status(401).json({ error: "Session expirée, veuillez vous reconnecter" });
+  }
+}
+
 export {
   JWT_SECRET,
   JWT_EXPIRES_IN,
@@ -77,5 +98,6 @@ export {
   aiLimiter,
   uploadLimiter,
   authMiddleware,
+  partnerAuthMiddleware,
   signTokenAndSetCookie,
 };
