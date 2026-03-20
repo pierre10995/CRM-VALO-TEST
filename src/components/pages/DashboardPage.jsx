@@ -25,8 +25,8 @@ export default function DashboardPage({ stats, activities, contacts, missions, c
 
   const visibleReminders = reminders.filter(r => !dismissedKeys.includes(reminderKey(r)));
 
-  // Partner proposals: only show "Proposition partenaire" stage (not yet accepted/archived)
-  const pendingPartnerProposals = partnerSubmissions.filter(s => s.stage === "Proposition partenaire");
+  // Partner proposals: only show "En attente" stage (not yet accepted/archived)
+  const pendingPartnerProposals = partnerSubmissions.filter(s => s.stage === "En attente");
 
   const totalClients = contacts.filter(c => c.status === "Client").length;
   const totalCandidats = contacts.filter(c => c.status === "Candidat").length;

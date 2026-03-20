@@ -115,7 +115,7 @@ router.get("/auto-reminders", asyncHandler(async (req, res) => {
     FROM candidatures cd
     JOIN contacts c ON cd.candidate_id = c.id
     JOIN missions m ON cd.mission_id = m.id
-    WHERE cd.stage IN ('Proposition partenaire', 'Soumis', 'Entretien', 'Finaliste')
+    WHERE cd.stage IN ('En attente', 'Proposition partenaire', 'Soumis', 'Entretien', 'Finaliste')
   `);
   for (const cd of activeCandidatures) {
     const lastDate = cd.last_activity || cd.updated_at;

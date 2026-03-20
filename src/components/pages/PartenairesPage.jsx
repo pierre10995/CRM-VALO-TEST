@@ -138,8 +138,8 @@ export default function PartenairesPage({ missions, currentUser }) {
   };
 
   // Split submissions by status
-  const activeSubmissions = submissions.filter(s => s.stage !== "Archivé" && s.stage !== "Présélectionné");
-  const preselectedSubmissions = submissions.filter(s => s.stage === "Présélectionné");
+  const activeSubmissions = submissions.filter(s => s.stage === "En attente");
+  const preselectedSubmissions = submissions.filter(s => s.stage === "Proposition partenaire" || s.stage === "Présélectionné");
   const archivedSubmissions = submissions.filter(s => s.stage === "Archivé");
 
   // Missions that have submissions (for the filter dropdown)
@@ -147,7 +147,7 @@ export default function PartenairesPage({ missions, currentUser }) {
   const submissionMissions = [...new Map(currentList.map(s => [s.missionId, { id: s.missionId, label: `${s.missionTitle} — ${s.missionCompany}` }])).values()];
   const filteredSubmissions = filterMission === "all" ? currentList : currentList.filter(s => String(s.missionId) === filterMission);
 
-  const newSubmissionsCount = submissions.filter(s => s.stage === "Proposition partenaire").length;
+  const newSubmissionsCount = activeSubmissions.length;
 
   return (
     <div>
@@ -338,9 +338,9 @@ export default function PartenairesPage({ missions, currentUser }) {
 
                     {/* Stage action buttons */}
                     <div style={{ marginLeft: "auto", display: "flex", gap: 6 }}>
-                      {s.stage !== "Présélectionné" && s.stage !== "Archivé" && (
+                      {s.stage === "En attente" && (
                         <button
-                          onClick={() => updateStage(s.id, "Présélectionné")}
+                          onClick={() => updateStage(s.id, "Proposition partenaire")}
                           style={{
                             display: "inline-flex", alignItems: "center", gap: 5,
                             padding: "7px 14px", background: "#d1fae5", border: "none", borderRadius: 10,
@@ -348,7 +348,7 @@ export default function PartenairesPage({ missions, currentUser }) {
                           }}
                         >
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                          Pré-sélectionner
+                          Accepter
                         </button>
                       )}
                       {s.stage !== "Archivé" && (
@@ -618,9 +618,10 @@ const modalBox = { background: "white", borderRadius: 18, padding: 28, width: "1
 
 function stageStyle(stage) {
   switch (stage) {
-    case "Proposition partenaire": return { background: "#fef3c7", color: "#d97706" };
+    case "En attente": return { background: "#fef3c7", color: "#d97706" };
+    case "Proposition partenaire": return { background: "#d1fae5", color: "#059669" };
     case "Soumis": return { background: "#fef3c7", color: "#d97706" };
-    case "Présélectionné": return { background: "#d1fae5", color: "#059669" };
+    case "Présélectionné": return { background: "#dbeafe", color: "#2563eb" };
     case "Archivé": return { background: "#f1f5f9", color: "#64748b" };
     case "Placé": return { background: "#dbeafe", color: "#2563eb" };
     default: return { background: "#e0e7ff", color: "#4f46e5" };
@@ -629,9 +630,10 @@ function stageStyle(stage) {
 
 function borderColor(stage) {
   switch (stage) {
-    case "Proposition partenaire": return "#f59e0b";
+    case "En attente": return "#f59e0b";
+    case "Proposition partenaire": return "#10b981";
     case "Soumis": return "#f59e0b";
-    case "Présélectionné": return "#10b981";
+    case "Présélectionné": return "#3b82f6";
     case "Archivé": return "#94a3b8";
     default: return "#3b82f6";
   }
