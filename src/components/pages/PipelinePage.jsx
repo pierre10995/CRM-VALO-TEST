@@ -25,7 +25,7 @@ export default function PipelinePage({ candidatures, candidates, missions, onEdi
         {/* Partner column */}
         <div style={{ background: partnerCol.bg, border: `1.5px solid ${partnerCol.border}`, borderRadius: 14, padding: 12, minWidth: 160 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-            <h3 style={{ fontSize: 11, fontWeight: 700, color: partnerCol.color }}>Proposé partenaire</h3>
+            <h3 style={{ fontSize: 11, fontWeight: 700, color: partnerCol.color }}>Proposition partenaire</h3>
             <span style={{ background: partnerCol.color, color: "white", borderRadius: 20, padding: "1px 8px", fontSize: 11, fontWeight: 700 }}>{partnerItems.length}</span>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
