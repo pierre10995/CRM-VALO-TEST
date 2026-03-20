@@ -223,7 +223,7 @@ export default function CRM() {
         {activeTab === "placements" && <PlacementsPage candidatures={candidatures} candidates={candidates} missions={missions} />}
         {activeTab === "revenue" && <RevenuePage contacts={contacts} missions={missions} candidatures={candidatures} users={users} fiscalYears={fiscalYears} loadAll={loadAll} />}
         {activeTab === "objectifs" && <ObjectifsPage contacts={contacts} missions={missions} candidatures={candidatures} users={users} fiscalYears={fiscalYears} loadAll={loadAll} />}
-        {activeTab === "partenaires" && <PartenairesPage missions={missions} />}
+        {activeTab === "partenaires" && <PartenairesPage missions={missions} currentUser={currentUser} />}
       </main>
 
       {/* Modals */}

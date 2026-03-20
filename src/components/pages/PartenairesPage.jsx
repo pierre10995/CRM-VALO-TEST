@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import api from "../../services/api";
 
-export default function PartenairesPage({ missions }) {
+export default function PartenairesPage({ missions, currentUser }) {
   const [partners, setPartners] = useState([]);
   const [modal, setModal] = useState(null); // null | "create" | "edit" | "missions"
   const [form, setForm] = useState({});
@@ -11,6 +11,11 @@ export default function PartenairesPage({ missions }) {
   const [search, setSearch] = useState("");
   const [error, setError] = useState("");
   const [tab, setTab] = useState("notifications"); // "notifications" | "partners"
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [reviewModal, setReviewModal] = useState(null); // { candidatureId, candidateName }
+  const [reviewForm, setReviewForm] = useState({ rating: 0, comment: "" });
+  const [reviews, setReviews] = useState({}); // { candidatureId: [reviews] }
+  const [reviewLoading, setReviewLoading] = useState(false);
 
   const loadPartners = async () => {
     const data = await api.get("/api/partners");
@@ -87,6 +92,43 @@ export default function PartenairesPage({ missions }) {
       a.click();
       URL.revokeObjectURL(url);
     } catch { /* ignore */ }
+  };
+
+  const handlePreviewCv = async (fileId) => {
+    try {
+      const blob = await api.getBlob(`/api/files/${fileId}`);
+      const url = URL.createObjectURL(blob);
+      setPreviewUrl(url);
+    } catch { /* ignore */ }
+  };
+
+  const closePreview = () => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(null);
+  };
+
+  const openReviewModal = async (candidatureId, candidateName) => {
+    setReviewModal({ candidatureId, candidateName });
+    setReviewForm({ rating: 0, comment: "" });
+    // Load existing reviews
+    const data = await api.get(`/api/partners/submissions/${candidatureId}/reviews`);
+    setReviews(prev => ({ ...prev, [candidatureId]: data }));
+    // Pre-fill if current user already reviewed
+    const mine = data.find(r => r.userId === currentUser?.id);
+    if (mine) setReviewForm({ rating: mine.rating, comment: mine.comment });
+  };
+
+  const submitReview = async () => {
+    if (!reviewForm.rating) return;
+    setReviewLoading(true);
+    const res = await api.post(`/api/partners/submissions/${reviewModal.candidatureId}/reviews`, reviewForm);
+    if (res.ok) {
+      const data = await api.get(`/api/partners/submissions/${reviewModal.candidatureId}/reviews`);
+      setReviews(prev => ({ ...prev, [reviewModal.candidatureId]: data }));
+      await loadSubmissions();
+      setReviewModal(null);
+    }
+    setReviewLoading(false);
   };
 
   const newSubmissionsCount = submissions.filter(s => s.stage === "Soumis").length;
@@ -194,20 +236,46 @@ export default function PartenairesPage({ missions }) {
                     </div>
                   )}
 
-                  {/* CV download */}
-                  {s.cvFileId && (
+                  {/* Actions row */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                    {s.cvFileId && (
+                      <>
+                        <button
+                          onClick={() => handlePreviewCv(s.cvFileId)}
+                          style={{
+                            display: "inline-flex", alignItems: "center", gap: 6,
+                            padding: "7px 14px", background: "#f0f9ff", border: "1px solid #bae6fd", borderRadius: 10,
+                            fontSize: 12.5, fontWeight: 600, color: "#0369a1", cursor: "pointer", fontFamily: "inherit",
+                          }}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                          Voir le CV
+                        </button>
+                        <button
+                          onClick={() => handleDownloadCv(s.cvFileId, s.candidateName)}
+                          style={{
+                            display: "inline-flex", alignItems: "center", gap: 6,
+                            padding: "7px 14px", background: "#dbeafe", border: "none", borderRadius: 10,
+                            fontSize: 12.5, fontWeight: 600, color: "#1d4ed8", cursor: "pointer", fontFamily: "inherit",
+                          }}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                          Télécharger
+                        </button>
+                      </>
+                    )}
                     <button
-                      onClick={() => handleDownloadCv(s.cvFileId, s.candidateName)}
+                      onClick={() => openReviewModal(s.id, s.candidateName)}
                       style={{
                         display: "inline-flex", alignItems: "center", gap: 6,
-                        padding: "7px 14px", background: "#dbeafe", border: "none", borderRadius: 10,
-                        fontSize: 12.5, fontWeight: 600, color: "#1d4ed8", cursor: "pointer", fontFamily: "inherit",
+                        padding: "7px 14px", background: "#fefce8", border: "1px solid #fde68a", borderRadius: 10,
+                        fontSize: 12.5, fontWeight: 600, color: "#a16207", cursor: "pointer", fontFamily: "inherit",
                       }}
                     >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                      Télécharger le CV
+                      <StarIcon size={14} />
+                      {s.reviewCount > 0 ? `${s.avgRating}/5 (${s.reviewCount} avis)` : "Noter le profil"}
                     </button>
-                  )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -338,7 +406,99 @@ export default function PartenairesPage({ missions }) {
         </div>
       )}
       </>)}
+
+      {/* CV Preview Modal */}
+      {previewUrl && (
+        <div style={overlay} onClick={closePreview}>
+          <div style={{ background: "white", borderRadius: 18, width: "90%", maxWidth: 900, height: "85vh", display: "flex", flexDirection: "column", overflow: "hidden", boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 20px", borderBottom: "1px solid #e2e8f0" }}>
+              <span style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>Aperçu du CV</span>
+              <button onClick={closePreview} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "#94a3b8" }}>x</button>
+            </div>
+            <iframe src={previewUrl} style={{ flex: 1, border: "none", width: "100%" }} title="CV Preview" />
+          </div>
+        </div>
+      )}
+
+      {/* Review Modal */}
+      {reviewModal && (
+        <div style={overlay}>
+          <div style={{ ...modalBox, maxWidth: 500 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+              <h3 style={{ fontSize: 17, fontWeight: 700, margin: 0 }}>Évaluer {reviewModal.candidateName}</h3>
+              <button onClick={() => setReviewModal(null)} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "#94a3b8" }}>x</button>
+            </div>
+
+            {/* Star rating */}
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", display: "block", marginBottom: 8 }}>Votre note</label>
+              <div style={{ display: "flex", gap: 6 }}>
+                {[1, 2, 3, 4, 5].map(n => (
+                  <button
+                    key={n}
+                    onClick={() => setReviewForm(f => ({ ...f, rating: n }))}
+                    style={{ background: "none", border: "none", cursor: "pointer", padding: 2, fontSize: 28, lineHeight: 1, color: n <= reviewForm.rating ? "#f59e0b" : "#d1d5db", transition: "color 0.1s" }}
+                  >
+                    <StarIcon size={28} filled={n <= reviewForm.rating} />
+                  </button>
+                ))}
+                {reviewForm.rating > 0 && <span style={{ fontSize: 14, fontWeight: 700, color: "#f59e0b", alignSelf: "center", marginLeft: 4 }}>{reviewForm.rating}/5</span>}
+              </div>
+            </div>
+
+            {/* Comment */}
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", display: "block", marginBottom: 6 }}>Commentaire</label>
+              <textarea
+                value={reviewForm.comment}
+                onChange={e => setReviewForm(f => ({ ...f, comment: e.target.value }))}
+                placeholder="Votre avis sur ce profil..."
+                rows={3}
+                style={{ width: "100%", padding: "10px 14px", border: "1.5px solid #e2e8f0", borderRadius: 12, fontSize: 13, fontFamily: "inherit", resize: "vertical", outline: "none" }}
+              />
+            </div>
+
+            <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
+              <button onClick={() => setReviewModal(null)} className="btn btn-ghost" style={{ flex: 1 }}>Annuler</button>
+              <button onClick={submitReview} disabled={!reviewForm.rating || reviewLoading} className="btn btn-primary" style={{ flex: 2, opacity: !reviewForm.rating || reviewLoading ? 0.5 : 1 }}>
+                {reviewLoading ? "Envoi..." : "Enregistrer"}
+              </button>
+            </div>
+
+            {/* Existing reviews */}
+            {reviews[reviewModal.candidatureId]?.length > 0 && (
+              <div style={{ borderTop: "1px solid #f1f5f9", paddingTop: 14 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: "#64748b", textTransform: "uppercase", marginBottom: 8 }}>Avis de l'équipe</div>
+                <div style={{ display: "grid", gap: 8 }}>
+                  {reviews[reviewModal.candidatureId].map(r => (
+                    <div key={r.id} style={{ padding: "10px 12px", background: "#f8fafc", borderRadius: 10 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: "#0f172a" }}>{r.userName}</span>
+                        <span style={{ display: "flex", gap: 2 }}>
+                          {[1, 2, 3, 4, 5].map(n => (
+                            <StarIcon key={n} size={13} filled={n <= r.rating} />
+                          ))}
+                        </span>
+                      </div>
+                      {r.comment && <div style={{ fontSize: 12.5, color: "#475569", lineHeight: 1.4 }}>{r.comment}</div>}
+                      <div style={{ fontSize: 10.5, color: "#94a3b8", marginTop: 4 }}>{new Date(r.updatedAt || r.createdAt).toLocaleDateString("fr-CA")}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
+  );
+}
+
+function StarIcon({ size = 16, filled = false }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill={filled ? "#f59e0b" : "none"} stroke={filled ? "#f59e0b" : "#d1d5db"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+    </svg>
   );
 }
 

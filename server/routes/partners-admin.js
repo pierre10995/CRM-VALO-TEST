@@ -64,7 +64,9 @@ router.get("/submissions", asyncHandler(async (req, res) => {
            c.skills as candidate_skills, c.city as candidate_city,
            m.title as mission_title, m.company as mission_company,
            p.id as partner_id, p.name as partner_name, p.company as partner_company,
-           (SELECT f.id FROM files f WHERE f.contact_id = cd.candidate_id AND f.file_type = 'cv' ORDER BY f.created_at DESC LIMIT 1) as cv_file_id
+           (SELECT f.id FROM files f WHERE f.contact_id = cd.candidate_id AND f.file_type = 'cv' ORDER BY f.created_at DESC LIMIT 1) as cv_file_id,
+           (SELECT ROUND(AVG(sr.rating)::numeric, 1) FROM submission_reviews sr WHERE sr.candidature_id = cd.id) as avg_rating,
+           (SELECT COUNT(*) FROM submission_reviews sr WHERE sr.candidature_id = cd.id) as review_count
     FROM candidatures cd
     INNER JOIN partners p ON cd.partner_id = p.id
     LEFT JOIN contacts c ON cd.candidate_id = c.id
@@ -81,7 +83,42 @@ router.get("/submissions", asyncHandler(async (req, res) => {
     missionTitle: r.mission_title || "", missionCompany: r.mission_company || "",
     partnerId: r.partner_id, partnerName: r.partner_name || "", partnerCompany: r.partner_company || "",
     cvFileId: r.cv_file_id || null,
+    avgRating: r.avg_rating ? Number(r.avg_rating) : null,
+    reviewCount: parseInt(r.review_count) || 0,
   })));
+}));
+
+// ─── Submission reviews (rating + comment) ──────────────────────────────────
+
+router.get("/submissions/:candidatureId/reviews", asyncHandler(async (req, res) => {
+  const { rows } = await pool.query(`
+    SELECT sr.*, u.full_name as user_name
+    FROM submission_reviews sr
+    LEFT JOIN users u ON sr.user_id = u.id
+    WHERE sr.candidature_id = $1
+    ORDER BY sr.created_at DESC
+  `, [req.params.candidatureId]);
+  res.json(rows.map(r => ({
+    id: r.id, candidatureId: r.candidature_id, userId: r.user_id,
+    rating: r.rating, comment: r.comment || "", userName: r.user_name || "",
+    createdAt: r.created_at, updatedAt: r.updated_at,
+  })));
+}));
+
+router.post("/submissions/:candidatureId/reviews", asyncHandler(async (req, res) => {
+  const { rating, comment } = req.body;
+  if (!rating || rating < 1 || rating > 5) throw new AppError(400, "Note de 1 à 5 requise");
+
+  const userId = req.user.id;
+  const { rows } = await pool.query(`
+    INSERT INTO submission_reviews (candidature_id, user_id, rating, comment)
+    VALUES ($1, $2, $3, $4)
+    ON CONFLICT (candidature_id, user_id)
+    DO UPDATE SET rating = $3, comment = $4, updated_at = NOW()
+    RETURNING *
+  `, [req.params.candidatureId, userId, rating, comment || ""]);
+
+  res.status(201).json(rows[0]);
 }));
 
 // ─── Mission affiliations ───────────────────────────────────────────────────

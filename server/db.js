@@ -237,6 +237,19 @@ async function initDB() {
 
     await client.query(`ALTER TABLE candidatures ADD COLUMN IF NOT EXISTS partner_id INTEGER REFERENCES partners(id) ON DELETE SET NULL`);
 
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS submission_reviews (
+        id SERIAL PRIMARY KEY,
+        candidature_id INTEGER REFERENCES candidatures(id) ON DELETE CASCADE,
+        user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+        rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+        comment TEXT DEFAULT '',
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW(),
+        UNIQUE(candidature_id, user_id)
+      );
+    `);
+
     // Seed tracking
     await client.query(`CREATE TABLE IF NOT EXISTS seed_log (key VARCHAR(50) PRIMARY KEY, done_at TIMESTAMP DEFAULT NOW())`);
     const alreadySeeded = async (key) => {
