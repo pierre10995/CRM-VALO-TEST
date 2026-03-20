@@ -126,7 +126,7 @@ router.post("/submit", uploadLimiter, validate(partnerSubmitSchema), asyncHandle
     // Create candidature
     const { rows: cdRows } = await client.query(
       `INSERT INTO candidatures (candidate_id, mission_id, stage, notes, partner_id)
-       VALUES ($1, $2, 'Soumis', $3, $4) RETURNING id`,
+       VALUES ($1, $2, 'Proposition partenaire', $3, $4) RETURNING id`,
       [contactId, missionId, summary, partnerId]
     );
 

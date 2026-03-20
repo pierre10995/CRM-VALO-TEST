@@ -141,7 +141,7 @@ export default function PartenairesPage({ missions, currentUser }) {
   const submissionMissions = [...new Map(submissions.map(s => [s.missionId, { id: s.missionId, label: `${s.missionTitle} — ${s.missionCompany}` }])).values()];
   const filteredSubmissions = filterMission === "all" ? submissions : submissions.filter(s => String(s.missionId) === filterMission);
 
-  const newSubmissionsCount = submissions.filter(s => s.stage === "Soumis").length;
+  const newSubmissionsCount = submissions.filter(s => s.stage === "Proposition partenaire").length;
 
   return (
     <div>
@@ -590,6 +590,7 @@ const modalBox = { background: "white", borderRadius: 18, padding: 28, width: "1
 
 function stageStyle(stage) {
   switch (stage) {
+    case "Proposition partenaire": return { background: "#fef3c7", color: "#d97706" };
     case "Soumis": return { background: "#fef3c7", color: "#d97706" };
     case "Présélectionné": return { background: "#d1fae5", color: "#059669" };
     case "Archivé": return { background: "#f1f5f9", color: "#64748b" };
@@ -600,6 +601,7 @@ function stageStyle(stage) {
 
 function borderColor(stage) {
   switch (stage) {
+    case "Proposition partenaire": return "#f59e0b";
     case "Soumis": return "#f59e0b";
     case "Présélectionné": return "#10b981";
     case "Archivé": return "#94a3b8";

@@ -9,7 +9,7 @@ export default function PipelinePage({ candidatures, candidates, missions, onEdi
     { key: "Refusé", color: "#ef4444", bg: "#fef2f2", border: "#fecaca" },
   ];
 
-  const partnerItems = candidatures.filter(cd => cd.partnerId && cd.stage === "Soumis");
+  const partnerItems = candidatures.filter(cd => cd.stage === "Proposition partenaire");
   const allCols = [partnerCol, ...stageConfig];
 
   return (
