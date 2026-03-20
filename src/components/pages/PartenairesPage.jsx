@@ -10,7 +10,7 @@ export default function PartenairesPage({ missions, currentUser }) {
   const [submissions, setSubmissions] = useState([]);
   const [search, setSearch] = useState("");
   const [error, setError] = useState("");
-  const [tab, setTab] = useState("notifications"); // "notifications" | "partners"
+  const [tab, setTab] = useState("notifications"); // "notifications" | "partners" | "archived"
   const [previewUrl, setPreviewUrl] = useState(null);
   const [reviewModal, setReviewModal] = useState(null); // { candidatureId, candidateName }
   const [reviewForm, setReviewForm] = useState({ rating: 0, comment: "" });
@@ -137,9 +137,14 @@ export default function PartenairesPage({ missions, currentUser }) {
     if (res.ok) await loadSubmissions();
   };
 
+  // Split active vs archived submissions
+  const activeSubmissions = submissions.filter(s => s.stage !== "Archivé");
+  const archivedSubmissions = submissions.filter(s => s.stage === "Archivé");
+
   // Missions that have submissions (for the filter dropdown)
-  const submissionMissions = [...new Map(submissions.map(s => [s.missionId, { id: s.missionId, label: `${s.missionTitle} — ${s.missionCompany}` }])).values()];
-  const filteredSubmissions = filterMission === "all" ? submissions : submissions.filter(s => String(s.missionId) === filterMission);
+  const currentList = tab === "archived" ? archivedSubmissions : activeSubmissions;
+  const submissionMissions = [...new Map(currentList.map(s => [s.missionId, { id: s.missionId, label: `${s.missionTitle} — ${s.missionCompany}` }])).values()];
+  const filteredSubmissions = filterMission === "all" ? currentList : currentList.filter(s => String(s.missionId) === filterMission);
 
   const newSubmissionsCount = submissions.filter(s => s.stage === "Proposition partenaire").length;
 
@@ -161,7 +166,7 @@ export default function PartenairesPage({ missions, currentUser }) {
       {/* Tabs */}
       <div style={{ display: "flex", gap: 4, marginBottom: 20, background: "#f1f5f9", borderRadius: 12, padding: 4, width: "fit-content" }}>
         <button
-          onClick={() => setTab("notifications")}
+          onClick={() => { setTab("notifications"); setFilterMission("all"); }}
           style={{
             padding: "8px 18px", borderRadius: 10, border: "none", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit",
             background: tab === "notifications" ? "white" : "transparent",
@@ -178,6 +183,17 @@ export default function PartenairesPage({ missions, currentUser }) {
           )}
         </button>
         <button
+          onClick={() => { setTab("archived"); setFilterMission("all"); }}
+          style={{
+            padding: "8px 18px", borderRadius: 10, border: "none", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit",
+            background: tab === "archived" ? "white" : "transparent",
+            color: tab === "archived" ? "#0f172a" : "#64748b",
+            boxShadow: tab === "archived" ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
+          }}
+        >
+          Candidats archivés ({archivedSubmissions.length})
+        </button>
+        <button
           onClick={() => setTab("partners")}
           style={{
             padding: "8px 18px", borderRadius: 10, border: "none", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit",
@@ -190,11 +206,11 @@ export default function PartenairesPage({ missions, currentUser }) {
         </button>
       </div>
 
-      {/* ─── Notifications tab ─── */}
-      {tab === "notifications" && (
+      {/* ─── Notifications / Archived tab ─── */}
+      {(tab === "notifications" || tab === "archived") && (
         <div>
           {/* Mission filter */}
-          {submissions.length > 0 && (
+          {currentList.length > 0 && (
             <div style={{ marginBottom: 16 }}>
               <select
                 value={filterMission}
@@ -202,20 +218,20 @@ export default function PartenairesPage({ missions, currentUser }) {
                 className="input"
                 style={{ maxWidth: 400, padding: "8px 12px", fontSize: 13 }}
               >
-                <option value="all">Tous les postes ({submissions.length})</option>
+                <option value="all">Tous les postes ({currentList.length})</option>
                 {submissionMissions.map(m => (
                   <option key={m.id} value={String(m.id)}>
-                    {m.label} ({submissions.filter(s => s.missionId === m.id).length})
+                    {m.label} ({currentList.filter(s => s.missionId === m.id).length})
                   </option>
                 ))}
               </select>
             </div>
           )}
 
-          {submissions.length === 0 ? (
+          {currentList.length === 0 ? (
             <div className="card" style={{ textAlign: "center", padding: 40 }}>
-              <div style={{ fontSize: 16, fontWeight: 600, color: "#475569" }}>Aucune soumission de partenaire</div>
-              <div style={{ fontSize: 13, color: "#94a3b8", marginTop: 6 }}>Les candidats proposés par vos partenaires apparaitront ici.</div>
+              <div style={{ fontSize: 16, fontWeight: 600, color: "#475569" }}>{tab === "archived" ? "Aucun candidat archivé" : "Aucune soumission de partenaire"}</div>
+              <div style={{ fontSize: 13, color: "#94a3b8", marginTop: 6 }}>{tab === "archived" ? "Les candidats archivés apparaitront ici." : "Les candidats proposés par vos partenaires apparaitront ici."}</div>
             </div>
           ) : filteredSubmissions.length === 0 ? (
             <div className="card" style={{ textAlign: "center", padding: 40 }}>
