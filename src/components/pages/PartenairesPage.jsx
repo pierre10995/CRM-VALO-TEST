@@ -10,7 +10,7 @@ export default function PartenairesPage({ missions, currentUser }) {
   const [submissions, setSubmissions] = useState([]);
   const [search, setSearch] = useState("");
   const [error, setError] = useState("");
-  const [tab, setTab] = useState("notifications"); // "notifications" | "partners" | "archived"
+  const [tab, setTab] = useState("notifications"); // "notifications" | "preselected" | "archived" | "partners"
   const [previewUrl, setPreviewUrl] = useState(null);
   const [reviewModal, setReviewModal] = useState(null); // { candidatureId, candidateName }
   const [reviewForm, setReviewForm] = useState({ rating: 0, comment: "" });
@@ -137,12 +137,13 @@ export default function PartenairesPage({ missions, currentUser }) {
     if (res.ok) await loadSubmissions();
   };
 
-  // Split active vs archived submissions
-  const activeSubmissions = submissions.filter(s => s.stage !== "Archivé");
+  // Split submissions by status
+  const activeSubmissions = submissions.filter(s => s.stage !== "Archivé" && s.stage !== "Présélectionné");
+  const preselectedSubmissions = submissions.filter(s => s.stage === "Présélectionné");
   const archivedSubmissions = submissions.filter(s => s.stage === "Archivé");
 
   // Missions that have submissions (for the filter dropdown)
-  const currentList = tab === "archived" ? archivedSubmissions : activeSubmissions;
+  const currentList = tab === "archived" ? archivedSubmissions : tab === "preselected" ? preselectedSubmissions : activeSubmissions;
   const submissionMissions = [...new Map(currentList.map(s => [s.missionId, { id: s.missionId, label: `${s.missionTitle} — ${s.missionCompany}` }])).values()];
   const filteredSubmissions = filterMission === "all" ? currentList : currentList.filter(s => String(s.missionId) === filterMission);
 
@@ -183,6 +184,17 @@ export default function PartenairesPage({ missions, currentUser }) {
           )}
         </button>
         <button
+          onClick={() => { setTab("preselected"); setFilterMission("all"); }}
+          style={{
+            padding: "8px 18px", borderRadius: 10, border: "none", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit",
+            background: tab === "preselected" ? "white" : "transparent",
+            color: tab === "preselected" ? "#0f172a" : "#64748b",
+            boxShadow: tab === "preselected" ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
+          }}
+        >
+          Candidats pré-sélectionnés ({preselectedSubmissions.length})
+        </button>
+        <button
           onClick={() => { setTab("archived"); setFilterMission("all"); }}
           style={{
             padding: "8px 18px", borderRadius: 10, border: "none", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit",
@@ -206,8 +218,8 @@ export default function PartenairesPage({ missions, currentUser }) {
         </button>
       </div>
 
-      {/* ─── Notifications / Archived tab ─── */}
-      {(tab === "notifications" || tab === "archived") && (
+      {/* ─── Notifications / Preselected / Archived tab ─── */}
+      {(tab === "notifications" || tab === "preselected" || tab === "archived") && (
         <div>
           {/* Mission filter */}
           {currentList.length > 0 && (
@@ -230,8 +242,8 @@ export default function PartenairesPage({ missions, currentUser }) {
 
           {currentList.length === 0 ? (
             <div className="card" style={{ textAlign: "center", padding: 40 }}>
-              <div style={{ fontSize: 16, fontWeight: 600, color: "#475569" }}>{tab === "archived" ? "Aucun candidat archivé" : "Aucune soumission de partenaire"}</div>
-              <div style={{ fontSize: 13, color: "#94a3b8", marginTop: 6 }}>{tab === "archived" ? "Les candidats archivés apparaitront ici." : "Les candidats proposés par vos partenaires apparaitront ici."}</div>
+              <div style={{ fontSize: 16, fontWeight: 600, color: "#475569" }}>{tab === "archived" ? "Aucun candidat archivé" : tab === "preselected" ? "Aucun candidat pré-sélectionné" : "Aucune soumission de partenaire"}</div>
+              <div style={{ fontSize: 13, color: "#94a3b8", marginTop: 6 }}>{tab === "archived" ? "Les candidats archivés apparaitront ici." : tab === "preselected" ? "Les candidats pré-sélectionnés apparaitront ici." : "Les candidats proposés par vos partenaires apparaitront ici."}</div>
             </div>
           ) : filteredSubmissions.length === 0 ? (
             <div className="card" style={{ textAlign: "center", padding: 40 }}>
