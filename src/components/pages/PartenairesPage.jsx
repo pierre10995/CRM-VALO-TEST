@@ -16,6 +16,7 @@ export default function PartenairesPage({ missions, currentUser }) {
   const [reviewForm, setReviewForm] = useState({ rating: 0, comment: "" });
   const [reviews, setReviews] = useState({}); // { candidatureId: [reviews] }
   const [reviewLoading, setReviewLoading] = useState(false);
+  const [filterMission, setFilterMission] = useState("all");
 
   const loadPartners = async () => {
     const data = await api.get("/api/partners");
@@ -131,6 +132,15 @@ export default function PartenairesPage({ missions, currentUser }) {
     setReviewLoading(false);
   };
 
+  const updateStage = async (candidatureId, stage) => {
+    const res = await api.put(`/api/candidatures/${candidatureId}`, { stage, rating: 0, notes: "", interviewDate: null });
+    if (res.ok) await loadSubmissions();
+  };
+
+  // Missions that have submissions (for the filter dropdown)
+  const submissionMissions = [...new Map(submissions.map(s => [s.missionId, { id: s.missionId, label: `${s.missionTitle} — ${s.missionCompany}` }])).values()];
+  const filteredSubmissions = filterMission === "all" ? submissions : submissions.filter(s => String(s.missionId) === filterMission);
+
   const newSubmissionsCount = submissions.filter(s => s.stage === "Soumis").length;
 
   return (
@@ -183,15 +193,38 @@ export default function PartenairesPage({ missions, currentUser }) {
       {/* ─── Notifications tab ─── */}
       {tab === "notifications" && (
         <div>
+          {/* Mission filter */}
+          {submissions.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <select
+                value={filterMission}
+                onChange={e => setFilterMission(e.target.value)}
+                className="input"
+                style={{ maxWidth: 400, padding: "8px 12px", fontSize: 13 }}
+              >
+                <option value="all">Tous les postes ({submissions.length})</option>
+                {submissionMissions.map(m => (
+                  <option key={m.id} value={String(m.id)}>
+                    {m.label} ({submissions.filter(s => s.missionId === m.id).length})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           {submissions.length === 0 ? (
             <div className="card" style={{ textAlign: "center", padding: 40 }}>
               <div style={{ fontSize: 16, fontWeight: 600, color: "#475569" }}>Aucune soumission de partenaire</div>
               <div style={{ fontSize: 13, color: "#94a3b8", marginTop: 6 }}>Les candidats proposés par vos partenaires apparaitront ici.</div>
             </div>
+          ) : filteredSubmissions.length === 0 ? (
+            <div className="card" style={{ textAlign: "center", padding: 40 }}>
+              <div style={{ fontSize: 14, color: "#94a3b8" }}>Aucun candidat pour ce poste.</div>
+            </div>
           ) : (
             <div style={{ display: "grid", gap: 12 }}>
-              {submissions.map(s => (
-                <div key={s.id} className="card" style={{ padding: "18px 20px", borderLeft: s.stage === "Soumis" ? "4px solid #f59e0b" : "4px solid #10b981" }}>
+              {filteredSubmissions.map(s => (
+                <div key={s.id} className="card" style={{ padding: "18px 20px", borderLeft: `4px solid ${borderColor(s.stage)}` }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                       <div style={{ width: 38, height: 38, borderRadius: 10, background: "#f0fdf4", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: 700, color: "#059669" }}>
@@ -208,8 +241,7 @@ export default function PartenairesPage({ missions, currentUser }) {
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <span style={{
                         padding: "3px 10px", borderRadius: 8, fontSize: 11, fontWeight: 600,
-                        background: s.stage === "Soumis" ? "#fef3c7" : s.stage === "Placé" ? "#d1fae5" : "#dbeafe",
-                        color: s.stage === "Soumis" ? "#d97706" : s.stage === "Placé" ? "#059669" : "#2563eb",
+                        ...stageStyle(s.stage),
                       }}>
                         {s.stage}
                       </span>
@@ -275,6 +307,36 @@ export default function PartenairesPage({ missions, currentUser }) {
                       <StarIcon size={14} />
                       {s.reviewCount > 0 ? `${s.avgRating}/5 (${s.reviewCount} avis)` : "Noter le profil"}
                     </button>
+
+                    {/* Stage action buttons */}
+                    <div style={{ marginLeft: "auto", display: "flex", gap: 6 }}>
+                      {s.stage !== "Présélectionné" && s.stage !== "Archivé" && (
+                        <button
+                          onClick={() => updateStage(s.id, "Présélectionné")}
+                          style={{
+                            display: "inline-flex", alignItems: "center", gap: 5,
+                            padding: "7px 14px", background: "#d1fae5", border: "none", borderRadius: 10,
+                            fontSize: 12.5, fontWeight: 600, color: "#059669", cursor: "pointer", fontFamily: "inherit",
+                          }}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                          Pré-sélectionner
+                        </button>
+                      )}
+                      {s.stage !== "Archivé" && (
+                        <button
+                          onClick={() => updateStage(s.id, "Archivé")}
+                          style={{
+                            display: "inline-flex", alignItems: "center", gap: 5,
+                            padding: "7px 14px", background: "#f1f5f9", border: "none", borderRadius: 10,
+                            fontSize: 12.5, fontWeight: 600, color: "#64748b", cursor: "pointer", fontFamily: "inherit",
+                          }}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 8v13H3V8M1 3h22v5H1zM10 12h4"/></svg>
+                          Archiver
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -525,3 +587,22 @@ const td = { padding: "10px 14px" };
 const actionBtn = { background: "none", border: "none", fontSize: 12, fontWeight: 600, color: "#2563eb", cursor: "pointer" };
 const overlay = { position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 };
 const modalBox = { background: "white", borderRadius: 18, padding: 28, width: "100%", maxWidth: 460, maxHeight: "90vh", overflow: "auto", boxShadow: "0 20px 60px rgba(0,0,0,0.15)" };
+
+function stageStyle(stage) {
+  switch (stage) {
+    case "Soumis": return { background: "#fef3c7", color: "#d97706" };
+    case "Présélectionné": return { background: "#d1fae5", color: "#059669" };
+    case "Archivé": return { background: "#f1f5f9", color: "#64748b" };
+    case "Placé": return { background: "#dbeafe", color: "#2563eb" };
+    default: return { background: "#e0e7ff", color: "#4f46e5" };
+  }
+}
+
+function borderColor(stage) {
+  switch (stage) {
+    case "Soumis": return "#f59e0b";
+    case "Présélectionné": return "#10b981";
+    case "Archivé": return "#94a3b8";
+    default: return "#3b82f6";
+  }
+}
