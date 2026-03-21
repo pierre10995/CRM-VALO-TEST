@@ -82,7 +82,7 @@ export default function CRM() {
     if (session && token) { setCurrentUser(JSON.parse(session)); setAuthed(true); }
   }, []);
 
-  useEffect(() => { if (authed) loadAll(); }, [authed]);
+  useEffect(() => { if (authed && currentUser?.role !== "partner") loadAll(); }, [authed]);
 
   const handleLogin = async () => {
     // Try internal user login first
