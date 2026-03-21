@@ -21,9 +21,24 @@ export default function CandidatForm({ form, setForm, onSave, onCancel, sectors 
   const [editLabel, setEditLabel] = useState("");
   const [parsing, setParsing] = useState(false);
   const [cvFileName, setCvFileName] = useState("");
+  const [duplicates, setDuplicates] = useState([]);
   const fileRef = useRef(null);
 
   const refreshStatuses = async () => { if (onStatusesChanged) await onStatusesChanged(); };
+
+  const checkDuplicate = async () => {
+    const email = form.email?.trim();
+    const phone = form.phone?.trim();
+    if (!email && !phone) { setDuplicates([]); return; }
+    try {
+      const params = new URLSearchParams();
+      if (email) params.set("email", email);
+      if (phone) params.set("phone", phone);
+      if (form.id) params.set("excludeId", form.id);
+      const data = await api.get(`/api/contacts/check-duplicate?${params}`);
+      setDuplicates(data.duplicates || []);
+    } catch { setDuplicates([]); }
+  };
 
   const addStatus = async () => {
     if (!newLabel.trim()) return;
@@ -118,10 +133,15 @@ export default function CandidatForm({ form, setForm, onSave, onCancel, sectors 
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
         <Field label="Nom *"><input className="input" value={form.name || ""} onChange={e => f("name", e.target.value)} placeholder="Prénom Nom" /></Field>
-        <Field label="Email"><input className="input" type="email" value={form.email || ""} onChange={e => f("email", e.target.value)} placeholder="email@exemple.ca" /></Field>
+        <Field label="Email"><input className="input" type="email" value={form.email || ""} onChange={e => f("email", e.target.value)} onBlur={checkDuplicate} placeholder="email@exemple.ca" /></Field>
       </div>
+      {duplicates.length > 0 && (
+        <div style={{ padding: "8px 12px", background: "#fef3c7", borderRadius: 8, border: "1px solid #fde68a", fontSize: 12, color: "#92400e" }}>
+          <strong>Doublon potentiel :</strong> {duplicates.map(d => `${d.name} (${d.email || d.phone})`).join(", ")}
+        </div>
+      )}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-        <Field label="Telephone"><input className="input" value={form.phone || ""} onChange={e => f("phone", e.target.value)} placeholder="(514) 555-0000" /></Field>
+        <Field label="Telephone"><input className="input" value={form.phone || ""} onChange={e => f("phone", e.target.value)} onBlur={checkDuplicate} placeholder="(514) 555-0000" /></Field>
         <Field label="Ville"><input className="input" value={form.city || ""} onChange={e => f("city", e.target.value)} placeholder="Montréal" /></Field>
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { fmtCAD } from "../../utils/constants";
+import { exportCsv } from "../../utils/exportCsv";
 import api from "../../services/api";
 import FicheCandidat from "./FicheCandidat";
 import BulkCvUpload from "../BulkCvUpload";
@@ -22,6 +23,8 @@ export default function CandidatsPage({ contacts, search, setSearch, onAdd, onEd
   const [newStatusLabel, setNewStatusLabel] = useState("");
   const [newStatusColorIdx, setNewStatusColorIdx] = useState(0);
   const [showBulkUpload, setShowBulkUpload] = useState(false);
+  const [sortBy, setSortBy] = useState("name");
+  const [sortDir, setSortDir] = useState("asc");
   const [showAddUser, setShowAddUser] = useState(false);
   const [newUser, setNewUser] = useState({ fullName: "", login: "", password: "" });
   const [addUserError, setAddUserError] = useState("");
@@ -75,8 +78,36 @@ export default function CandidatsPage({ contacts, search, setSearch, onAdd, onEd
     const matchValidation = !filterValidation || c.validationStatus === filterValidation;
     const matchOwner = !filterOwner || c.owner === filterOwner;
     return matchSearch && matchSkill && matchValidation && matchOwner;
+  }).sort((a, b) => {
+    let cmp = 0;
+    if (sortBy === "name") cmp = a.name.localeCompare(b.name);
+    else if (sortBy === "city") cmp = (a.city || "").localeCompare(b.city || "");
+    else if (sortBy === "salary") cmp = (a.salaryExpectation || 0) - (b.salaryExpectation || 0);
+    else if (sortBy === "date") cmp = new Date(a.createdAt) - new Date(b.createdAt);
+    return sortDir === "desc" ? -cmp : cmp;
   });
   const detail = contacts.find(c => c.id === detailId);
+
+  const handleSort = (col) => {
+    if (sortBy === col) setSortDir(d => d === "asc" ? "desc" : "asc");
+    else { setSortBy(col); setSortDir("asc"); }
+  };
+  const sortIcon = (col) => sortBy === col ? (sortDir === "asc" ? " ▲" : " ▼") : "";
+
+  const handleExportCsv = () => {
+    exportCsv(filtered, [
+      { key: "name", label: "Nom" },
+      { key: "email", label: "Email" },
+      { key: "phone", label: "Téléphone" },
+      { key: "city", label: "Ville" },
+      { key: "skills", label: "Compétences" },
+      { key: "validationStatus", label: "Statut validation" },
+      { key: "salaryExpectation", label: "Salaire souhaité" },
+      { key: "availability", label: "Disponibilité" },
+      { key: "owner", label: "Propriétaire" },
+      { key: "targetPosition", label: "Poste ciblé" },
+    ], `candidats_${new Date().toISOString().slice(0, 10)}.csv`);
+  };
 
   return (
     <div>
@@ -93,6 +124,7 @@ export default function CandidatsPage({ contacts, search, setSearch, onAdd, onEd
           >
             {showBulkUpload ? "Fermer l'import CV" : "Import CV en masse"}
           </button>
+          <button className="btn btn-ghost" style={{ fontSize: 13 }} onClick={handleExportCsv}>Exporter CSV</button>
           <button className="btn btn-primary" onClick={onAdd}>+ Ajouter un candidat</button>
         </div>
       </div>
@@ -181,8 +213,10 @@ export default function CandidatsPage({ contacts, search, setSearch, onAdd, onEd
       <div className="card" style={{ padding: 0, overflow: "hidden" }}>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead><tr style={{ borderBottom: "1px solid #f1f5f9" }}>
-            {["Candidat", "Ville", "Compétences", "Statut", "Salaire", "Actions"].map(h => (
-              <th key={h} style={{ padding: "14px 20px", textAlign: "left", fontSize: 11.5, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase" }}>{h}</th>
+            {[{ label: "Candidat", col: "name" }, { label: "Ville", col: "city" }, { label: "Compétences", col: null }, { label: "Statut", col: null }, { label: "Salaire", col: "salary" }, { label: "Actions", col: null }].map(h => (
+              <th key={h.label} onClick={() => h.col && handleSort(h.col)} style={{ padding: "14px 20px", textAlign: "left", fontSize: 11.5, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", cursor: h.col ? "pointer" : "default", userSelect: "none" }}>
+                {h.label}{h.col ? sortIcon(h.col) : ""}
+              </th>
             ))}
           </tr></thead>
           <tbody>

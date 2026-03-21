@@ -1,14 +1,31 @@
 import { useState } from "react";
 import { fmtCAD } from "../../utils/constants";
+import { exportCsv } from "../../utils/exportCsv";
 import FicheMission from "./FicheMission";
 
 export default function MissionsPage({ missions, contacts, users, candidatures, onAdd, onEdit, onDelete }) {
   const [detailMission, setDetailMission] = useState(null);
   const [filterStatus, setFilterStatus] = useState("Tous");
+  const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState("date");
+
   const statusColors = { "Ouverte": { bg: "#dbeafe", color: "#2563eb" }, "En cours": { bg: "#fef3c7", color: "#d97706" }, "Gagné": { bg: "#d1fae5", color: "#059669" }, "Pourvue": { bg: "#d1fae5", color: "#059669" }, "Fermée": { bg: "#f1f5f9", color: "#64748b" } };
   const priorityColors = { "Basse": "#94a3b8", "Normale": "#3b82f6", "Haute": "#f59e0b", "Urgente": "#dc2626" };
   const statuses = ["Tous", "Ouverte", "En cours", "Gagné", "Pourvue", "Fermée"];
-  const filtered = filterStatus === "Tous" ? missions : missions.filter(m => m.status === filterStatus);
+
+  const filtered = missions.filter(m => {
+    const matchStatus = filterStatus === "Tous" || m.status === filterStatus;
+    if (!matchStatus) return false;
+    if (!search) return true;
+    const q = search.toLowerCase();
+    return m.title.toLowerCase().includes(q) || m.company.toLowerCase().includes(q)
+      || (m.location || "").toLowerCase().includes(q) || (m.assignedName || "").toLowerCase().includes(q);
+  }).sort((a, b) => {
+    if (sortBy === "title") return a.title.localeCompare(b.title);
+    if (sortBy === "company") return a.company.localeCompare(b.company);
+    if (sortBy === "salary") return (b.salaryMax || 0) - (a.salaryMax || 0);
+    return new Date(b.createdAt) - new Date(a.createdAt); // date desc
+  });
 
   return (
     <div>
@@ -17,9 +34,18 @@ export default function MissionsPage({ missions, contacts, users, candidatures, 
           <h1 style={{ fontSize: 26, fontWeight: 800, color: "#0f172a" }}>Postes Ouverts</h1>
           <p style={{ fontSize: 13.5, color: "#64748b", marginTop: 3 }}>{filtered.length} mission{filtered.length > 1 ? "s" : ""}{filterStatus !== "Tous" ? ` (${filterStatus})` : ""}</p>
         </div>
-        <button className="btn btn-primary" onClick={onAdd}>+ Nouveau poste</button>
+        <div style={{ display: "flex", gap: 10 }}>
+          <button className="btn btn-ghost" style={{ fontSize: 13 }} onClick={() => exportCsv(filtered, [
+            { key: "title", label: "Titre" }, { key: "company", label: "Entreprise" }, { key: "location", label: "Ville" },
+            { key: "contractType", label: "Type contrat" }, { key: "workMode", label: "Mode" },
+            { key: "salaryMin", label: "Salaire min" }, { key: "salaryMax", label: "Salaire max" },
+            { key: "status", label: "Statut" }, { key: "priority", label: "Priorité" },
+            { key: "assignedName", label: "Assigné à" }, { key: "commission", label: "Commission" },
+          ], `missions_${new Date().toISOString().slice(0, 10)}.csv`)}>Exporter CSV</button>
+          <button className="btn btn-primary" onClick={onAdd}>+ Nouveau poste</button>
+        </div>
       </div>
-      <div style={{ display: "flex", gap: 6, marginBottom: 18 }}>
+      <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
         {statuses.map(s => {
           const active = filterStatus === s;
           const sc = s === "Tous" ? { bg: "#f1f5f9", color: "#64748b" } : statusColors[s] || { bg: "#f1f5f9", color: "#64748b" };
@@ -30,6 +56,15 @@ export default function MissionsPage({ missions, contacts, users, candidatures, 
             </button>
           );
         })}
+      </div>
+      <div style={{ display: "flex", gap: 10, marginBottom: 18 }}>
+        <input className="input" style={{ flex: 1 }} placeholder="Rechercher par titre, entreprise, ville, recruteur..." value={search} onChange={e => setSearch(e.target.value)} />
+        <select className="input" style={{ width: "auto", minWidth: 160 }} value={sortBy} onChange={e => setSortBy(e.target.value)}>
+          <option value="date">Trier : Plus récent</option>
+          <option value="title">Trier : Titre A-Z</option>
+          <option value="company">Trier : Entreprise A-Z</option>
+          <option value="salary">Trier : Salaire décroissant</option>
+        </select>
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}>
         {filtered.map(m => {
@@ -67,7 +102,7 @@ export default function MissionsPage({ missions, contacts, users, candidatures, 
           );
         })}
       </div>
-      {filtered.length === 0 && <div className="card" style={{ textAlign: "center", color: "#94a3b8" }}>{filterStatus === "Tous" ? "Aucune mission" : `Aucune mission avec le statut « ${filterStatus} »`}</div>}
+      {filtered.length === 0 && <div className="card" style={{ textAlign: "center", color: "#94a3b8" }}>{search ? `Aucun résultat pour « ${search} »` : filterStatus === "Tous" ? "Aucune mission" : `Aucune mission avec le statut « ${filterStatus} »`}</div>}
 
       {detailMission && (
         <div className="modal-bg" onClick={e => e.target === e.currentTarget && setDetailMission(null)}>

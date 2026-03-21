@@ -72,6 +72,86 @@ router.post("/users", validate(userCreateSchema), asyncHandler(async (req, res) 
   }
 }));
 
+// ─── Audit log ──────────────────────────────────────────────────────────────
+
+router.get("/audit-log", asyncHandler(async (req, res) => {
+  const { rows } = await pool.query(
+    "SELECT * FROM audit_log ORDER BY created_at DESC LIMIT 200"
+  );
+  res.json(rows.map(r => ({
+    id: r.id, userName: r.user_name, action: r.action,
+    entityType: r.entity_type, entityId: r.entity_id,
+    details: r.details || "", createdAt: r.created_at,
+  })));
+}));
+
+router.post("/audit-log", asyncHandler(async (req, res) => {
+  const { userName, action, entityType, entityId, details } = req.body;
+  await pool.query(
+    "INSERT INTO audit_log (user_name, action, entity_type, entity_id, details) VALUES ($1,$2,$3,$4,$5)",
+    [userName || "Système", action, entityType, entityId || null, details || ""]
+  );
+  res.status(201).json({ ok: true });
+}));
+
+// ─── Tags CRUD ──────────────────────────────────────────────────────────────
+
+router.get("/tags", asyncHandler(async (req, res) => {
+  const { rows } = await pool.query("SELECT * FROM tags ORDER BY label ASC");
+  res.json(rows);
+}));
+
+router.post("/tags", asyncHandler(async (req, res) => {
+  const { label, color } = req.body;
+  if (!label || !label.trim()) return res.status(400).json({ error: "Libellé requis" });
+  try {
+    const { rows } = await pool.query(
+      "INSERT INTO tags (label, color) VALUES ($1, $2) RETURNING *",
+      [label.trim(), color || "#3b82f6"]
+    );
+    res.status(201).json(rows[0]);
+  } catch (err) {
+    if (err.code === "23505") return res.status(409).json({ error: "Ce tag existe déjà" });
+    throw err;
+  }
+}));
+
+router.delete("/tags/:id", asyncHandler(async (req, res) => {
+  await pool.query("DELETE FROM tags WHERE id=$1", [req.params.id]);
+  res.json({ ok: true });
+}));
+
+router.get("/contacts/:contactId/tags", asyncHandler(async (req, res) => {
+  const { rows } = await pool.query(
+    "SELECT t.* FROM tags t INNER JOIN contact_tags ct ON ct.tag_id = t.id WHERE ct.contact_id = $1 ORDER BY t.label",
+    [req.params.contactId]
+  );
+  res.json(rows);
+}));
+
+router.post("/contacts/:contactId/tags", asyncHandler(async (req, res) => {
+  const { tagId } = req.body;
+  if (!tagId) return res.status(400).json({ error: "tagId requis" });
+  try {
+    await pool.query(
+      "INSERT INTO contact_tags (contact_id, tag_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
+      [req.params.contactId, tagId]
+    );
+  } catch (err) {
+    if (err.code === "23503") return res.status(404).json({ error: "Contact ou tag introuvable" });
+    throw err;
+  }
+  res.json({ ok: true });
+}));
+
+router.delete("/contacts/:contactId/tags/:tagId", asyncHandler(async (req, res) => {
+  await pool.query(
+    "DELETE FROM contact_tags WHERE contact_id=$1 AND tag_id=$2",
+    [req.params.contactId, req.params.tagId]
+  );
+  res.json({ ok: true });
+}));
+
 // ─── Validation statuses CRUD ────────────────────────────────────────────────
 
 router.get("/validation-statuses", asyncHandler(async (req, res) => {

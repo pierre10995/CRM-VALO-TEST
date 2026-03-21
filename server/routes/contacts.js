@@ -12,12 +12,31 @@ router.get("/", asyncHandler(async (req, res) => {
   res.json(rows.map(fmtContact));
 }));
 
+// Check for duplicate contacts by email or phone
+router.get("/check-duplicate", asyncHandler(async (req, res) => {
+  const { email, phone, excludeId } = req.query;
+  const conditions = [];
+  const params = [];
+  let idx = 1;
+  if (email) { conditions.push(`LOWER(email) = LOWER($${idx++})`); params.push(email); }
+  if (phone) { conditions.push(`phone = $${idx++}`); params.push(phone); }
+  if (conditions.length === 0) return res.json({ duplicates: [] });
+  let q = `SELECT id, name, email, phone FROM contacts WHERE (${conditions.join(" OR ")})`;
+  if (excludeId) { q += ` AND id != $${idx++}`; params.push(excludeId); }
+  const { rows } = await pool.query(q, params);
+  res.json({ duplicates: rows.map(r => ({ id: r.id, name: r.name, email: r.email, phone: r.phone })) });
+}));
+
 router.post("/", validate(contactSchema), asyncHandler(async (req, res) => {
   const d = req.body;
   const { rows } = await pool.query(
     `INSERT INTO contacts (name, company, email, phone, status, sector, revenue, notes, city, linkedin, skills, salary_expectation, availability, validation_status, target_position, owner)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) RETURNING *`,
     [d.name, d.company, d.email, d.phone, d.status, d.sector, d.revenue, d.notes, d.city, d.linkedin, d.skills, d.salaryExpectation, d.availability, d.validationStatus, d.targetPosition, d.owner]
+  );
+  await pool.query(
+    "INSERT INTO audit_log (user_name, action, entity_type, entity_id, details) VALUES ($1,$2,$3,$4,$5)",
+    [req.user?.login || "Système", "Créer", "Contact", rows[0].id, d.name]
   );
   res.json(fmtContact(rows[0]));
 }));
@@ -29,6 +48,10 @@ router.put("/:id", validate(contactSchema), asyncHandler(async (req, res) => {
     [d.name, d.company, d.email, d.phone, d.status, d.sector, d.revenue, d.notes, d.city, d.linkedin, d.skills, d.salaryExpectation, d.availability, d.validationStatus, d.targetPosition, d.owner, req.params.id]
   );
   if (rows.length === 0) return res.status(404).json({ error: "Contact non trouvé" });
+  await pool.query(
+    "INSERT INTO audit_log (user_name, action, entity_type, entity_id, details) VALUES ($1,$2,$3,$4,$5)",
+    [req.user?.login || "Système", "Modifier", "Contact", parseInt(req.params.id), d.name]
+  );
   res.json(fmtContact(rows[0]));
 }));
 

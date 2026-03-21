@@ -251,6 +251,34 @@ async function initDB() {
       );
     `);
 
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS audit_log (
+        id SERIAL PRIMARY KEY,
+        user_name VARCHAR(100) NOT NULL,
+        action VARCHAR(30) NOT NULL,
+        entity_type VARCHAR(30) NOT NULL,
+        entity_id INTEGER,
+        details TEXT DEFAULT '',
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS tags (
+        id SERIAL PRIMARY KEY,
+        label VARCHAR(50) NOT NULL UNIQUE,
+        color VARCHAR(20) DEFAULT '#3b82f6'
+      );
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS contact_tags (
+        contact_id INTEGER REFERENCES contacts(id) ON DELETE CASCADE,
+        tag_id INTEGER REFERENCES tags(id) ON DELETE CASCADE,
+        PRIMARY KEY (contact_id, tag_id)
+      );
+    `);
+
     // Seed tracking
     await client.query(`CREATE TABLE IF NOT EXISTS seed_log (key VARCHAR(50) PRIMARY KEY, done_at TIMESTAMP DEFAULT NOW())`);
     const alreadySeeded = async (key) => {
