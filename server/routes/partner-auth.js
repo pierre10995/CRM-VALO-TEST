@@ -19,9 +19,9 @@ router.post("/partner/login", loginLimiter, validate(partnerLoginSchema), asyncH
   const valid = await bcrypt.compare(password, partner.password);
   if (!valid) return res.status(401).json({ error: "Identifiant ou mot de passe incorrect." });
 
-  const token = signTokenAndSetCookie(res, { id: partner.id, email: partner.email, role: "partner" });
+  signTokenAndSetCookie(res, { id: partner.id, email: partner.email, role: "partner" });
 
-  res.json({ id: partner.id, email: partner.email, name: partner.name, company: partner.company, role: "partner", token });
+  res.json({ id: partner.id, email: partner.email, name: partner.name, company: partner.company, role: "partner" });
 }));
 
 router.post("/partner/logout", (req, res) => {

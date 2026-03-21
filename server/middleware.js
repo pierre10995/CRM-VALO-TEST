@@ -30,6 +30,15 @@ const uploadLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+const emailCheckLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  message: { error: "Trop de vérifications d'email. Réessayez dans 15 minutes." },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => req.partner?.id || req.ip,
+});
+
 // ─── Auth middleware ─────────────────────────────────────────────────────────
 
 /**
@@ -45,7 +54,12 @@ function authMiddleware(req, res, next) {
   }
 
   try {
-    req.user = jwt.verify(token, JWT_SECRET);
+    const decoded = jwt.verify(token, JWT_SECRET);
+    // Block partner tokens from accessing admin/internal routes
+    if (decoded.role === "partner") {
+      return res.status(403).json({ error: "Accès réservé aux utilisateurs internes" });
+    }
+    req.user = decoded;
     next();
   } catch {
     res.clearCookie(COOKIE_NAME);
@@ -97,6 +111,7 @@ export {
   loginLimiter,
   aiLimiter,
   uploadLimiter,
+  emailCheckLimiter,
   authMiddleware,
   partnerAuthMiddleware,
   signTokenAndSetCookie,

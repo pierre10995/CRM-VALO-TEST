@@ -2,7 +2,7 @@ import { Router } from "express";
 import { Resend } from "resend";
 import { pool } from "../db.js";
 import { config } from "../config.js";
-import { partnerAuthMiddleware, uploadLimiter } from "../middleware.js";
+import { partnerAuthMiddleware, uploadLimiter, emailCheckLimiter } from "../middleware.js";
 import { validate } from "../validators/validate.js";
 import { partnerSubmitSchema } from "../validators/schemas.js";
 import { asyncHandler, AppError } from "../helpers/errors.js";
@@ -82,7 +82,7 @@ router.get("/candidatures", asyncHandler(async (req, res) => {
 
 // ─── Check if a candidate email is already known ────────────────────────────
 
-router.get("/check-email", asyncHandler(async (req, res) => {
+router.get("/check-email", emailCheckLimiter, asyncHandler(async (req, res) => {
   const email = (req.query.email || "").trim();
   if (!email) return res.json({ known: false });
 

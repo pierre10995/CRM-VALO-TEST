@@ -37,7 +37,7 @@ const app = express();
 
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors({
-  origin: config.cors.origins.length > 0 ? config.cors.origins : true,
+  origin: config.cors.origins.length > 0 ? config.cors.origins : (config.isProduction ? false : true),
   credentials: true,
 }));
 app.use(cookieParser());

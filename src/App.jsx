@@ -96,10 +96,10 @@ export default function CRM() {
       return;
     }
     // Try partner login (using login field as email)
-    const partnerRes = await fetch("/api/partner/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: loginForm.login, password: loginForm.password }) });
+    const partnerRes = await fetch("/api/partner/login", { method: "POST", headers: { "Content-Type": "application/json" }, credentials: "include", body: JSON.stringify({ email: loginForm.login, password: loginForm.password }) });
     if (partnerRes.ok) {
       const partner = await partnerRes.json();
-      localStorage.setItem("crm_token", partner.token);
+      // Token is in httpOnly cookie only — not stored in localStorage for security
       setCurrentUser(partner); setAuthed(true);
       localStorage.setItem("crm_user", JSON.stringify(partner));
       setLoginError("");
