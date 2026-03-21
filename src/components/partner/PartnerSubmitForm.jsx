@@ -39,15 +39,9 @@ export default function PartnerSubmitForm({ missionId, missionTitle, onClose, on
     }
     setEmailCheck("checking");
     try {
-      const res = await api.get(`/api/partner/check-email?email=${encodeURIComponent(trimmed)}`);
-      if (res.ok) {
-        const data = await res.json();
-        setEmailCheck(data.known ? "known" : "available");
-        setEmailBlocked(data.known);
-      } else {
-        setEmailCheck(null);
-        setEmailBlocked(false);
-      }
+      const data = await api.get(`/api/partner/check-email?email=${encodeURIComponent(trimmed)}`);
+      setEmailCheck(data.known ? "known" : "available");
+      setEmailBlocked(data.known);
     } catch {
       setEmailCheck(null);
       setEmailBlocked(false);
