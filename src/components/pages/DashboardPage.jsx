@@ -4,10 +4,30 @@ import { fmtCAD } from "../../utils/constants";
 
 export default function DashboardPage({ stats, activities, contacts, missions, candidatures }) {
   const [reminders, setReminders] = useState([]);
+  const [dismissedKeys, setDismissedKeys] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("crm_dismissed_reminders") || "[]"); } catch { return []; }
+  });
+  const [partnerSubmissions, setPartnerSubmissions] = useState([]);
 
   useEffect(() => {
     api.get("/api/auto-reminders").then(setReminders).catch(() => {});
+    api.get("/api/partners/submissions").then(setPartnerSubmissions).catch(() => {});
   }, []);
+
+  const reminderKey = (r) => `${r.type}-${r.contactId || ""}-${r.missionId || ""}`;
+
+  const dismissReminder = (r) => {
+    const key = reminderKey(r);
+    const updated = [...dismissedKeys, key];
+    setDismissedKeys(updated);
+    localStorage.setItem("crm_dismissed_reminders", JSON.stringify(updated));
+  };
+
+  const visibleReminders = reminders.filter(r => !dismissedKeys.includes(reminderKey(r)));
+
+  // Partner proposals: only show "En attente" stage (not yet accepted/archived)
+  const pendingPartnerProposals = partnerSubmissions.filter(s => s.stage === "En attente");
+
   const totalClients = contacts.filter(c => c.status === "Client").length;
   const totalCandidats = contacts.filter(c => c.status === "Candidat").length;
   const missionsOuvertes = missions.filter(m => m.status === "Ouverte" || m.status === "En cours").length;
@@ -40,11 +60,33 @@ export default function DashboardPage({ stats, activities, contacts, missions, c
           </div>
         ))}
       </div>
-      {reminders.length > 0 && (
-        <div className="card" style={{ marginBottom: 16, background: "#fffbeb", border: "1px solid #fde68a" }}>
-          <h3 style={{ fontSize: 15, fontWeight: 700, color: "#d97706", marginBottom: 14 }}>Relances suggérées ({reminders.length})</h3>
+
+      {/* Partner proposal notifications */}
+      {pendingPartnerProposals.length > 0 && (
+        <div className="card" style={{ marginBottom: 16, background: "#f0fdf4", border: "1px solid #a7f3d0" }}>
+          <h3 style={{ fontSize: 15, fontWeight: 700, color: "#059669", marginBottom: 14 }}>Propositions partenaires ({pendingPartnerProposals.length})</h3>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {reminders.slice(0, 8).map((r, i) => (
+            {pendingPartnerProposals.slice(0, 8).map((s) => (
+              <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "white", borderRadius: 8, border: "1px solid #d1fae5" }}>
+                <div style={{ width: 28, height: 28, borderRadius: 8, background: "#d1fae5", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "#059669" }}>
+                  {s.candidateName?.[0] || "?"}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 12.5, fontWeight: 600, color: "#0f172a" }}>{s.candidateName}</div>
+                  <div style={{ fontSize: 11, color: "#64748b" }}>{s.missionTitle} — {s.missionCompany} | par {s.partnerName}</div>
+                </div>
+                <span style={{ fontSize: 11, color: "#94a3b8" }}>{new Date(s.createdAt).toLocaleDateString("fr-CA")}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {visibleReminders.length > 0 && (
+        <div className="card" style={{ marginBottom: 16, background: "#fffbeb", border: "1px solid #fde68a" }}>
+          <h3 style={{ fontSize: 15, fontWeight: 700, color: "#d97706", marginBottom: 14 }}>Relances suggérées ({visibleReminders.length})</h3>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {visibleReminders.slice(0, 8).map((r, i) => (
               <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "white", borderRadius: 8, border: "1px solid #fef3c7" }}>
                 <div style={{ width: 28, height: 28, borderRadius: 8, background: r.type === "prospect" ? "#dbeafe" : r.type === "candidature" ? "#fef3c7" : "#fee2e2", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: r.type === "prospect" ? "#2563eb" : r.type === "candidature" ? "#d97706" : "#dc2626" }}>
                   {r.type === "prospect" ? "P" : r.type === "candidature" ? "C" : "M"}
@@ -53,6 +95,13 @@ export default function DashboardPage({ stats, activities, contacts, missions, c
                   <div style={{ fontSize: 12.5, color: "#0f172a" }}>{r.message}</div>
                 </div>
                 <span style={{ fontSize: 11, fontWeight: 700, color: r.days >= 14 ? "#dc2626" : "#d97706", background: r.days >= 14 ? "#fef2f2" : "#fffbeb", padding: "2px 8px", borderRadius: 8 }}>{r.days}j</span>
+                <button
+                  onClick={() => dismissReminder(r)}
+                  title="Marquer comme fait"
+                  style={{ width: 24, height: 24, borderRadius: 6, border: "1px solid #e2e8f0", background: "#f8fafc", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: "#94a3b8", flexShrink: 0 }}
+                >
+                  ✓
+                </button>
               </div>
             ))}
           </div>

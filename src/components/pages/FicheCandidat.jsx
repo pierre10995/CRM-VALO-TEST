@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import api from "../../services/api";
-import { fmtCAD, VALIDATION_COLORS } from "../../utils/constants";
+import { fmtCAD } from "../../utils/constants";
 
-export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, candidatures, missions, loadAll }) {
+export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, candidatures, missions, loadAll, validationStatuses = [] }) {
   const [files, setFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [evaluations, setEvaluations] = useState([]);
@@ -10,6 +10,12 @@ export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, c
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const [cvSummary, setCvSummary] = useState(null);
   const [loadingSummary, setLoadingSummary] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [previewName, setPreviewName] = useState("");
+
+  useEffect(() => {
+    return () => { if (previewUrl) URL.revokeObjectURL(previewUrl); };
+  }, [previewUrl]);
 
   const loadFiles = async () => {
     const data = await api.get(`/api/files/contact/${c.id}`);
@@ -59,8 +65,31 @@ export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, c
     await loadFiles();
   };
 
-  const downloadFile = (id, name) => {
-    window.open(`/api/files/${id}`, "_blank");
+  const downloadFile = async (id, name) => {
+    try {
+      const blob = await api.getBlob(`/api/files/${id}`);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = name || "fichier.pdf";
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch { alert("Erreur lors du téléchargement"); }
+  };
+
+  const previewFile = async (id, name) => {
+    try {
+      const blob = await api.getBlob(`/api/files/${id}`);
+      const url = URL.createObjectURL(blob);
+      setPreviewUrl(url);
+      setPreviewName(name || "Document");
+    } catch { alert("Erreur lors de la prévisualisation"); }
+  };
+
+  const closePreview = () => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(null);
+    setPreviewName("");
   };
 
   const findSuggestions = async () => {
@@ -126,13 +155,24 @@ export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, c
           <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", marginBottom: 4 }}>SECTEUR</div>
           <div style={{ fontSize: 13, color: "#0f172a" }}>{c.sector || "—"}</div>
         </div>
+        <div style={{ background: "#f8fafc", borderRadius: 10, padding: 12, gridColumn: "1 / -1" }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", marginBottom: 4 }}>LINKEDIN</div>
+          <div style={{ fontSize: 13 }}>
+            {c.linkedin ? <a href={c.linkedin} target="_blank" rel="noopener noreferrer" style={{ color: "#2563eb", textDecoration: "none" }}>{c.linkedin}</a> : <span style={{ color: "#0f172a" }}>—</span>}
+          </div>
+        </div>
+        <div style={{ background: "#f8fafc", borderRadius: 10, padding: 12, gridColumn: "1 / -1" }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", marginBottom: 4 }}>POSTE CIBLÉ</div>
+          <div style={{ fontSize: 13, color: "#0f172a", fontWeight: 600 }}>{c.targetPosition || "—"}</div>
+        </div>
       </div>
 
       {/* Statut validation */}
       <div style={{ marginBottom: 20 }}>
         <div style={{ fontSize: 12, fontWeight: 700, color: "#94a3b8", marginBottom: 8 }}>STATUT VALIDATION</div>
         {c.validationStatus ? (() => {
-          const vc = VALIDATION_COLORS[c.validationStatus] || { bg: "#f1f5f9", color: "#64748b" };
+          const vs = validationStatuses.find(s => s.label === c.validationStatus);
+          const vc = vs ? { bg: vs.bg, color: vs.color } : { bg: "#f1f5f9", color: "#64748b" };
           return <span style={{ fontSize: 13, fontWeight: 600, padding: "5px 14px", borderRadius: 16, background: vc.bg, color: vc.color }}>{c.validationStatus}</span>;
         })() : <span style={{ fontSize: 13, color: "#cbd5e1" }}>Non défini</span>}
       </div>
@@ -170,6 +210,7 @@ export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, c
           <div key={f.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "#f8fafc", borderRadius: 8, marginBottom: 6 }}>
             <span style={{ fontSize: 13, color: "#0f172a", flex: 1 }}>{f.file_name}</span>
             <span style={{ fontSize: 11, color: "#94a3b8" }}>{new Date(f.created_at).toLocaleDateString("fr-CA")}</span>
+            <button className="btn btn-primary" style={{ padding: "4px 10px", fontSize: 11 }} onClick={() => previewFile(f.id, f.file_name)}>Voir</button>
             <button className="btn btn-ghost" style={{ padding: "4px 10px", fontSize: 11 }} onClick={() => downloadFile(f.id, f.file_name)}>Télécharger</button>
             <button className="btn btn-danger" style={{ padding: "4px 10px", fontSize: 11 }} onClick={() => window.confirm("Attention : cette suppression est définitive. Voulez-vous continuer ?") && deleteFile(f.id)}>Suppr.</button>
           </div>
@@ -235,6 +276,7 @@ export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, c
           <div key={f.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "#f8fafc", borderRadius: 8, marginBottom: 6 }}>
             <span style={{ fontSize: 13, color: "#0f172a", flex: 1 }}>{f.file_name}</span>
             <span style={{ fontSize: 11, color: "#94a3b8" }}>{new Date(f.created_at).toLocaleDateString("fr-CA")}</span>
+            <button className="btn btn-primary" style={{ padding: "4px 10px", fontSize: 11 }} onClick={() => previewFile(f.id, f.file_name)}>Voir</button>
             <button className="btn btn-ghost" style={{ padding: "4px 10px", fontSize: 11 }} onClick={() => downloadFile(f.id, f.file_name)}>Télécharger</button>
             <button className="btn btn-danger" style={{ padding: "4px 10px", fontSize: 11 }} onClick={() => window.confirm("Attention : cette suppression est définitive. Voulez-vous continuer ?") && deleteFile(f.id)}>Suppr.</button>
           </div>
@@ -298,6 +340,19 @@ export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, c
         <button className="btn btn-ghost" style={{ flex: 1, justifyContent: "center" }} onClick={onEdit}>Modifier</button>
         <button className="btn btn-danger" style={{ flex: 1, justifyContent: "center" }} onClick={() => window.confirm("Attention : cette suppression est définitive. Voulez-vous continuer ?") && onDelete()}>Supprimer</button>
       </div>
+
+      {/* PDF Preview Modal */}
+      {previewUrl && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={closePreview}>
+          <div style={{ background: "#fff", borderRadius: 12, width: "80vw", height: "85vh", display: "flex", flexDirection: "column", overflow: "hidden" }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 20px", borderBottom: "1px solid #e2e8f0" }}>
+              <span style={{ fontSize: 14, fontWeight: 600, color: "#0f172a" }}>{previewName}</span>
+              <button className="btn btn-ghost" style={{ padding: "4px 10px", fontSize: 12 }} onClick={closePreview}>Fermer</button>
+            </div>
+            <iframe src={previewUrl} style={{ flex: 1, border: "none" }} title="Prévisualisation PDF" />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

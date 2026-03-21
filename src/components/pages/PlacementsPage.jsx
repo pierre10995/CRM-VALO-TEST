@@ -62,8 +62,11 @@ export default function PlacementsPage({ candidatures, candidates, missions }) {
       probationDate: p.probationDate ? p.probationDate.split("T")[0] : "",
       startInvoiceSent: p.startInvoiceSent,
       startInvoiceName: p.startInvoiceName,
+      startInvoicePaid: p.startInvoicePaid,
       probationInvoiceSent: p.probationInvoiceSent,
       probationInvoiceName: p.probationInvoiceName,
+      probationInvoicePaid: p.probationInvoicePaid,
+      probationValidated: p.probationValidated,
       notes: p.notes,
     });
   };
@@ -143,9 +146,15 @@ export default function PlacementsPage({ candidatures, candidates, missions }) {
                     <label style={{ fontSize: 12, color: "#0f172a" }}>Facture envoyée</label>
                   </div>
                   {form.startInvoiceSent && (
-                    <div>
+                    <div style={{ marginBottom: 8 }}>
                       <label style={{ fontSize: 11, color: "#94a3b8", display: "block", marginBottom: 3 }}>Nom de la facture</label>
                       <input className="input" value={form.startInvoiceName || ""} onChange={e => setForm(f => ({ ...f, startInvoiceName: e.target.value }))} placeholder="FAC-2026-001" />
+                    </div>
+                  )}
+                  {form.startInvoiceSent && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <input type="checkbox" checked={form.startInvoicePaid || false} onChange={e => setForm(f => ({ ...f, startInvoicePaid: e.target.checked }))} />
+                      <label style={{ fontSize: 12, color: "#0f172a" }}>Facture payée</label>
                     </div>
                   )}
                 </div>
@@ -161,11 +170,21 @@ export default function PlacementsPage({ candidatures, candidates, missions }) {
                     <label style={{ fontSize: 12, color: "#0f172a" }}>Facture envoyée</label>
                   </div>
                   {form.probationInvoiceSent && (
-                    <div>
+                    <div style={{ marginBottom: 8 }}>
                       <label style={{ fontSize: 11, color: "#94a3b8", display: "block", marginBottom: 3 }}>Nom de la facture</label>
                       <input className="input" value={form.probationInvoiceName || ""} onChange={e => setForm(f => ({ ...f, probationInvoiceName: e.target.value }))} placeholder="FAC-2026-002" />
                     </div>
                   )}
+                  {form.probationInvoiceSent && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                      <input type="checkbox" checked={form.probationInvoicePaid || false} onChange={e => setForm(f => ({ ...f, probationInvoicePaid: e.target.checked }))} />
+                      <label style={{ fontSize: 12, color: "#0f172a" }}>Facture payée</label>
+                    </div>
+                  )}
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10, paddingTop: 10, borderTop: "1px solid #e2e8f0" }}>
+                    <input type="checkbox" checked={form.probationValidated || false} onChange={e => setForm(f => ({ ...f, probationValidated: e.target.checked }))} />
+                    <label style={{ fontSize: 12, fontWeight: 600, color: "#059669" }}>Période d'essai validée</label>
+                  </div>
                 </div>
               </div>
               <div style={{ marginBottom: 14 }}>
@@ -201,11 +220,16 @@ export default function PlacementsPage({ candidatures, candidates, missions }) {
                     <span style={{ color: "#94a3b8", fontSize: 11 }}>Date : </span>
                     {p.startDate ? new Date(p.startDate).toLocaleDateString("fr-CA") : "—"}
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                     <span style={{ color: "#94a3b8", fontSize: 11 }}>Facture : </span>
                     <span className="tag" style={{ background: p.startInvoiceSent ? "#d1fae5" : "#fee2e2", color: p.startInvoiceSent ? "#059669" : "#dc2626", fontSize: 11 }}>
                       {p.startInvoiceSent ? "Envoyée" : "Non envoyée"}
                     </span>
+                    {p.startInvoiceSent && (
+                      <span className="tag" style={{ background: p.startInvoicePaid ? "#dbeafe" : "#fef3c7", color: p.startInvoicePaid ? "#2563eb" : "#d97706", fontSize: 11 }}>
+                        {p.startInvoicePaid ? "Payée" : "Non payée"}
+                      </span>
+                    )}
                     {p.startInvoiceSent && p.startInvoiceName && (
                       <span style={{ fontSize: 11, color: "#64748b" }}>{p.startInvoiceName}</span>
                     )}
@@ -218,13 +242,47 @@ export default function PlacementsPage({ candidatures, candidates, missions }) {
                     <span style={{ color: "#94a3b8", fontSize: 11 }}>Date : </span>
                     {p.probationDate ? new Date(p.probationDate).toLocaleDateString("fr-CA") : "—"}
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                     <span style={{ color: "#94a3b8", fontSize: 11 }}>Facture : </span>
                     <span className="tag" style={{ background: p.probationInvoiceSent ? "#d1fae5" : "#fee2e2", color: p.probationInvoiceSent ? "#059669" : "#dc2626", fontSize: 11 }}>
                       {p.probationInvoiceSent ? "Envoyée" : "Non envoyée"}
                     </span>
+                    {p.probationInvoiceSent && (
+                      <span className="tag" style={{ background: p.probationInvoicePaid ? "#dbeafe" : "#fef3c7", color: p.probationInvoicePaid ? "#2563eb" : "#d97706", fontSize: 11 }}>
+                        {p.probationInvoicePaid ? "Payée" : "Non payée"}
+                      </span>
+                    )}
                     {p.probationInvoiceSent && p.probationInvoiceName && (
                       <span style={{ fontSize: 11, color: "#64748b" }}>{p.probationInvoiceName}</span>
+                    )}
+                  </div>
+                  <div style={{ marginTop: 10 }}>
+                    {p.probationValidated ? (
+                      <span className="tag" style={{ background: "#d1fae5", color: "#059669", fontSize: 11, fontWeight: 700, padding: "4px 12px" }}>
+                        Période d'essai validée
+                      </span>
+                    ) : (
+                      <button
+                        className="btn btn-primary"
+                        style={{ fontSize: 11, padding: "4px 12px" }}
+                        onClick={async () => {
+                          const res = await api.put(`/api/placements/${p.id}`, {
+                            startDate: p.startDate ? p.startDate.split("T")[0] : null,
+                            probationDate: p.probationDate ? p.probationDate.split("T")[0] : null,
+                            startInvoiceSent: p.startInvoiceSent,
+                            startInvoiceName: p.startInvoiceName,
+                            startInvoicePaid: p.startInvoicePaid,
+                            probationInvoiceSent: p.probationInvoiceSent,
+                            probationInvoiceName: p.probationInvoiceName,
+                            probationInvoicePaid: p.probationInvoicePaid,
+                            probationValidated: true,
+                            notes: p.notes,
+                          });
+                          if (res.ok) await loadPlacements();
+                        }}
+                      >
+                        Valider la période d'essai
+                      </button>
                     )}
                   </div>
                 </div>

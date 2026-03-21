@@ -17,6 +17,11 @@ import ActivitesPage from "./components/pages/ActivitesPage";
 import EvaluationPage from "./components/pages/EvaluationPage";
 import RevenuePage from "./components/pages/RevenuePage";
 import PlacementsPage from "./components/pages/PlacementsPage";
+import ObjectifsPage from "./components/pages/ObjectifsPage";
+import PartenairesPage from "./components/pages/PartenairesPage";
+
+// Partner portal
+import PartnerPortal from "./components/partner/PartnerPortal";
 
 // Forms
 import ClientForm from "./components/forms/ClientForm";
@@ -43,6 +48,7 @@ export default function CRM() {
   const [fiscalYears, setFiscalYears] = useState([]);
   const [sectors, setSectors] = useState([]);
   const [workModes, setWorkModes] = useState([]);
+  const [validationStatuses, setValidationStatuses] = useState([]);
 
   // UI state
   const [modal, setModal] = useState(null);
@@ -55,7 +61,7 @@ export default function CRM() {
   const clients = contacts.filter(c => c.status === "Client" || c.status === "Prospect");
 
   const loadAll = async () => {
-    const [c, m, cd, a, u, s, fy, sec, wm] = await Promise.all([
+    const [c, m, cd, a, u, s, fy, sec, wm, vs] = await Promise.all([
       api.get("/api/contacts"),
       api.get("/api/missions"),
       api.get("/api/candidatures"),
@@ -65,8 +71,9 @@ export default function CRM() {
       api.get("/api/fiscal-years"),
       api.get("/api/sectors"),
       api.get("/api/work-modes"),
+      api.get("/api/validation-statuses"),
     ]);
-    setContacts(c); setMissions(m); setCandidatures(cd); setActivities(a); setUsers(u); setStats(s); setFiscalYears(fy); setSectors(sec); setWorkModes(wm);
+    setContacts(c); setMissions(m); setCandidatures(cd); setActivities(a); setUsers(u); setStats(s); setFiscalYears(fy); setSectors(sec); setWorkModes(wm); setValidationStatuses(vs);
   };
 
   useEffect(() => {
@@ -78,6 +85,7 @@ export default function CRM() {
   useEffect(() => { if (authed) loadAll(); }, [authed]);
 
   const handleLogin = async () => {
+    // Try internal user login first
     const res = await fetch("/api/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(loginForm) });
     if (res.ok) {
       const user = await res.json();
@@ -85,10 +93,20 @@ export default function CRM() {
       setCurrentUser(user); setAuthed(true);
       localStorage.setItem("crm_user", JSON.stringify(user));
       setLoginError("");
-    } else {
-      const err = await res.json();
-      setLoginError(err.error);
+      return;
     }
+    // Try partner login (using login field as email)
+    const partnerRes = await fetch("/api/partner/login", { method: "POST", headers: { "Content-Type": "application/json" }, credentials: "include", body: JSON.stringify({ email: loginForm.login, password: loginForm.password }) });
+    if (partnerRes.ok) {
+      const partner = await partnerRes.json();
+      // Token is in httpOnly cookie only — not stored in localStorage for security
+      setCurrentUser(partner); setAuthed(true);
+      localStorage.setItem("crm_user", JSON.stringify(partner));
+      setLoginError("");
+      return;
+    }
+    const err = await res.json().catch(() => ({ error: "Identifiant ou mot de passe incorrect." }));
+    setLoginError(err.error);
   };
 
   const handleLogout = () => {
@@ -101,8 +119,28 @@ export default function CRM() {
   // CRUD helpers
   const saveContact = async () => {
     if (!form.company && !form.name) return;
-    if (form.id) await api.put(`/api/contacts/${form.id}`, form);
-    else await api.post("/api/contacts", form);
+    const cvFile = form._cvFile;
+    const { _cvFile, ...formData } = form;
+    let contactId = form.id;
+    if (contactId) {
+      await api.put(`/api/contacts/${contactId}`, formData);
+    } else {
+      const res = await api.post("/api/contacts", formData);
+      if (res.ok) {
+        const created = await res.json();
+        contactId = created.id;
+      }
+    }
+    // Upload CV if one was attached during creation
+    if (cvFile && contactId) {
+      await api.post("/api/files", {
+        contactId,
+        fileType: "cv",
+        fileName: cvFile.fileName,
+        mimeType: cvFile.mimeType,
+        fileData: cvFile.fileData,
+      });
+    }
     await loadAll(); setModal(null);
   };
 
@@ -157,6 +195,16 @@ export default function CRM() {
 
   if (!authed) return <LoginScreen form={loginForm} setForm={setLoginForm} showPwd={showPwd} setShowPwd={setShowPwd} error={loginError} onLogin={handleLogin} />;
 
+  // Partner portal
+  if (currentUser?.role === "partner") {
+    return (
+      <>
+        <style>{GLOBAL_STYLES}</style>
+        <PartnerPortal partner={currentUser} onLogout={handleLogout} />
+      </>
+    );
+  }
+
   return (
     <div style={{ display: "flex", height: "100vh", fontFamily: "'Sora', sans-serif", background: "#f0f4ff", overflow: "hidden" }}>
       <style>{GLOBAL_STYLES}</style>
@@ -166,14 +214,16 @@ export default function CRM() {
       {/* Main Content */}
       <main style={{ flex: 1, overflow: "auto", padding: 28 }}>
         {activeTab === "dashboard" && <DashboardPage stats={stats} activities={activities} contacts={contacts} missions={missions} candidatures={candidatures} />}
-        {activeTab === "clients" && <ClientsPage contacts={clients} search={search} setSearch={setSearch} filterStatus={filterStatus} setFilterStatus={setFilterStatus} onAdd={() => { setModal("client"); setForm({ status: "Prospect", sector: "Tech", revenue: 0 }); }} onEdit={c => { setModal("client"); setForm({ ...c }); }} onDelete={deleteContact} onDetail={id => setDetailId(id)} detailId={detailId} setDetailId={setDetailId} />}
-        {activeTab === "candidats" && <CandidatsPage contacts={candidates} search={search} setSearch={setSearch} onAdd={() => { setModal("candidat"); setForm({ status: "Candidat", sector: "Tech", salaryExpectation: 0 }); }} onEdit={c => { setModal("candidat"); setForm({ ...c }); }} onDelete={deleteContact} onDetail={id => setDetailId(id)} detailId={detailId} setDetailId={setDetailId} candidatures={candidatures} missions={missions} loadAll={loadAll} />}
+        {activeTab === "clients" && <ClientsPage contacts={clients} missions={missions} candidatures={candidatures} search={search} setSearch={setSearch} filterStatus={filterStatus} setFilterStatus={setFilterStatus} onAdd={() => { setModal("client"); setForm({ status: "Prospect", sector: "Tech", revenue: 0 }); }} onEdit={c => { setModal("client"); setForm({ ...c }); }} onDelete={deleteContact} onDetail={id => setDetailId(id)} detailId={detailId} setDetailId={setDetailId} />}
+        {activeTab === "candidats" && <CandidatsPage contacts={candidates} search={search} setSearch={setSearch} onAdd={() => { setModal("candidat"); setForm({ status: "Candidat", sector: "Tech", salaryExpectation: 0 }); }} onEdit={c => { setModal("candidat"); setForm({ ...c }); }} onDelete={deleteContact} onDetail={id => setDetailId(id)} detailId={detailId} setDetailId={setDetailId} candidatures={candidatures} missions={missions} loadAll={loadAll} validationStatuses={validationStatuses} users={users} />}
         {activeTab === "missions" && <MissionsPage missions={missions} contacts={contacts} users={users} candidatures={candidatures} onAdd={() => { setModal("mission"); setForm({ status: "Ouverte", priority: "Normale", contractType: "CDI" }); }} onEdit={m => { setModal("mission"); setForm({ ...m }); }} onDelete={deleteMission} />}
-        {activeTab === "pipeline" && <PipelinePage candidatures={candidatures} candidates={candidates} missions={missions} onEdit={cd => { setModal("candidature"); setForm({ ...cd }); }} onAdd={() => { setModal("candidature"); setForm({ stage: "Présélectionné", rating: 0 }); }} onDelete={deleteCandidature} />}
+        {activeTab === "pipeline" && <PipelinePage candidatures={candidatures} candidates={candidates} missions={missions} onEdit={cd => { setModal("candidature"); setForm({ ...cd }); }} onAdd={() => { setModal("candidature"); setForm({ stage: "Présélectionné", rating: 0 }); }} onDelete={deleteCandidature} loadAll={loadAll} />}
         {activeTab === "activites" && <ActivitesPage activities={activities} contacts={contacts} missions={missions} users={users} currentUser={currentUser} onAdd={() => { setModal("activity"); setForm({ type: "Appel" }); }} onToggle={toggleActivity} onDelete={deleteActivity} />}
         {activeTab === "evaluation" && <EvaluationPage candidates={candidates} missions={missions} loadAll={loadAll} />}
         {activeTab === "placements" && <PlacementsPage candidatures={candidatures} candidates={candidates} missions={missions} />}
         {activeTab === "revenue" && <RevenuePage contacts={contacts} missions={missions} candidatures={candidatures} users={users} fiscalYears={fiscalYears} loadAll={loadAll} />}
+        {activeTab === "objectifs" && <ObjectifsPage contacts={contacts} missions={missions} candidatures={candidatures} users={users} fiscalYears={fiscalYears} loadAll={loadAll} />}
+        {activeTab === "partenaires" && <PartenairesPage missions={missions} currentUser={currentUser} />}
       </main>
 
       {/* Modals */}
@@ -184,7 +234,7 @@ export default function CRM() {
       )}
       {modal === "candidat" && (
         <ModalWrapper onClose={() => setModal(null)} title={form.id ? "Modifier le candidat" : "Nouveau candidat"}>
-          <CandidatForm form={form} setForm={setForm} onSave={saveContact} onCancel={() => setModal(null)} sectors={sectors} />
+          <CandidatForm form={form} setForm={setForm} onSave={saveContact} onCancel={() => setModal(null)} sectors={sectors} validationStatuses={validationStatuses} onStatusesChanged={loadAll} users={users} />
         </ModalWrapper>
       )}
       {modal === "mission" && (
