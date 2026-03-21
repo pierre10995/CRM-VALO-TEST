@@ -28,7 +28,7 @@ export default function ObjectiveCard({ obj, actuals, userCA, periodLabel, onEdi
         {!isEditing && (
           <div style={{ display: "flex", gap: 6 }}>
             <button className="btn btn-ghost" style={{ padding: "4px 8px", fontSize: 11 }} onClick={onEdit}>Modifier</button>
-            <button className="btn btn-danger" style={{ padding: "4px 8px", fontSize: 11 }} onClick={onDelete}>Suppr.</button>
+            <button className="btn btn-danger" style={{ padding: "4px 8px", fontSize: 11 }} onClick={() => { if (window.confirm("Supprimer cet objectif ?")) onDelete(); }}>Suppr.</button>
           </div>
         )}
       </div>

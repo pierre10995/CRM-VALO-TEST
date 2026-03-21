@@ -340,7 +340,7 @@ export default function PartenairesPage({ missions, currentUser }) {
                     <div style={{ marginLeft: "auto", display: "flex", gap: 6 }}>
                       {s.stage === "En attente" && (
                         <button
-                          onClick={() => updateStage(s.id, "Proposition partenaire")}
+                          onClick={() => { if (window.confirm("Accepter cette proposition ?")) updateStage(s.id, "Proposition partenaire"); }}
                           style={{
                             display: "inline-flex", alignItems: "center", gap: 5,
                             padding: "7px 14px", background: "#d1fae5", border: "none", borderRadius: 10,
@@ -353,7 +353,7 @@ export default function PartenairesPage({ missions, currentUser }) {
                       )}
                       {s.stage !== "Archivé" && (
                         <button
-                          onClick={() => updateStage(s.id, "Archivé")}
+                          onClick={() => { if (window.confirm("Archiver cette soumission ?")) updateStage(s.id, "Archivé"); }}
                           style={{
                             display: "inline-flex", alignItems: "center", gap: 5,
                             padding: "7px 14px", background: "#f1f5f9", border: "none", borderRadius: 10,
@@ -467,7 +467,7 @@ export default function PartenairesPage({ missions, currentUser }) {
                       <span style={{ color: "#64748b" }}> — {m.company}</span>
                     </div>
                     <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 6, background: m.status === "Ouverte" ? "#d1fae5" : "#f1f5f9", color: m.status === "Ouverte" ? "#059669" : "#64748b" }}>{m.status}</span>
-                    <button onClick={() => removeMission(m.id)} style={{ background: "none", border: "none", color: "#dc2626", cursor: "pointer", fontSize: 12, fontWeight: 600 }}>Retirer</button>
+                    <button onClick={() => { if (window.confirm("Retirer cette mission du partenaire ?")) removeMission(m.id); }} style={{ background: "none", border: "none", color: "#dc2626", cursor: "pointer", fontSize: 12, fontWeight: 600 }}>Retirer</button>
                   </div>
                 ))}
               </div>

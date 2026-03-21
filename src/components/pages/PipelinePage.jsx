@@ -40,6 +40,8 @@ export default function PipelinePage({ candidatures, candidates, missions, onEdi
     const cd = dragRef.current;
     if (!cd || cd.stage === stageKey) { setDraggedId(null); return; }
 
+    if (!window.confirm(`Déplacer cette candidature vers "${stageKey}" ?`)) { setDraggedId(null); dragRef.current = null; return; }
+
     try {
       await api.put(`/api/candidatures/${cd.id}`, {
         stage: stageKey, rating: cd.rating || 0, notes: cd.notes || "", interviewDate: cd.interviewDate || null,
@@ -53,6 +55,7 @@ export default function PipelinePage({ candidatures, candidates, missions, onEdi
   const handleDragEnd = () => { setDraggedId(null); setDropTarget(null); dragRef.current = null; };
 
   const quickMove = async (cd, newStage) => {
+    if (!window.confirm(`Déplacer cette candidature vers "${newStage}" ?`)) return;
     try {
       await api.put(`/api/candidatures/${cd.id}`, {
         stage: newStage, rating: cd.rating || 0, notes: cd.notes || "", interviewDate: cd.interviewDate || null,
