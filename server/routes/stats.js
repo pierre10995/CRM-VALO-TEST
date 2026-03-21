@@ -56,6 +56,26 @@ router.get("/users", asyncHandler(async (req, res) => {
   res.json(rows.map(r => ({ id: r.id, login: r.login, fullName: r.full_name })));
 }));
 
+router.post("/users", asyncHandler(async (req, res) => {
+  const { fullName, login, password } = req.body;
+  if (!fullName || !fullName.trim()) return res.status(400).json({ error: "Nom complet requis" });
+  if (!login || !login.trim()) return res.status(400).json({ error: "Email requis" });
+  if (!password || password.length < 6) return res.status(400).json({ error: "Mot de passe requis (min. 6 caractères)" });
+
+  const { default: bcrypt } = await import("bcryptjs");
+  const hash = bcrypt.hashSync(password, 10);
+  try {
+    const { rows } = await pool.query(
+      "INSERT INTO users (login, password, full_name) VALUES ($1, $2, $3) RETURNING id, login, full_name",
+      [login.trim(), hash, fullName.trim()]
+    );
+    res.status(201).json({ id: rows[0].id, login: rows[0].login, fullName: rows[0].full_name });
+  } catch (err) {
+    if (err.code === "23505") return res.status(409).json({ error: "Cet email est déjà utilisé" });
+    throw err;
+  }
+}));
+
 // ─── Validation statuses CRUD ────────────────────────────────────────────────
 
 router.get("/validation-statuses", asyncHandler(async (req, res) => {

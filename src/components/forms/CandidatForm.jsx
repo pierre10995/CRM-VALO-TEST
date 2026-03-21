@@ -138,7 +138,7 @@ export default function CandidatForm({ form, setForm, onSave, onCancel, sectors 
       <Field label="Propriétaire du contact">
         <select className="input" value={form.owner || ""} onChange={e => f("owner", e.target.value)}>
           <option value="">— Non assigné —</option>
-          {users.map(u => <option key={u.id} value={u.name}>{u.name}</option>)}
+          {users.map(u => <option key={u.id} value={u.fullName}>{u.fullName}</option>)}
         </select>
       </Field>
 
