@@ -80,6 +80,19 @@ router.get("/candidatures", asyncHandler(async (req, res) => {
   })));
 }));
 
+// ─── Check if a candidate email is already known ────────────────────────────
+
+router.get("/check-email", asyncHandler(async (req, res) => {
+  const email = (req.query.email || "").trim();
+  if (!email) return res.json({ known: false });
+
+  const { rows } = await pool.query(
+    "SELECT id, name FROM contacts WHERE LOWER(email) = LOWER($1) AND status = 'Candidat'",
+    [email]
+  );
+  res.json({ known: rows.length > 0 });
+}));
+
 // ─── Submit a candidate ─────────────────────────────────────────────────────
 
 router.post("/submit", uploadLimiter, validate(partnerSubmitSchema), asyncHandler(async (req, res) => {
@@ -98,30 +111,28 @@ router.post("/submit", uploadLimiter, validate(partnerSubmitSchema), asyncHandle
     throw new AppError(400, "Fichier trop volumineux (max 6 Mo)");
   }
 
+  // Block submission if candidate email is already known
+  if (email) {
+    const { rows: existing } = await pool.query(
+      "SELECT id FROM contacts WHERE LOWER(email) = LOWER($1) AND status = 'Candidat'",
+      [email]
+    );
+    if (existing.length > 0) {
+      throw new AppError(409, "Ce candidat est déjà enregistré dans notre base. Vous ne pouvez pas soumettre un candidat déjà connu.");
+    }
+  }
+
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
 
-    // Check duplicate email
-    let contactId;
-    if (email) {
-      const { rows: existing } = await client.query(
-        "SELECT id FROM contacts WHERE LOWER(email) = LOWER($1)", [email]
-      );
-      if (existing.length > 0) {
-        contactId = existing[0].id;
-      }
-    }
-
-    // Create contact if not a duplicate
-    if (!contactId) {
-      const { rows: newContact } = await client.query(
-        `INSERT INTO contacts (name, email, phone, company, status, sector, revenue, notes)
-         VALUES ($1, $2, $3, '', 'Candidat', 'Tech', 0, $4) RETURNING id`,
-        [name, email, phone, summary]
-      );
-      contactId = newContact[0].id;
-    }
+    // Create contact
+    const { rows: newContact } = await client.query(
+      `INSERT INTO contacts (name, email, phone, company, status, sector, revenue, notes)
+       VALUES ($1, $2, $3, '', 'Candidat', 'Tech', 0, $4) RETURNING id`,
+      [name, email, phone, summary]
+    );
+    const contactId = newContact[0].id;
 
     // Create candidature
     const { rows: cdRows } = await client.query(

@@ -7,6 +7,10 @@ export default function PartnerSubmitForm({ missionId, missionTitle, onClose, on
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // Email check state
+  const [emailCheck, setEmailCheck] = useState(null); // null | "checking" | "known" | "available"
+  const [emailBlocked, setEmailBlocked] = useState(false);
+
   const handleFileChange = (e) => {
     const f = e.target.files[0];
     if (!f) return;
@@ -26,9 +30,41 @@ export default function PartnerSubmitForm({ missionId, missionTitle, onClose, on
     reader.readAsDataURL(f);
   };
 
+  const checkEmail = async (email) => {
+    const trimmed = email.trim();
+    if (!trimmed || !trimmed.includes("@")) {
+      setEmailCheck(null);
+      setEmailBlocked(false);
+      return;
+    }
+    setEmailCheck("checking");
+    try {
+      const res = await api.get(`/api/partner/check-email?email=${encodeURIComponent(trimmed)}`);
+      if (res.ok) {
+        const data = await res.json();
+        setEmailCheck(data.known ? "known" : "available");
+        setEmailBlocked(data.known);
+      } else {
+        setEmailCheck(null);
+        setEmailBlocked(false);
+      }
+    } catch {
+      setEmailCheck(null);
+      setEmailBlocked(false);
+    }
+  };
+
+  const handleEmailChange = (v) => {
+    setForm(f => ({ ...f, email: v }));
+    setEmailCheck(null);
+    setEmailBlocked(false);
+  };
+
   const handleSubmit = async () => {
     setError("");
     if (!form.name.trim()) return setError("Le nom du candidat est requis.");
+    if (!form.email.trim()) return setError("L'email du candidat est requis pour vérifier les doublons.");
+    if (emailBlocked) return setError("Ce candidat est déjà connu de notre entreprise. Soumission impossible.");
     if (!file) return setError("Veuillez joindre un CV (PDF).");
 
     setLoading(true);
@@ -67,7 +103,47 @@ export default function PartnerSubmitForm({ missionId, missionTitle, onClose, on
 
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <Field label="Nom du candidat *" value={form.name} onChange={v => setForm(f => ({ ...f, name: v }))} placeholder="Prénom Nom" />
-          <Field label="Email" value={form.email} onChange={v => setForm(f => ({ ...f, email: v }))} placeholder="candidat@email.com" type="email" />
+
+          {/* Email with check */}
+          <div>
+            <label style={{ fontSize: 12.5, fontWeight: 600, color: "#374151", display: "block", marginBottom: 6 }}>Email du candidat *</label>
+            <div style={{ display: "flex", gap: 8 }}>
+              <input
+                type="email"
+                value={form.email}
+                onChange={e => handleEmailChange(e.target.value)}
+                placeholder="candidat@email.com"
+                style={{
+                  flex: 1, padding: "10px 14px",
+                  border: `1.5px solid ${emailCheck === "known" ? "#fca5a5" : emailCheck === "available" ? "#86efac" : "#e2e8f0"}`,
+                  borderRadius: 12, fontSize: 13, fontFamily: "inherit", outline: "none",
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => checkEmail(form.email)}
+                disabled={emailCheck === "checking" || !form.email.trim()}
+                style={{
+                  padding: "10px 16px", background: "#f0f9ff", border: "1.5px solid #93c5fd", borderRadius: 12,
+                  fontSize: 12.5, fontWeight: 600, color: "#2563eb", cursor: "pointer", fontFamily: "inherit",
+                  whiteSpace: "nowrap", opacity: (!form.email.trim() || emailCheck === "checking") ? 0.5 : 1,
+                }}
+              >
+                {emailCheck === "checking" ? "..." : "Vérifier"}
+              </button>
+            </div>
+            {emailCheck === "known" && (
+              <div style={{ marginTop: 6, padding: "8px 12px", background: "#fee2e2", borderRadius: 8, fontSize: 12.5, color: "#dc2626", fontWeight: 500 }}>
+                Ce candidat est déjà connu de notre entreprise. Vous ne pouvez pas le soumettre.
+              </div>
+            )}
+            {emailCheck === "available" && (
+              <div style={{ marginTop: 6, padding: "8px 12px", background: "#f0fdf4", borderRadius: 8, fontSize: 12.5, color: "#059669", fontWeight: 500 }}>
+                Ce candidat n'est pas encore dans notre base. Vous pouvez le soumettre.
+              </div>
+            )}
+          </div>
+
           <Field label="Téléphone" value={form.phone} onChange={v => setForm(f => ({ ...f, phone: v }))} placeholder="(514) 555-1234" />
 
           <div>
@@ -106,12 +182,12 @@ export default function PartnerSubmitForm({ missionId, missionTitle, onClose, on
             <button onClick={onClose} style={{ flex: 1, padding: 12, background: "#f1f5f9", color: "#475569", border: "none", borderRadius: 12, fontSize: 13.5, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
               Annuler
             </button>
-            <button onClick={handleSubmit} disabled={loading} style={{
-              flex: 2, padding: 12, background: "linear-gradient(135deg, #059669, #10b981)", color: "white",
-              border: "none", borderRadius: 12, fontSize: 13.5, fontWeight: 700, cursor: "pointer",
-              fontFamily: "inherit", boxShadow: "0 4px 12px rgba(16,185,129,0.3)", opacity: loading ? 0.7 : 1,
+            <button onClick={handleSubmit} disabled={loading || emailBlocked} style={{
+              flex: 2, padding: 12, background: emailBlocked ? "#e2e8f0" : "linear-gradient(135deg, #059669, #10b981)", color: emailBlocked ? "#94a3b8" : "white",
+              border: "none", borderRadius: 12, fontSize: 13.5, fontWeight: 700, cursor: emailBlocked ? "not-allowed" : "pointer",
+              fontFamily: "inherit", boxShadow: emailBlocked ? "none" : "0 4px 12px rgba(16,185,129,0.3)", opacity: loading ? 0.7 : 1,
             }}>
-              {loading ? "Envoi en cours..." : "Soumettre le candidat"}
+              {loading ? "Envoi en cours..." : emailBlocked ? "Soumission bloquée" : "Soumettre le candidat"}
             </button>
           </div>
         </div>
