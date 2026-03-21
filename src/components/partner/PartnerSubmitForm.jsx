@@ -54,12 +54,21 @@ export default function PartnerSubmitForm({ missionId, missionTitle, onClose, on
     setEmailBlocked(false);
   };
 
+  const formDirty = form.name || form.email || form.phone || form.summary || file;
+
+  const handleClose = () => {
+    if (formDirty && !window.confirm("Êtes-vous sûr de vouloir quitter ? Les informations saisies seront perdues.")) return;
+    onClose();
+  };
+
   const handleSubmit = async () => {
     setError("");
     if (!form.name.trim()) return setError("Le nom du candidat est requis.");
     if (!form.email.trim()) return setError("L'email du candidat est requis pour vérifier les doublons.");
     if (emailBlocked) return setError("Ce candidat est déjà connu de notre entreprise. Soumission impossible.");
     if (!file) return setError("Veuillez joindre un CV (PDF).");
+
+    if (!window.confirm(`Confirmez-vous la soumission du candidat « ${form.name.trim()} » pour la mission « ${missionTitle} » ?`)) return;
 
     setLoading(true);
     try {
@@ -85,14 +94,14 @@ export default function PartnerSubmitForm({ missionId, missionTitle, onClose, on
   };
 
   return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }} onClick={e => { if (e.target === e.currentTarget) handleClose(); }}>
       <div style={{ background: "white", borderRadius: 18, padding: 28, width: "100%", maxWidth: 520, maxHeight: "90vh", overflow: "auto", boxShadow: "0 20px 60px rgba(0,0,0,0.15)" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
           <div>
             <h3 style={{ fontSize: 17, fontWeight: 700, color: "#0f172a", margin: 0 }}>Proposer un candidat</h3>
             <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>pour {missionTitle}</div>
           </div>
-          <button onClick={onClose} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "#94a3b8" }}>x</button>
+          <button onClick={handleClose} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "#94a3b8" }}>x</button>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -173,7 +182,7 @@ export default function PartnerSubmitForm({ missionId, missionTitle, onClose, on
           )}
 
           <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
-            <button onClick={onClose} style={{ flex: 1, padding: 12, background: "#f1f5f9", color: "#475569", border: "none", borderRadius: 12, fontSize: 13.5, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+            <button onClick={handleClose} style={{ flex: 1, padding: 12, background: "#f1f5f9", color: "#475569", border: "none", borderRadius: 12, fontSize: 13.5, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
               Annuler
             </button>
             <button onClick={handleSubmit} disabled={loading || emailBlocked} style={{
