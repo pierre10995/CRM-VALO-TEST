@@ -33,6 +33,9 @@ import partnersAdminRoutes from "./server/routes/partners-admin.js";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 
+// Trust first proxy (Railway, Render, etc.) so rate-limiters & req.ip work correctly
+app.set("trust proxy", 1);
+
 // ─── Security & parsing middleware ───────────────────────────────────────────
 
 app.use(helmet({ contentSecurityPolicy: false }));
