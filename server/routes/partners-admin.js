@@ -1,6 +1,6 @@
 import { Router } from "express";
-import bcrypt from "bcryptjs";
 import { pool } from "../db.js";
+import { supabaseAdmin } from "../supabase.js";
 import { fmtPartner } from "../formatters.js";
 import { validate } from "../validators/validate.js";
 import { partnerCreateSchema, partnerUpdateSchema, partnerMissionSchema } from "../validators/schemas.js";
@@ -24,21 +24,45 @@ router.post("/", validate(partnerCreateSchema), asyncHandler(async (req, res) =>
   const { rows: existing } = await pool.query("SELECT 1 FROM partners WHERE LOWER(email) = LOWER($1)", [email]);
   if (existing.length > 0) throw new AppError(409, "Un partenaire avec cet email existe déjà");
 
-  const hash = await bcrypt.hash(password, 10);
-  const { rows } = await pool.query(
-    `INSERT INTO partners (name, email, password, company, phone) VALUES ($1, $2, $3, $4, $5)
-     RETURNING *, 0 as mission_count`,
-    [name, email, hash, company, phone]
-  );
-  res.status(201).json(fmtPartner(rows[0]));
+  // Créer l'utilisateur dans Supabase Auth
+  const { data: authUser, error: authErr } = await supabaseAdmin.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+    user_metadata: { full_name: name, role: "partner", company },
+  });
+
+  if (authErr) {
+    if (authErr.message?.includes("already been registered")) {
+      throw new AppError(409, "Un partenaire avec cet email existe déjà");
+    }
+    throw authErr;
+  }
+
+  try {
+    const { rows } = await pool.query(
+      `INSERT INTO partners (name, email, company, phone, auth_id) VALUES ($1, $2, $3, $4, $5)
+       RETURNING *, 0 as mission_count`,
+      [name, email, company, phone, authUser.user.id]
+    );
+    res.status(201).json(fmtPartner(rows[0]));
+  } catch (err) {
+    // Rollback : supprimer l'utilisateur Supabase si l'insert local échoue
+    await supabaseAdmin.auth.admin.deleteUser(authUser.user.id);
+    throw err;
+  }
 }));
 
 router.put("/:id", validate(partnerUpdateSchema), asyncHandler(async (req, res) => {
   const { name, email, company, phone, password } = req.body;
 
+  // Si le mot de passe est fourni, le mettre à jour dans Supabase Auth
   if (password) {
-    const hash = await bcrypt.hash(password, 10);
-    await pool.query("UPDATE partners SET password = $1 WHERE id = $2", [hash, req.params.id]);
+    const { rows: partnerRows } = await pool.query("SELECT auth_id FROM partners WHERE id = $1", [req.params.id]);
+    if (partnerRows.length > 0 && partnerRows[0].auth_id) {
+      const { error } = await supabaseAdmin.auth.admin.updateUserById(partnerRows[0].auth_id, { password });
+      if (error) throw new AppError(500, "Erreur lors de la mise à jour du mot de passe");
+    }
   }
 
   const { rows } = await pool.query(
@@ -51,6 +75,11 @@ router.put("/:id", validate(partnerUpdateSchema), asyncHandler(async (req, res) 
 }));
 
 router.delete("/:id", asyncHandler(async (req, res) => {
+  // Supprimer aussi dans Supabase Auth
+  const { rows } = await pool.query("SELECT auth_id FROM partners WHERE id = $1", [req.params.id]);
+  if (rows.length > 0 && rows[0].auth_id) {
+    await supabaseAdmin.auth.admin.deleteUser(rows[0].auth_id);
+  }
   await pool.query("DELETE FROM partners WHERE id = $1", [req.params.id]);
   res.json({ ok: true });
 }));

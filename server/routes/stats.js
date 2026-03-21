@@ -58,15 +58,32 @@ router.get("/users", asyncHandler(async (req, res) => {
 
 router.post("/users", validate(userCreateSchema), asyncHandler(async (req, res) => {
   const { fullName, login, password } = req.body;
-  const { default: bcrypt } = await import("bcryptjs");
-  const hash = bcrypt.hashSync(password, 10);
+  const { supabaseAdmin } = await import("../supabase.js");
+
+  // Créer l'utilisateur dans Supabase Auth
+  const { data: authUser, error: authErr } = await supabaseAdmin.auth.admin.createUser({
+    email: login.trim(),
+    password,
+    email_confirm: true,
+    user_metadata: { full_name: fullName.trim(), role: "admin" },
+  });
+
+  if (authErr) {
+    if (authErr.message?.includes("already been registered")) {
+      return res.status(409).json({ error: "Cet email est déjà utilisé" });
+    }
+    throw authErr;
+  }
+
   try {
     const { rows } = await pool.query(
-      "INSERT INTO users (login, password, full_name) VALUES ($1, $2, $3) RETURNING id, login, full_name",
-      [login.trim(), hash, fullName.trim()]
+      "INSERT INTO users (login, full_name, auth_id) VALUES ($1, $2, $3) RETURNING id, login, full_name",
+      [login.trim(), fullName.trim(), authUser.user.id]
     );
     res.status(201).json({ id: rows[0].id, login: rows[0].login, fullName: rows[0].full_name });
   } catch (err) {
+    // Rollback : supprimer l'utilisateur Supabase si l'insert local échoue
+    await supabaseAdmin.auth.admin.deleteUser(authUser.user.id);
     if (err.code === "23505") return res.status(409).json({ error: "Cet email est déjà utilisé" });
     throw err;
   }
