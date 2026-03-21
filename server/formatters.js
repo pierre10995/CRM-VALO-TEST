@@ -6,6 +6,7 @@ export function fmtContact(r) {
     salaryExpectation: Number(r.salary_expectation) || 0, availability: r.availability || "",
     validationStatus: r.validation_status || "",
     targetPosition: r.target_position || "",
+    owner: r.owner || "",
     createdAt: r.created_at,
   };
 }

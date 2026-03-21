@@ -14,9 +14,10 @@ const COLOR_PRESETS = [
   { bg: "#f1f5f9", color: "#64748b", name: "Gris" },
 ];
 
-export default function CandidatsPage({ contacts, search, setSearch, onAdd, onEdit, onDelete, onDetail, detailId, setDetailId, candidatures, missions, loadAll, validationStatuses = [] }) {
+export default function CandidatsPage({ contacts, search, setSearch, onAdd, onEdit, onDelete, onDetail, detailId, setDetailId, candidatures, missions, loadAll, validationStatuses = [], users = [] }) {
   const [filterSkill, setFilterSkill] = useState("");
   const [filterValidation, setFilterValidation] = useState("");
+  const [filterOwner, setFilterOwner] = useState("");
   const [showStatusManager, setShowStatusManager] = useState(false);
   const [newStatusLabel, setNewStatusLabel] = useState("");
   const [newStatusColorIdx, setNewStatusColorIdx] = useState(0);
@@ -53,7 +54,8 @@ export default function CandidatsPage({ contacts, search, setSearch, onAdd, onEd
     const matchSearch = !search || c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q) || (c.skills || "").toLowerCase().includes(q) || (c.city || "").toLowerCase().includes(q);
     const matchSkill = !filterSkill || (c.skills || "").toLowerCase().includes(filterSkill.toLowerCase());
     const matchValidation = !filterValidation || c.validationStatus === filterValidation;
-    return matchSearch && matchSkill && matchValidation;
+    const matchOwner = !filterOwner || c.owner === filterOwner;
+    return matchSearch && matchSkill && matchValidation && matchOwner;
   });
   const detail = contacts.find(c => c.id === detailId);
 
@@ -88,7 +90,11 @@ export default function CandidatsPage({ contacts, search, setSearch, onAdd, onEd
           <option value="">Tous les statuts validation</option>
           {validationStatuses.map(s => <option key={s.id} value={s.label}>{s.label}</option>)}
         </select>
-        {(filterSkill || filterValidation) && <button className="btn btn-ghost" style={{ fontSize: 12, padding: "6px 12px" }} onClick={() => { setFilterSkill(""); setFilterValidation(""); }}>Réinitialiser filtres</button>}
+        <select className="input" style={{ width: "auto", minWidth: 180 }} value={filterOwner} onChange={e => setFilterOwner(e.target.value)}>
+          <option value="">Tous les propriétaires</option>
+          {users.map(u => <option key={u.id} value={u.name}>{u.name}</option>)}
+        </select>
+        {(filterSkill || filterValidation || filterOwner) && <button className="btn btn-ghost" style={{ fontSize: 12, padding: "6px 12px" }} onClick={() => { setFilterSkill(""); setFilterValidation(""); setFilterOwner(""); }}>Réinitialiser filtres</button>}
         <button className="btn btn-ghost" style={{ fontSize: 12, padding: "6px 12px", marginLeft: "auto" }} onClick={() => setShowStatusManager(!showStatusManager)}>
           {showStatusManager ? "Fermer" : "Gérer les statuts"}
         </button>

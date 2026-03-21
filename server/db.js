@@ -58,6 +58,7 @@ async function initDB() {
       ["availability", "VARCHAR(50) DEFAULT ''"],
       ["validation_status", "VARCHAR(30) DEFAULT ''"],
       ["target_position", "VARCHAR(200) DEFAULT ''"],
+      ["owner", "VARCHAR(100) DEFAULT ''"],
     ];
     for (const [col, type] of newCols) {
       await client.query(`ALTER TABLE contacts ADD COLUMN IF NOT EXISTS ${col} ${type}`);

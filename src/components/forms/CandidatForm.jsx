@@ -12,7 +12,7 @@ const COLOR_PRESETS = [
   { bg: "#f1f5f9", color: "#64748b", name: "Gris" },
 ];
 
-export default function CandidatForm({ form, setForm, onSave, onCancel, sectors = [], validationStatuses = [], onStatusesChanged }) {
+export default function CandidatForm({ form, setForm, onSave, onCancel, sectors = [], validationStatuses = [], onStatusesChanged, users = [] }) {
   const f = (k, v) => setForm(p => ({ ...p, [k]: v }));
   const [showStatusMgr, setShowStatusMgr] = useState(false);
   const [newLabel, setNewLabel] = useState("");
@@ -135,6 +135,12 @@ export default function CandidatForm({ form, setForm, onSave, onCancel, sectors 
       <Field label="LinkedIn (URL)"><input className="input" type="url" value={form.linkedin || ""} onChange={e => f("linkedin", e.target.value)} placeholder="https://linkedin.com/in/prenom-nom" /></Field>
       <Field label="Poste ciblé"><input className="input" value={form.targetPosition || ""} onChange={e => f("targetPosition", e.target.value)} placeholder="Développeur Full Stack, Chef de projet..." /></Field>
       <Field label="Compétences (séparées par virgules)"><input className="input" value={form.skills || ""} onChange={e => f("skills", e.target.value)} placeholder="React, Node.js, PostgreSQL..." /></Field>
+      <Field label="Propriétaire du contact">
+        <select className="input" value={form.owner || ""} onChange={e => f("owner", e.target.value)}>
+          <option value="">— Non assigné —</option>
+          {users.map(u => <option key={u.id} value={u.name}>{u.name}</option>)}
+        </select>
+      </Field>
 
       {/* Statut de validation + gestionnaire */}
       <Field label="Statut de validation">

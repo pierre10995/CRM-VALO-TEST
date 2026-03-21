@@ -39,6 +39,7 @@ export const contactSchema = z.object({
   availability: z.string().max(50).default(""),
   validationStatus: z.string().max(30).default(""),
   targetPosition: z.string().max(200).default(""),
+  owner: z.string().max(100).default(""),
 });
 
 // ─── Missions ────────────────────────────────────────────────────────────────
