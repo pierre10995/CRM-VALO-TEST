@@ -84,6 +84,19 @@ function signTokenAndSetCookie(res, payload) {
   return token;
 }
 
+const ADMIN_EMAIL = "pierre@valo-inno.com";
+
+/**
+ * Middleware qui restreint l'accès à l'administrateur (pierre@valo-inno.com).
+ * Doit être utilisé après authMiddleware.
+ */
+function adminOnly(req, res, next) {
+  if (req.user?.login !== ADMIN_EMAIL) {
+    return res.status(403).json({ error: "Accès réservé à l'administrateur" });
+  }
+  next();
+}
+
 function partnerAuthMiddleware(req, res, next) {
   const token = req.cookies?.[COOKIE_NAME]
     || (req.headers.authorization?.startsWith("Bearer ") ? req.headers.authorization.split(" ")[1] : null);
@@ -113,6 +126,7 @@ export {
   uploadLimiter,
   emailCheckLimiter,
   authMiddleware,
+  adminOnly,
   partnerAuthMiddleware,
   signTokenAndSetCookie,
 };

@@ -27,10 +27,6 @@ export default function CandidatsPage({ contacts, search, setSearch, onAdd, onEd
   const [sortDir, setSortDir] = useState("asc");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
-  const [showAddUser, setShowAddUser] = useState(false);
-  const [newUser, setNewUser] = useState({ fullName: "", login: "", password: "" });
-  const [addUserError, setAddUserError] = useState("");
-
   // Build color map from dynamic statuses
   const VALIDATION_COLORS = {};
   validationStatuses.forEach(s => { VALIDATION_COLORS[s.label] = { bg: s.bg, color: s.color }; });
@@ -53,22 +49,6 @@ export default function CandidatsPage({ contacts, search, setSearch, onAdd, onEd
     if (!window.confirm("Supprimer ce statut de validation ?")) return;
     await api.del(`/api/validation-statuses/${id}`);
     if (loadAll) await loadAll();
-  };
-
-  const addUser = async () => {
-    setAddUserError("");
-    if (!newUser.fullName.trim()) return setAddUserError("Nom complet requis");
-    if (!newUser.login.trim()) return setAddUserError("Email requis");
-    if (!newUser.password || newUser.password.length < 6) return setAddUserError("Mot de passe requis (min. 6 caractères)");
-    const res = await api.post("/api/users", newUser);
-    if (res.ok) {
-      setNewUser({ fullName: "", login: "", password: "" });
-      setShowAddUser(false);
-      if (loadAll) await loadAll();
-    } else {
-      const err = await res.json();
-      setAddUserError(err.error || "Erreur");
-    }
   };
 
   const allSkills = [...new Set(contacts.flatMap(c => (c.skills || "").split(",").map(s => s.trim()).filter(Boolean)))].sort();
@@ -144,13 +124,10 @@ export default function CandidatsPage({ contacts, search, setSearch, onAdd, onEd
           <option value="">Tous les statuts validation</option>
           {validationStatuses.map(s => <option key={s.id} value={s.label}>{s.label}</option>)}
         </select>
-        <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
-          <select className="input" style={{ width: "auto", minWidth: 180 }} value={filterOwner} onChange={e => setFilterOwner(e.target.value)}>
-            <option value="">Tous les propriétaires</option>
-            {users.map(u => <option key={u.id} value={u.fullName}>{u.fullName}</option>)}
-          </select>
-          <button className="btn btn-ghost" style={{ padding: "7px 10px", fontSize: 14, fontWeight: 700, lineHeight: 1 }} onClick={() => { setShowAddUser(!showAddUser); setAddUserError(""); }} title="Ajouter un utilisateur">+</button>
-        </div>
+        <select className="input" style={{ width: "auto", minWidth: 180 }} value={filterOwner} onChange={e => setFilterOwner(e.target.value)}>
+          <option value="">Tous les propriétaires</option>
+          {users.map(u => <option key={u.id} value={u.fullName}>{u.fullName}</option>)}
+        </select>
         <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
           <input type="date" className="input" style={{ width: "auto" }} value={dateFrom} onChange={e => setDateFrom(e.target.value)} title="Date début" />
           <span style={{ fontSize: 12, color: "#94a3b8" }}>→</span>
@@ -161,29 +138,6 @@ export default function CandidatsPage({ contacts, search, setSearch, onAdd, onEd
           {showStatusManager ? "Fermer" : "Gérer les statuts"}
         </button>
       </div>
-
-      {/* Add User Panel */}
-      {showAddUser && (
-        <div className="card" style={{ marginBottom: 20, padding: 16 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", marginBottom: 12 }}>Ajouter un utilisateur</div>
-          <div style={{ display: "flex", gap: 10, alignItems: "end", flexWrap: "wrap" }}>
-            <div style={{ flex: 1, minWidth: 150 }}>
-              <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", marginBottom: 4, display: "block" }}>Nom complet *</label>
-              <input className="input" value={newUser.fullName} onChange={e => setNewUser(u => ({ ...u, fullName: e.target.value }))} placeholder="Prénom Nom" />
-            </div>
-            <div style={{ flex: 1, minWidth: 150 }}>
-              <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", marginBottom: 4, display: "block" }}>Email (login) *</label>
-              <input className="input" type="email" value={newUser.login} onChange={e => setNewUser(u => ({ ...u, login: e.target.value }))} placeholder="prenom@entreprise.com" />
-            </div>
-            <div style={{ flex: 1, minWidth: 150 }}>
-              <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", marginBottom: 4, display: "block" }}>Mot de passe *</label>
-              <input className="input" type="password" value={newUser.password} onChange={e => setNewUser(u => ({ ...u, password: e.target.value }))} placeholder="Min. 6 caractères" onKeyDown={e => e.key === "Enter" && addUser()} />
-            </div>
-            <button className="btn btn-primary" style={{ padding: "8px 16px", fontSize: 12 }} onClick={addUser}>Ajouter</button>
-          </div>
-          {addUserError && <div style={{ marginTop: 8, fontSize: 12, color: "#dc2626", fontWeight: 500 }}>{addUserError}</div>}
-        </div>
-      )}
 
       {/* Status Manager */}
       {showStatusManager && (

@@ -5,6 +5,7 @@ import { fmtPartner } from "../formatters.js";
 import { validate } from "../validators/validate.js";
 import { partnerCreateSchema, partnerUpdateSchema, partnerMissionSchema } from "../validators/schemas.js";
 import { asyncHandler, AppError } from "../helpers/errors.js";
+import { adminOnly } from "../middleware.js";
 
 const router = Router();
 
@@ -18,7 +19,7 @@ router.get("/", asyncHandler(async (req, res) => {
   res.json(rows.map(fmtPartner));
 }));
 
-router.post("/", validate(partnerCreateSchema), asyncHandler(async (req, res) => {
+router.post("/", adminOnly, validate(partnerCreateSchema), asyncHandler(async (req, res) => {
   const { name, email, password, company, phone } = req.body;
 
   const { rows: existing } = await pool.query("SELECT 1 FROM partners WHERE LOWER(email) = LOWER($1)", [email]);
@@ -53,7 +54,7 @@ router.post("/", validate(partnerCreateSchema), asyncHandler(async (req, res) =>
   }
 }));
 
-router.put("/:id", validate(partnerUpdateSchema), asyncHandler(async (req, res) => {
+router.put("/:id", adminOnly, validate(partnerUpdateSchema), asyncHandler(async (req, res) => {
   const { name, email, company, phone, password } = req.body;
 
   // Si le mot de passe est fourni, le mettre à jour dans Supabase Auth
@@ -74,7 +75,7 @@ router.put("/:id", validate(partnerUpdateSchema), asyncHandler(async (req, res) 
   res.json(fmtPartner(rows[0]));
 }));
 
-router.delete("/:id", asyncHandler(async (req, res) => {
+router.delete("/:id", adminOnly, asyncHandler(async (req, res) => {
   // Supprimer aussi dans Supabase Auth
   const { rows } = await pool.query("SELECT auth_id FROM partners WHERE id = $1", [req.params.id]);
   if (rows.length > 0 && rows[0].auth_id) {

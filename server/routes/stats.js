@@ -7,6 +7,7 @@ import { validate } from "../validators/validate.js";
 import { validationStatusSchema, cvSummarySchema, userCreateSchema } from "../validators/schemas.js";
 import { asyncHandler, AppError } from "../helpers/errors.js";
 import { logger } from "../helpers/logger.js";
+import { adminOnly } from "../middleware.js";
 
 const router = Router();
 
@@ -56,7 +57,7 @@ router.get("/users", asyncHandler(async (req, res) => {
   res.json(rows.map(r => ({ id: r.id, login: r.login, fullName: r.full_name })));
 }));
 
-router.post("/users", validate(userCreateSchema), asyncHandler(async (req, res) => {
+router.post("/users", adminOnly, validate(userCreateSchema), asyncHandler(async (req, res) => {
   const { fullName, login, password } = req.body;
   const { supabaseAdmin } = await import("../supabase.js");
 

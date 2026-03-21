@@ -19,6 +19,7 @@ import RevenuePage from "./components/pages/RevenuePage";
 import PlacementsPage from "./components/pages/PlacementsPage";
 import ObjectifsPage from "./components/pages/ObjectifsPage";
 import PartenairesPage from "./components/pages/PartenairesPage";
+import AdminPage from "./components/pages/AdminPage";
 
 // Partner portal
 import PartnerPortal from "./components/partner/PartnerPortal";
@@ -224,6 +225,7 @@ export default function CRM() {
         {activeTab === "revenue" && <RevenuePage contacts={contacts} missions={missions} candidatures={candidatures} users={users} fiscalYears={fiscalYears} loadAll={loadAll} />}
         {activeTab === "objectifs" && <ObjectifsPage contacts={contacts} missions={missions} candidatures={candidatures} users={users} fiscalYears={fiscalYears} loadAll={loadAll} />}
         {activeTab === "partenaires" && <PartenairesPage missions={missions} currentUser={currentUser} />}
+        {activeTab === "admin" && <AdminPage currentUser={currentUser} loadAll={loadAll} />}
       </main>
 
       {/* Modals */}
