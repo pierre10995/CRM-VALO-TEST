@@ -36,7 +36,7 @@ const emailCheckLimiter = rateLimit({
   message: { error: "Trop de vérifications d'email. Réessayez dans 15 minutes." },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => req.partner?.id || req.ip,
+  keyGenerator: (req) => req.partner?.id ? String(req.partner.id) : "global",
 });
 
 // ─── Auth middleware ─────────────────────────────────────────────────────────
