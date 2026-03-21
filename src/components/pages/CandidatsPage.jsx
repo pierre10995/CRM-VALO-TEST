@@ -25,6 +25,8 @@ export default function CandidatsPage({ contacts, search, setSearch, onAdd, onEd
   const [showBulkUpload, setShowBulkUpload] = useState(false);
   const [sortBy, setSortBy] = useState("name");
   const [sortDir, setSortDir] = useState("asc");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const [showAddUser, setShowAddUser] = useState(false);
   const [newUser, setNewUser] = useState({ fullName: "", login: "", password: "" });
   const [addUserError, setAddUserError] = useState("");
@@ -77,7 +79,8 @@ export default function CandidatsPage({ contacts, search, setSearch, onAdd, onEd
     const matchSkill = !filterSkill || (c.skills || "").toLowerCase().includes(filterSkill.toLowerCase());
     const matchValidation = !filterValidation || c.validationStatus === filterValidation;
     const matchOwner = !filterOwner || c.owner === filterOwner;
-    return matchSearch && matchSkill && matchValidation && matchOwner;
+    const matchDate = (!dateFrom || c.createdAt >= dateFrom) && (!dateTo || c.createdAt <= dateTo);
+    return matchSearch && matchSkill && matchValidation && matchOwner && matchDate;
   }).sort((a, b) => {
     let cmp = 0;
     if (sortBy === "name") cmp = a.name.localeCompare(b.name);
@@ -148,7 +151,12 @@ export default function CandidatsPage({ contacts, search, setSearch, onAdd, onEd
           </select>
           <button className="btn btn-ghost" style={{ padding: "7px 10px", fontSize: 14, fontWeight: 700, lineHeight: 1 }} onClick={() => { setShowAddUser(!showAddUser); setAddUserError(""); }} title="Ajouter un utilisateur">+</button>
         </div>
-        {(filterSkill || filterValidation || filterOwner) && <button className="btn btn-ghost" style={{ fontSize: 12, padding: "6px 12px" }} onClick={() => { setFilterSkill(""); setFilterValidation(""); setFilterOwner(""); }}>Réinitialiser filtres</button>}
+        <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+          <input type="date" className="input" style={{ width: "auto" }} value={dateFrom} onChange={e => setDateFrom(e.target.value)} title="Date début" />
+          <span style={{ fontSize: 12, color: "#94a3b8" }}>→</span>
+          <input type="date" className="input" style={{ width: "auto" }} value={dateTo} onChange={e => setDateTo(e.target.value)} title="Date fin" />
+        </div>
+        {(filterSkill || filterValidation || filterOwner || dateFrom || dateTo) && <button className="btn btn-ghost" style={{ fontSize: 12, padding: "6px 12px" }} onClick={() => { setFilterSkill(""); setFilterValidation(""); setFilterOwner(""); setDateFrom(""); setDateTo(""); }}>Réinitialiser filtres</button>}
         <button className="btn btn-ghost" style={{ fontSize: 12, padding: "6px 12px", marginLeft: "auto" }} onClick={() => setShowStatusManager(!showStatusManager)}>
           {showStatusManager ? "Fermer" : "Gérer les statuts"}
         </button>
