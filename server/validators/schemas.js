@@ -182,6 +182,14 @@ export const evaluationGenerateSchema = z.object({
 // ─── Matching ────────────────────────────────────────────────────────────────
 // (pas de body — validation de params uniquement)
 
+// ─── Users ──────────────────────────────────────────────────────────────────
+
+export const userCreateSchema = z.object({
+  fullName: z.string().min(1, "Nom complet requis").max(100),
+  login: z.string().email("Email invalide").max(100),
+  password: z.string().min(6, "Mot de passe min. 6 caractères").max(200),
+});
+
 // ─── Validation Statuses ─────────────────────────────────────────────────────
 
 export const validationStatusSchema = z.object({

@@ -4,7 +4,7 @@ import pdf from "pdf-parse/lib/pdf-parse.js";
 import { pool } from "../db.js";
 import { config } from "../config.js";
 import { validate } from "../validators/validate.js";
-import { validationStatusSchema, cvSummarySchema } from "../validators/schemas.js";
+import { validationStatusSchema, cvSummarySchema, userCreateSchema } from "../validators/schemas.js";
 import { asyncHandler, AppError } from "../helpers/errors.js";
 import { logger } from "../helpers/logger.js";
 
@@ -56,12 +56,8 @@ router.get("/users", asyncHandler(async (req, res) => {
   res.json(rows.map(r => ({ id: r.id, login: r.login, fullName: r.full_name })));
 }));
 
-router.post("/users", asyncHandler(async (req, res) => {
+router.post("/users", validate(userCreateSchema), asyncHandler(async (req, res) => {
   const { fullName, login, password } = req.body;
-  if (!fullName || !fullName.trim()) return res.status(400).json({ error: "Nom complet requis" });
-  if (!login || !login.trim()) return res.status(400).json({ error: "Email requis" });
-  if (!password || password.length < 6) return res.status(400).json({ error: "Mot de passe requis (min. 6 caractères)" });
-
   const { default: bcrypt } = await import("bcryptjs");
   const hash = bcrypt.hashSync(password, 10);
   try {

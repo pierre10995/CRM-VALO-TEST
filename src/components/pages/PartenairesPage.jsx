@@ -138,9 +138,9 @@ export default function PartenairesPage({ missions, currentUser }) {
   };
 
   // Split submissions by status
-  const activeSubmissions = submissions.filter(s => s.stage === "En attente");
-  const preselectedSubmissions = submissions.filter(s => s.stage === "Proposition partenaire" || s.stage === "Présélectionné");
   const archivedSubmissions = submissions.filter(s => s.stage === "Archivé");
+  const preselectedSubmissions = submissions.filter(s => s.stage === "Proposition partenaire" || s.stage === "Présélectionné");
+  const activeSubmissions = submissions.filter(s => s.stage !== "Archivé" && s.stage !== "Proposition partenaire" && s.stage !== "Présélectionné");
 
   // Missions that have submissions (for the filter dropdown)
   const currentList = tab === "archived" ? archivedSubmissions : tab === "preselected" ? preselectedSubmissions : activeSubmissions;
