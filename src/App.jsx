@@ -80,18 +80,17 @@ export default function CRM() {
 
   useEffect(() => {
     const session = localStorage.getItem("crm_user");
-    const token = localStorage.getItem("crm_token");
-    if (session && token) { setCurrentUser(JSON.parse(session)); setAuthed(true); }
+    if (session) { setCurrentUser(JSON.parse(session)); setAuthed(true); }
   }, []);
 
   useEffect(() => { if (authed && currentUser?.role !== "partner") loadAll(); }, [authed]);
 
   const handleLogin = async () => {
     // Try internal user login first
-    const res = await fetch("/api/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(loginForm) });
+    const res = await fetch("/api/login", { method: "POST", headers: { "Content-Type": "application/json" }, credentials: "include", body: JSON.stringify(loginForm) });
     if (res.ok) {
       const user = await res.json();
-      localStorage.setItem("crm_token", user.token);
+      // Token is in httpOnly cookie — only store user info (no token) in localStorage
       setCurrentUser(user); setAuthed(true);
       localStorage.setItem("crm_user", JSON.stringify(user));
       setLoginError("");
@@ -112,8 +111,9 @@ export default function CRM() {
   };
 
   const handleLogout = () => {
+    fetch("/api/logout", { method: "POST", credentials: "include" }).catch(() => {});
     localStorage.removeItem("crm_user");
-    localStorage.removeItem("crm_token");
+    localStorage.removeItem("crm_token"); // cleanup legacy
     setAuthed(false); setCurrentUser(null);
     setLoginForm({ login: "", password: "" });
   };

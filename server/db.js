@@ -20,6 +20,9 @@ async function initDB() {
       );
     `);
     await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS auth_id UUID UNIQUE`);
+    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(20) DEFAULT 'user'`);
+    // Ensure existing admin user has admin role
+    await client.query(`UPDATE users SET role = 'admin' WHERE login = 'pierre@valo-inno.com' AND role = 'user'`);
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS password_resets (

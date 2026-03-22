@@ -1,21 +1,17 @@
 /**
  * Client API centralisé.
  * Utilise les cookies httpOnly pour l'authentification (posés par le serveur).
- * Conserve le header Authorization en fallback pour la compatibilité.
+ * Aucun token n'est stocké en JS — seul le cookie httpOnly est utilisé.
  */
 
 function getAuthHeaders() {
-  const headers = { "Content-Type": "application/json" };
-  // Fallback: si le token est encore en localStorage (migration progressive)
-  const token = localStorage.getItem("crm_token");
-  if (token) headers["Authorization"] = `Bearer ${token}`;
-  return headers;
+  return { "Content-Type": "application/json" };
 }
 
 async function handleAuthResponse(r) {
   if (r.status === 401) {
-    localStorage.removeItem("crm_token");
     localStorage.removeItem("crm_user");
+    localStorage.removeItem("crm_token"); // cleanup legacy
     window.location.reload();
   }
   return r;

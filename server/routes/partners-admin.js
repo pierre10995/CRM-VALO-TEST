@@ -11,7 +11,7 @@ const router = Router();
 
 // ─── CRUD Partners ──────────────────────────────────────────────────────────
 
-router.get("/", asyncHandler(async (req, res) => {
+router.get("/", adminOnly, asyncHandler(async (req, res) => {
   const { rows } = await pool.query(`
     SELECT p.*, (SELECT COUNT(*) FROM partner_missions pm WHERE pm.partner_id = p.id) as mission_count
     FROM partners p ORDER BY p.created_at DESC
@@ -87,7 +87,7 @@ router.delete("/:id", adminOnly, asyncHandler(async (req, res) => {
 
 // ─── Partner submissions (notifications) ────────────────────────────────────
 
-router.get("/submissions", asyncHandler(async (req, res) => {
+router.get("/submissions", adminOnly, asyncHandler(async (req, res) => {
   const { rows } = await pool.query(`
     SELECT cd.id, cd.candidate_id, cd.mission_id, cd.stage, cd.notes, cd.created_at,
            c.name as candidate_name, c.email as candidate_email, c.phone as candidate_phone,
@@ -120,7 +120,7 @@ router.get("/submissions", asyncHandler(async (req, res) => {
 
 // ─── Submission reviews (rating + comment) ──────────────────────────────────
 
-router.get("/submissions/:candidatureId/reviews", asyncHandler(async (req, res) => {
+router.get("/submissions/:candidatureId/reviews", adminOnly, asyncHandler(async (req, res) => {
   const { rows } = await pool.query(`
     SELECT sr.*, u.full_name as user_name
     FROM submission_reviews sr
@@ -135,7 +135,7 @@ router.get("/submissions/:candidatureId/reviews", asyncHandler(async (req, res) 
   })));
 }));
 
-router.post("/submissions/:candidatureId/reviews", asyncHandler(async (req, res) => {
+router.post("/submissions/:candidatureId/reviews", adminOnly, asyncHandler(async (req, res) => {
   const { rating, comment } = req.body;
   if (!rating || rating < 1 || rating > 5) throw new AppError(400, "Note de 1 à 5 requise");
 
@@ -153,7 +153,7 @@ router.post("/submissions/:candidatureId/reviews", asyncHandler(async (req, res)
 
 // ─── Mission affiliations ───────────────────────────────────────────────────
 
-router.get("/:id/missions", asyncHandler(async (req, res) => {
+router.get("/:id/missions", adminOnly, asyncHandler(async (req, res) => {
   const { rows } = await pool.query(`
     SELECT m.id, m.title, m.company, m.status, pm.created_at as affiliated_at
     FROM partner_missions pm
@@ -164,7 +164,7 @@ router.get("/:id/missions", asyncHandler(async (req, res) => {
   res.json(rows);
 }));
 
-router.post("/:id/missions", validate(partnerMissionSchema), asyncHandler(async (req, res) => {
+router.post("/:id/missions", adminOnly, validate(partnerMissionSchema), asyncHandler(async (req, res) => {
   const { missionId } = req.body;
   await pool.query(
     "INSERT INTO partner_missions (partner_id, mission_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
@@ -173,7 +173,7 @@ router.post("/:id/missions", validate(partnerMissionSchema), asyncHandler(async 
   res.status(201).json({ ok: true });
 }));
 
-router.delete("/:id/missions/:missionId", asyncHandler(async (req, res) => {
+router.delete("/:id/missions/:missionId", adminOnly, asyncHandler(async (req, res) => {
   await pool.query(
     "DELETE FROM partner_missions WHERE partner_id = $1 AND mission_id = $2",
     [req.params.id, req.params.missionId]

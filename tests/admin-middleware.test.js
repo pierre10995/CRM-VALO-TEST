@@ -19,17 +19,17 @@ function mockReqResNext(opts = {}) {
 }
 
 describe("adminOnly middleware", () => {
-  it("allows pierre@valo-inno.com", () => {
+  it("allows users with admin role", () => {
     const { req, res, next } = mockReqResNext();
-    req.user = { id: 1, login: "pierre@valo-inno.com" };
+    req.user = { id: 1, login: "pierre@valo-inno.com", userRole: "admin" };
     adminOnly(req, res, next);
     expect(next).toHaveBeenCalled();
     expect(res.status).not.toHaveBeenCalled();
   });
 
-  it("rejects other internal users", () => {
+  it("rejects non-admin internal users", () => {
     const { req, res, next } = mockReqResNext();
-    req.user = { id: 2, login: "oceane@valo-inno.com" };
+    req.user = { id: 2, login: "oceane@valo-inno.com", userRole: "user" };
     adminOnly(req, res, next);
     expect(res.status).toHaveBeenCalledWith(403);
     expect(res.json).toHaveBeenCalledWith({ error: "Accès réservé à l'administrateur" });
@@ -51,9 +51,9 @@ describe("adminOnly middleware", () => {
     expect(next).not.toHaveBeenCalled();
   });
 
-  it("rejects empty login", () => {
+  it("rejects users without role", () => {
     const { req, res, next } = mockReqResNext();
-    req.user = { id: 1, login: "" };
+    req.user = { id: 1, login: "user@test.com" };
     adminOnly(req, res, next);
     expect(res.status).toHaveBeenCalledWith(403);
     expect(next).not.toHaveBeenCalled();

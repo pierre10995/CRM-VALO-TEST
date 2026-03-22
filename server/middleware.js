@@ -84,14 +84,12 @@ function signTokenAndSetCookie(res, payload) {
   return token;
 }
 
-const ADMIN_EMAIL = "pierre@valo-inno.com";
-
 /**
- * Middleware qui restreint l'accès à l'administrateur (pierre@valo-inno.com).
+ * Middleware qui restreint l'accès aux administrateurs (role='admin' dans le JWT).
  * Doit être utilisé après authMiddleware.
  */
 function adminOnly(req, res, next) {
-  if (req.user?.login !== ADMIN_EMAIL) {
+  if (req.user?.userRole !== "admin") {
     return res.status(403).json({ error: "Accès réservé à l'administrateur" });
   }
   next();

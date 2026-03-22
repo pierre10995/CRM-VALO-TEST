@@ -1,8 +1,6 @@
 import { useState, useEffect } from "react";
 import api from "../../services/api";
 
-const ADMIN_EMAIL = "pierre@valo-inno.com";
-
 export default function AdminPage({ currentUser, loadAll }) {
   const [tab, setTab] = useState("users"); // "users" | "partners"
   const [users, setUsers] = useState([]);
@@ -13,7 +11,7 @@ export default function AdminPage({ currentUser, loadAll }) {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  const isAdmin = currentUser?.login === ADMIN_EMAIL;
+  const isAdmin = currentUser?.userRole === "admin";
 
   const load = async () => {
     const [u, p] = await Promise.all([
@@ -50,7 +48,7 @@ export default function AdminPage({ currentUser, loadAll }) {
     if (formType === "user") {
       if (!form.fullName?.trim()) return setError("Nom complet requis");
       if (!form.login?.trim()) return setError("Email requis");
-      if (!form.password || form.password.length < 6) return setError("Mot de passe requis (min. 6 caract\u00e8res)");
+      if (!form.password || form.password.length < 12) return setError("Mot de passe requis (min. 12 car., 1 maj., 1 min., 1 chiffre)");
 
       const res = await api.post("/api/users", form);
       if (res.ok) {
@@ -65,7 +63,7 @@ export default function AdminPage({ currentUser, loadAll }) {
     } else {
       if (!form.name?.trim()) return setError("Nom requis");
       if (!form.email?.trim()) return setError("Email requis");
-      if (!form.password || form.password.length < 6) return setError("Mot de passe requis (min. 6 caract\u00e8res)");
+      if (!form.password || form.password.length < 12) return setError("Mot de passe requis (min. 12 car., 1 maj., 1 min., 1 chiffre)");
 
       const res = await api.post("/api/partners", form);
       if (res.ok) {
@@ -128,7 +126,7 @@ export default function AdminPage({ currentUser, loadAll }) {
                 </div>
                 <div style={{ flex: 1, minWidth: 180 }}>
                   <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", marginBottom: 4, display: "block" }}>Mot de passe *</label>
-                  <input className="input" type="password" value={form.password || ""} onChange={e => f("password", e.target.value)} placeholder="Min. 6 caract\u00e8res" onKeyDown={e => e.key === "Enter" && handleSave()} />
+                  <input className="input" type="password" value={form.password || ""} onChange={e => f("password", e.target.value)} placeholder="Min. 12 car. (maj+min+chiffre)" onKeyDown={e => e.key === "Enter" && handleSave()} />
                 </div>
               </>
             ) : (
@@ -143,7 +141,7 @@ export default function AdminPage({ currentUser, loadAll }) {
                 </div>
                 <div style={{ flex: 1, minWidth: 180 }}>
                   <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", marginBottom: 4, display: "block" }}>Mot de passe *</label>
-                  <input className="input" type="password" value={form.password || ""} onChange={e => f("password", e.target.value)} placeholder="Min. 6 caract\u00e8res" onKeyDown={e => e.key === "Enter" && handleSave()} />
+                  <input className="input" type="password" value={form.password || ""} onChange={e => f("password", e.target.value)} placeholder="Min. 12 car. (maj+min+chiffre)" onKeyDown={e => e.key === "Enter" && handleSave()} />
                 </div>
                 <div style={{ flex: 1, minWidth: 180 }}>
                   <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", marginBottom: 4, display: "block" }}>Entreprise</label>

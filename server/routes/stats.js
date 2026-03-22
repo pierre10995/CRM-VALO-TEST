@@ -53,8 +53,8 @@ router.get("/work-modes", asyncHandler(async (req, res) => {
 // ─── Users ───────────────────────────────────────────────────────────────────
 
 router.get("/users", asyncHandler(async (req, res) => {
-  const { rows } = await pool.query("SELECT id, login, full_name FROM users ORDER BY id");
-  res.json(rows.map(r => ({ id: r.id, login: r.login, fullName: r.full_name })));
+  const { rows } = await pool.query("SELECT id, login, full_name, role FROM users ORDER BY id");
+  res.json(rows.map(r => ({ id: r.id, login: r.login, fullName: r.full_name, userRole: r.role || "user" })));
 }));
 
 router.post("/users", adminOnly, validate(userCreateSchema), asyncHandler(async (req, res) => {
@@ -104,10 +104,11 @@ router.get("/audit-log", asyncHandler(async (req, res) => {
 }));
 
 router.post("/audit-log", asyncHandler(async (req, res) => {
-  const { userName, action, entityType, entityId, details } = req.body;
+  const { action, entityType, entityId, details } = req.body;
+  const userName = req.user?.login || "Système";
   await pool.query(
     "INSERT INTO audit_log (user_name, action, entity_type, entity_id, details) VALUES ($1,$2,$3,$4,$5)",
-    [userName || "Système", action, entityType, entityId || null, details || ""]
+    [userName, action, entityType, entityId || null, details || ""]
   );
   res.status(201).json({ ok: true });
 }));
@@ -119,7 +120,7 @@ router.get("/tags", asyncHandler(async (req, res) => {
   res.json(rows);
 }));
 
-router.post("/tags", asyncHandler(async (req, res) => {
+router.post("/tags", adminOnly, asyncHandler(async (req, res) => {
   const { label, color } = req.body;
   if (!label || !label.trim()) return res.status(400).json({ error: "Libellé requis" });
   try {
@@ -134,7 +135,7 @@ router.post("/tags", asyncHandler(async (req, res) => {
   }
 }));
 
-router.delete("/tags/:id", asyncHandler(async (req, res) => {
+router.delete("/tags/:id", adminOnly, asyncHandler(async (req, res) => {
   await pool.query("DELETE FROM tags WHERE id=$1", [req.params.id]);
   res.json({ ok: true });
 }));
@@ -177,7 +178,7 @@ router.get("/validation-statuses", asyncHandler(async (req, res) => {
   res.json(rows.map(r => ({ id: r.id, label: r.label, bg: r.bg_color, color: r.text_color, sortOrder: r.sort_order })));
 }));
 
-router.post("/validation-statuses", validate(validationStatusSchema), asyncHandler(async (req, res) => {
+router.post("/validation-statuses", adminOnly, validate(validationStatusSchema), asyncHandler(async (req, res) => {
   const { label, bg, color } = req.body;
   const { rows: maxRows } = await pool.query("SELECT COALESCE(MAX(sort_order), 0) + 1 as next FROM validation_statuses");
   const { rows } = await pool.query(
@@ -188,7 +189,7 @@ router.post("/validation-statuses", validate(validationStatusSchema), asyncHandl
   res.json({ id: r.id, label: r.label, bg: r.bg_color, color: r.text_color, sortOrder: r.sort_order });
 }));
 
-router.put("/validation-statuses/:id", validate(validationStatusSchema), asyncHandler(async (req, res) => {
+router.put("/validation-statuses/:id", adminOnly, validate(validationStatusSchema), asyncHandler(async (req, res) => {
   const { label, bg, color } = req.body;
   const { rows } = await pool.query(
     "UPDATE validation_statuses SET label=$1, bg_color=$2, text_color=$3 WHERE id=$4 RETURNING *",
@@ -199,7 +200,7 @@ router.put("/validation-statuses/:id", validate(validationStatusSchema), asyncHa
   res.json({ id: r.id, label: r.label, bg: r.bg_color, color: r.text_color, sortOrder: r.sort_order });
 }));
 
-router.delete("/validation-statuses/:id", asyncHandler(async (req, res) => {
+router.delete("/validation-statuses/:id", adminOnly, asyncHandler(async (req, res) => {
   await pool.query("DELETE FROM validation_statuses WHERE id=$1", [req.params.id]);
   res.json({ ok: true });
 }));

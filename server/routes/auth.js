@@ -37,9 +37,9 @@ router.post("/login", loginLimiter, validate(loginSchema), asyncHandler(async (r
     await pool.query("UPDATE users SET auth_id = $1 WHERE id = $2", [data.user.id, user.id]);
   }
 
-  const token = signTokenAndSetCookie(res, { id: user.id, login: user.login });
+  signTokenAndSetCookie(res, { id: user.id, login: user.login, userRole: user.role || "user" });
 
-  res.json({ id: user.id, login: user.login, fullName: user.full_name, token });
+  res.json({ id: user.id, login: user.login, fullName: user.full_name, userRole: user.role || "user" });
 }));
 
 // ─── Forgot password ─────────────────────────────────────────────────────────
