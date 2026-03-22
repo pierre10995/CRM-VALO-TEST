@@ -100,7 +100,7 @@ export default function AdminPage({ currentUser, loadAll }) {
           <p style={{ fontSize: 13.5, color: "#64748b", marginTop: 3 }}>Gestion des comptes utilisateurs et partenaires</p>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
-          <button className="btn btn-primary" onClick={() => resetForm("user")}>+ Employ\u00e9</button>
+          <button className="btn btn-primary" onClick={() => resetForm("user")}>Employ\u00e9</button>
           <button className="btn btn-primary" style={{ background: "#7c3aed" }} onClick={() => resetForm("partner")}>+ Recruteur externe</button>
         </div>
       </div>
