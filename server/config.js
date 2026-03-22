@@ -4,6 +4,7 @@
  */
 
 const isProduction = process.env.NODE_ENV === "production";
+const isTest = process.env.NODE_ENV === "test" || typeof process.env.VITEST !== "undefined";
 
 // --- JWT ---
 if (isProduction && !process.env.JWT_SECRET) {
@@ -16,7 +17,7 @@ if (!process.env.JWT_SECRET) {
 }
 
 // --- Supabase ---
-if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+if (!isTest && (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY)) {
   console.error("FATAL: SUPABASE_URL et SUPABASE_SERVICE_ROLE_KEY sont requis.");
   process.exit(1);
 }
