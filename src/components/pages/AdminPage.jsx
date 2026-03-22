@@ -118,7 +118,7 @@ export default function AdminPage({ currentUser, loadAll }) {
               <>
                 <div style={{ flex: 1, minWidth: 180 }}>
                   <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", marginBottom: 4, display: "block" }}>Nom complet *</label>
-                  <input className="input" value={form.fullName || ""} onChange={e => f("fullName", e.target.value)} placeholder="Pr\u00e9nom Nom" />
+                  <input className="input" value={form.fullName || ""} onChange={e => f("fullName", e.target.value)} placeholder="Prénom Nom" />
                 </div>
                 <div style={{ flex: 1, minWidth: 180 }}>
                   <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", marginBottom: 4, display: "block" }}>Email (identifiant) *</label>
@@ -133,7 +133,7 @@ export default function AdminPage({ currentUser, loadAll }) {
               <>
                 <div style={{ flex: 1, minWidth: 180 }}>
                   <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", marginBottom: 4, display: "block" }}>Nom complet *</label>
-                  <input className="input" value={form.name || ""} onChange={e => f("name", e.target.value)} placeholder="Pr\u00e9nom Nom" />
+                  <input className="input" value={form.name || ""} onChange={e => f("name", e.target.value)} placeholder="Prénom Nom" />
                 </div>
                 <div style={{ flex: 1, minWidth: 180 }}>
                   <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", marginBottom: 4, display: "block" }}>Email *</label>
@@ -168,7 +168,7 @@ export default function AdminPage({ currentUser, loadAll }) {
 
       {/* Tabs */}
       <div style={{ display: "flex", gap: 4, marginBottom: 20, background: "#f1f5f9", borderRadius: 10, padding: 4, width: "fit-content" }}>
-        <button style={tabStyle("users")} onClick={() => setTab("users")}>Employ\u00e9s ({users.length})</button>
+        <button style={tabStyle("users")} onClick={() => setTab("users")}>Employés Internes ({users.length})</button>
         <button style={tabStyle("partners")} onClick={() => setTab("partners")}>Recruteurs externes ({partners.length})</button>
       </div>
 
