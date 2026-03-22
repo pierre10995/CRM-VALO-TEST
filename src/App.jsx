@@ -19,6 +19,7 @@ import RevenuePage from "./components/pages/RevenuePage";
 import PlacementsPage from "./components/pages/PlacementsPage";
 import ObjectifsPage from "./components/pages/ObjectifsPage";
 import PartenairesPage from "./components/pages/PartenairesPage";
+import ProfilePage from "./components/pages/ProfilePage";
 import AdminPage from "./components/pages/AdminPage";
 
 // Partner portal
@@ -225,13 +226,14 @@ export default function CRM() {
         {activeTab === "revenue" && <RevenuePage contacts={contacts} missions={missions} candidatures={candidatures} users={users} fiscalYears={fiscalYears} loadAll={loadAll} />}
         {activeTab === "objectifs" && <ObjectifsPage contacts={contacts} missions={missions} candidatures={candidatures} users={users} fiscalYears={fiscalYears} loadAll={loadAll} />}
         {activeTab === "partenaires" && <PartenairesPage missions={missions} currentUser={currentUser} />}
+        {activeTab === "profil" && <ProfilePage currentUser={currentUser} contacts={contacts} missions={missions} candidatures={candidatures} users={users} setActiveTab={setActiveTab} />}
         {activeTab === "admin" && <AdminPage currentUser={currentUser} loadAll={loadAll} />}
       </main>
 
       {/* Modals */}
       {modal === "client" && (
         <ModalWrapper onClose={() => setModal(null)} title={form.id ? "Modifier le client" : "Nouveau client"}>
-          <ClientForm form={form} setForm={setForm} onSave={saveContact} onCancel={() => setModal(null)} sectors={sectors} />
+          <ClientForm form={form} setForm={setForm} onSave={saveContact} onCancel={() => setModal(null)} sectors={sectors} users={users} />
         </ModalWrapper>
       )}
       {modal === "candidat" && (

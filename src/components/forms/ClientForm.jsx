@@ -1,6 +1,6 @@
 import Field from "../common/Field";
 
-export default function ClientForm({ form, setForm, onSave, onCancel, sectors = [] }) {
+export default function ClientForm({ form, setForm, onSave, onCancel, sectors = [], users = [] }) {
   const f = (k, v) => setForm(p => ({ ...p, [k]: v }));
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -20,7 +20,15 @@ export default function ClientForm({ form, setForm, onSave, onCancel, sectors = 
         </Field>
         <Field label="CA annuel ($ CAD)"><input className="input" type="number" value={form.revenue || ""} onChange={e => f("revenue", e.target.value)} placeholder="0" /></Field>
       </div>
-      <Field label="Ville"><input className="input" value={form.city || ""} onChange={e => f("city", e.target.value)} placeholder="Montréal" /></Field>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        <Field label="Ville"><input className="input" value={form.city || ""} onChange={e => f("city", e.target.value)} placeholder="Montréal" /></Field>
+        <Field label="Propriétaire">
+          <select className="input" value={form.owner || ""} onChange={e => f("owner", e.target.value)}>
+            <option value="">— Non assigné —</option>
+            {users.map(u => <option key={u.id} value={u.fullName}>{u.fullName}</option>)}
+          </select>
+        </Field>
+      </div>
       <Field label="Notes"><textarea className="input" style={{ resize: "vertical", minHeight: 72 }} value={form.notes || ""} onChange={e => f("notes", e.target.value)} placeholder="Informations..." /></Field>
       <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
         <button className="btn btn-ghost" onClick={onCancel}>Annuler</button>
