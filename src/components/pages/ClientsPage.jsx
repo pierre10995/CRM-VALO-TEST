@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { fmtCAD } from "../../utils/constants";
 
-export default function ClientsPage({ contacts, missions, candidatures, search, setSearch, filterStatus, setFilterStatus, onAdd, onEdit, onDelete, onDetail, detailId, setDetailId }) {
+export default function ClientsPage({ contacts, missions, candidatures, users, search, setSearch, filterStatus, setFilterStatus, onAdd, onEdit, onDelete, onDetail, detailId, setDetailId }) {
+  const [filterOwner, setFilterOwner] = useState("");
   // Compute total commissions from placed candidates per company
   const companyRevenue = {};
   (candidatures || []).filter(cd => cd.stage === "Placé").forEach(cd => {
@@ -16,7 +18,8 @@ export default function ClientsPage({ contacts, missions, candidatures, search, 
     const q = search.toLowerCase();
     const matchSearch = !search || c.name.toLowerCase().includes(q) || c.company.toLowerCase().includes(q) || c.email.toLowerCase().includes(q);
     const matchStatus = filterStatus === "Tous" || c.status === filterStatus;
-    return matchSearch && matchStatus;
+    const matchOwner = !filterOwner || c.owner === filterOwner;
+    return matchSearch && matchStatus && matchOwner;
   });
   const detail = contacts.find(c => c.id === detailId);
 
@@ -34,6 +37,10 @@ export default function ClientsPage({ contacts, missions, candidatures, search, 
         {["Tous", "Client", "Prospect"].map(s => (
           <button key={s} onClick={() => setFilterStatus(s)} className="btn" style={{ padding: "9px 14px", background: filterStatus === s ? "linear-gradient(135deg, #2563eb, #3b82f6)" : "white", color: filterStatus === s ? "white" : "#64748b", border: filterStatus === s ? "none" : "1.5px solid #e2e8f0" }}>{s}</button>
         ))}
+        <select className="input" style={{ width: "auto", minWidth: 180 }} value={filterOwner} onChange={e => setFilterOwner(e.target.value)}>
+          <option value="">Tous les propriétaires</option>
+          {(users || []).map(u => <option key={u.id} value={u.fullName}>{u.fullName}</option>)}
+        </select>
       </div>
       <div className="card" style={{ padding: 0, overflow: "hidden" }}>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
