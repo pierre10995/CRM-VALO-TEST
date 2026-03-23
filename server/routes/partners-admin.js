@@ -64,8 +64,8 @@ router.post("/", adminOnly, validate(partnerCreateSchema), asyncHandler(async (r
   } catch (err) {
     // Rollback : supprimer l'utilisateur Supabase si l'insert local échoue
     await supabaseAdmin.auth.admin.deleteUser(authUser.user.id);
-    logger.error("Erreur INSERT partners", { message: err.message });
-    throw new AppError(500, "Erreur lors de l'enregistrement en base de données");
+    logger.error("Erreur INSERT partners", { message: err.message, detail: err.detail, code: err.code });
+    throw new AppError(500, `Erreur DB: ${err.message}${err.detail ? " — " + err.detail : ""}`);
   }
 }));
 
