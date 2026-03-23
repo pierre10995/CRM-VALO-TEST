@@ -43,9 +43,7 @@ export default function PartnerPortal({ partner, onLogout }) {
       {/* Sidebar */}
       <aside style={{ width: 240, background: "white", padding: "24px 16px", display: "flex", flexDirection: "column", boxShadow: "1px 0 0 #e2e8f0", flexShrink: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 24 }}>
-          <div style={{ width: 34, height: 34, background: "linear-gradient(135deg, #059669, #10b981)", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-          </div>
+          <img src="/logo-valo.svg" alt="VALO" style={{ width: 38, height: 38, borderRadius: 10, objectFit: "cover" }} />
           <div>
             <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>VALO Recrutement</div>
             <div style={{ fontSize: 10.5, color: "#059669", fontWeight: 600 }}>Espace Partenaire</div>

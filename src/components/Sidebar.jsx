@@ -86,9 +86,7 @@ export default function Sidebar({ activeTab, setActiveTab, currentUser, onLogout
     <aside style={{ width: 220, background: "white", padding: "24px 12px", display: "flex", flexDirection: "column", gap: 4, boxShadow: "1px 0 0 #e2e8f0", flexShrink: 0 }}>
       <div style={{ padding: "0 6px 20px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ width: 34, height: 34, background: "linear-gradient(135deg, #1d4ed8, #3b82f6)", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-          </div>
+          <img src="/logo-valo.svg" alt="VALO" style={{ width: 38, height: 38, borderRadius: 10, objectFit: "cover" }} />
           <div>
             <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>VALO Recrutement</div>
             <div style={{ fontSize: 10.5, color: "#94a3b8" }}>CRM v2.0</div>
