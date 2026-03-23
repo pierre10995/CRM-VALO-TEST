@@ -7,6 +7,7 @@ export default function PlacementsPage({ candidatures, candidates, missions }) {
   const [form, setForm] = useState({});
   const [showAdd, setShowAdd] = useState(false);
   const [addForm, setAddForm] = useState({});
+  const [filterOwner, setFilterOwner] = useState("");
 
   const loadPlacements = async () => {
     const data = await api.get("/api/placements");
@@ -14,6 +15,14 @@ export default function PlacementsPage({ candidatures, candidates, missions }) {
   };
 
   useEffect(() => { loadPlacements(); }, []);
+
+  // Unique owners for filter dropdown
+  const owners = [...new Set(placements.map(p => p.owner).filter(Boolean))].sort();
+
+  // Filtered placements
+  const filteredPlacements = filterOwner
+    ? placements.filter(p => p.owner === filterOwner)
+    : placements;
 
   // Candidatures with stage "Placé" that don't already have a placement
   const placedCandidatures = candidatures.filter(cd =>
@@ -76,11 +85,17 @@ export default function PlacementsPage({ candidatures, candidates, missions }) {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 800, color: "#0f172a" }}>Suivi des placements</h1>
-          <p style={{ fontSize: 13, color: "#64748b", marginTop: 4 }}>{placements.length} candidat{placements.length !== 1 ? "s" : ""} placé{placements.length !== 1 ? "s" : ""}</p>
+          <p style={{ fontSize: 13, color: "#64748b", marginTop: 4 }}>{filteredPlacements.length} candidat{filteredPlacements.length !== 1 ? "s" : ""} placé{filteredPlacements.length !== 1 ? "s" : ""}{filterOwner ? ` (filtre : ${filterOwner})` : ""}</p>
         </div>
-        <button className="btn btn-primary" onClick={() => { setShowAdd(true); setAddForm({}); }} disabled={placedCandidatures.length === 0}>
-          + Ajouter un placement
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <select className="input" style={{ minWidth: 160, fontSize: 13 }} value={filterOwner} onChange={e => setFilterOwner(e.target.value)}>
+            <option value="">Tous les propriétaires</option>
+            {owners.map(o => <option key={o} value={o}>{o}</option>)}
+          </select>
+          <button className="btn btn-primary" onClick={() => { setShowAdd(true); setAddForm({}); }} disabled={placedCandidatures.length === 0}>
+            + Ajouter un placement
+          </button>
+        </div>
       </div>
 
       {/* Add form */}
@@ -121,7 +136,7 @@ export default function PlacementsPage({ candidatures, candidates, missions }) {
       )}
 
       {/* Placements list */}
-      {placements.map(p => (
+      {filteredPlacements.map(p => (
         <div key={p.id} className="card" style={{ padding: 20, marginBottom: 14 }}>
           {editing === p.id ? (
             /* Edit mode */

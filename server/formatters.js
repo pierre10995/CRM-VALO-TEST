@@ -92,6 +92,6 @@ export function fmtPlacement(r) {
     probationValidated: r.probation_validated || false,
     notes: r.notes || "", createdAt: r.created_at,
     candidateName: r.candidate_name || "", missionTitle: r.mission_title || "",
-    missionCompany: r.mission_company || "",
+    missionCompany: r.mission_company || "", owner: r.candidate_owner || "",
   };
 }
