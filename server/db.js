@@ -103,6 +103,7 @@ async function initDB() {
 
     await client.query(`ALTER TABLE missions ADD COLUMN IF NOT EXISTS fiscal_year_id INTEGER REFERENCES fiscal_years(id) ON DELETE SET NULL`);
     await client.query(`ALTER TABLE missions ADD COLUMN IF NOT EXISTS work_mode VARCHAR(50) DEFAULT ''`);
+    await client.query(`ALTER TABLE missions ADD COLUMN IF NOT EXISTS partner_notes TEXT DEFAULT ''`);
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS candidatures (

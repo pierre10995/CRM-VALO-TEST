@@ -53,6 +53,7 @@ export default function MissionForm({ form, setForm, onSave, onCancel, contacts,
       </div>
       <Field label="Description"><textarea className="input" style={{ resize: "vertical", minHeight: 72 }} value={form.description || ""} onChange={e => f("description", e.target.value)} placeholder="Description du poste..." /></Field>
       <Field label="Pré-requis"><textarea className="input" style={{ resize: "vertical", minHeight: 72 }} value={form.requirements || ""} onChange={e => f("requirements", e.target.value)} placeholder="Compétences requises..." /></Field>
+      <Field label="Notes pour les recruteurs externes"><textarea className="input" style={{ resize: "vertical", minHeight: 72 }} value={form.partnerNotes || ""} onChange={e => f("partnerNotes", e.target.value)} placeholder="Notes complémentaires visibles par les recruteurs externes affiliés..." /></Field>
       <Field label="Date limite"><input className="input" type="date" value={form.deadline || ""} onChange={e => f("deadline", e.target.value)} /></Field>
       <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
         <button className="btn btn-ghost" onClick={onCancel}>Annuler</button>

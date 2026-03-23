@@ -52,6 +52,45 @@ router.get("/missions/:id", asyncHandler(async (req, res) => {
   res.json(fmtMission(rows[0]));
 }));
 
+// ─── List files attached to an affiliated mission ───────────────────────────
+
+router.get("/missions/:id/files", asyncHandler(async (req, res) => {
+  // Verify affiliation
+  const { rows: affil } = await pool.query(
+    "SELECT 1 FROM partner_missions WHERE partner_id = $1 AND mission_id = $2",
+    [req.partner.id, req.params.id]
+  );
+  if (affil.length === 0) throw new AppError(404, "Mission non trouvée ou non affiliée");
+
+  const { rows } = await pool.query(
+    "SELECT id, mission_id, file_type, file_name, mime_type, created_at FROM files WHERE mission_id = $1 ORDER BY created_at DESC",
+    [req.params.id]
+  );
+  res.json(rows);
+}));
+
+// ─── Download a file from an affiliated mission ─────────────────────────────
+
+router.get("/files/:id", asyncHandler(async (req, res) => {
+  const { rows } = await pool.query("SELECT * FROM files WHERE id = $1", [req.params.id]);
+  if (rows.length === 0) throw new AppError(404, "Fichier non trouvé");
+
+  const file = rows[0];
+
+  // Verify partner is affiliated to the mission this file belongs to
+  if (!file.mission_id) throw new AppError(403, "Accès non autorisé");
+  const { rows: affil } = await pool.query(
+    "SELECT 1 FROM partner_missions WHERE partner_id = $1 AND mission_id = $2",
+    [req.partner.id, file.mission_id]
+  );
+  if (affil.length === 0) throw new AppError(403, "Accès non autorisé");
+
+  const buffer = Buffer.from(file.file_data, "base64");
+  res.setHeader("Content-Type", file.mime_type);
+  res.setHeader("Content-Disposition", `inline; filename="${file.file_name}"`);
+  res.send(buffer);
+}));
+
 // ─── List candidatures submitted by this partner ────────────────────────────
 
 router.get("/candidatures", asyncHandler(async (req, res) => {

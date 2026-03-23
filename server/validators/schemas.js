@@ -64,6 +64,7 @@ export const missionSchema = z.object({
   deadline: z.string().nullable().default(null),
   fiscalYearId: z.coerce.number().int().positive().nullable().default(null),
   workMode: z.string().max(50).default(""),
+  partnerNotes: z.string().max(5000).default(""),
 });
 
 // ─── Candidatures ────────────────────────────────────────────────────────────

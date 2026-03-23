@@ -24,6 +24,7 @@ export function fmtMission(r) {
     clientName: r.client_name || "", assignedName: r.assigned_name || "",
     candidatureCount: parseInt(r.candidature_count) || 0,
     fiscalYearLabel: r.fiscal_year_label || "",
+    partnerNotes: r.partner_notes || "",
   };
 }
 
