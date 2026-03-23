@@ -146,6 +146,7 @@ export default function PlacementsPage({ candidatures, candidates, missions }) {
                 <div>
                   <div style={{ fontSize: 15, fontWeight: 700, color: "#0f172a" }}>{p.candidateName}</div>
                   <div style={{ fontSize: 12, color: "#64748b" }}>{p.missionTitle} — {p.company || p.missionCompany}</div>
+                  {p.owner && <div style={{ fontSize: 11, color: "#2563eb", marginTop: 2 }}>Propriétaire : {p.owner}</div>}
                 </div>
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
@@ -220,6 +221,7 @@ export default function PlacementsPage({ candidatures, candidates, missions }) {
                   <div>
                     <div style={{ fontSize: 15, fontWeight: 700, color: "#0f172a" }}>{p.candidateName}</div>
                     <div style={{ fontSize: 12, color: "#64748b" }}>{p.missionTitle} — {p.company || p.missionCompany}</div>
+                    {p.owner && <div style={{ fontSize: 11, color: "#2563eb", marginTop: 2 }}>Propriétaire : {p.owner}</div>}
                   </div>
                 </div>
                 <div style={{ display: "flex", gap: 6 }}>

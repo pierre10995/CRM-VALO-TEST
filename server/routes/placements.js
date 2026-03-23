@@ -9,10 +9,11 @@ const router = Router();
 
 router.get("/", asyncHandler(async (req, res) => {
   const { rows } = await pool.query(`
-    SELECT p.*, c.name as candidate_name, c.owner as candidate_owner, m.title as mission_title, m.company as mission_company
+    SELECT p.*, c.name as candidate_name, m.title as mission_title, m.company as mission_company, u.name as owner_name
     FROM placements p
     LEFT JOIN contacts c ON p.candidate_id = c.id
     LEFT JOIN missions m ON p.mission_id = m.id
+    LEFT JOIN users u ON m.assigned_to = u.id
     ORDER BY p.created_at DESC
   `);
   res.json(rows.map(fmtPlacement));
