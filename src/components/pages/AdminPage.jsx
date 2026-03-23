@@ -77,6 +77,14 @@ export default function AdminPage({ currentUser, loadAll }) {
     }
   };
 
+  const handleDeletePartner = async (partner) => {
+    if (!window.confirm(`Supprimer le recruteur externe "${partner.name}" ?`)) return;
+    const res = await api.del(`/api/partners/${partner.id}`);
+    if (res.ok) {
+      await load();
+    }
+  };
+
   const f = (k, v) => setForm(p => ({ ...p, [k]: v }));
 
   const tabStyle = (t) => ({
@@ -206,10 +214,11 @@ export default function AdminPage({ currentUser, loadAll }) {
               <th style={thStyle}>Nom</th>
               <th style={thStyle}>Email</th>
               <th style={thStyle}>Entreprise</th>
-              <th style={thStyle}>T\u00e9l\u00e9phone</th>
+              <th style={thStyle}>Téléphone</th>
+              <th style={{ ...thStyle, textAlign: "right" }}>Actions</th>
             </tr></thead>
             <tbody>
-              {partners.length === 0 && <tr><td colSpan={4} style={{ padding: 40, textAlign: "center", color: "#94a3b8" }}>Aucun partenaire</td></tr>}
+              {partners.length === 0 && <tr><td colSpan={5} style={{ padding: 40, textAlign: "center", color: "#94a3b8" }}>Aucun partenaire</td></tr>}
               {partners.map(p => (
                 <tr key={p.id} className="row-hover" style={{ borderBottom: "1px solid #f8fafc" }}>
                   <td style={tdStyle}>
@@ -219,8 +228,17 @@ export default function AdminPage({ currentUser, loadAll }) {
                     </div>
                   </td>
                   <td style={{ ...tdStyle, color: "#64748b" }}>{p.email}</td>
-                  <td style={{ ...tdStyle, color: "#374151" }}>{p.company || "\u2014"}</td>
-                  <td style={{ ...tdStyle, color: "#374151" }}>{p.phone || "\u2014"}</td>
+                  <td style={{ ...tdStyle, color: "#374151" }}>{p.company || "—"}</td>
+                  <td style={{ ...tdStyle, color: "#374151" }}>{p.phone || "—"}</td>
+                  <td style={{ ...tdStyle, textAlign: "right" }}>
+                    <button
+                      className="btn btn-ghost"
+                      style={{ color: "#dc2626", fontSize: 12, padding: "4px 10px" }}
+                      onClick={() => handleDeletePartner(p)}
+                    >
+                      Supprimer
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
