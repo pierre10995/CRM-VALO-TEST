@@ -37,7 +37,7 @@ router.post("/", adminOnly, validate(partnerCreateSchema), asyncHandler(async (r
     if (authErr.message?.includes("already been registered")) {
       throw new AppError(409, "Un partenaire avec cet email existe déjà");
     }
-    throw authErr;
+    throw new AppError(400, authErr.message || "Erreur lors de la création du compte");
   }
 
   try {
