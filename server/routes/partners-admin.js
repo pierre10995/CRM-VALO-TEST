@@ -5,6 +5,7 @@ import { fmtPartner } from "../formatters.js";
 import { validate } from "../validators/validate.js";
 import { partnerCreateSchema, partnerUpdateSchema, partnerMissionSchema } from "../validators/schemas.js";
 import { asyncHandler, AppError } from "../helpers/errors.js";
+import { logger } from "../helpers/logger.js";
 import { adminOnly } from "../middleware.js";
 
 const router = Router();
@@ -26,18 +27,31 @@ router.post("/", adminOnly, validate(partnerCreateSchema), asyncHandler(async (r
   if (existing.length > 0) throw new AppError(409, "Un partenaire avec cet email existe déjà");
 
   // Créer l'utilisateur dans Supabase Auth
-  const { data: authUser, error: authErr } = await supabaseAdmin.auth.admin.createUser({
-    email,
-    password,
-    email_confirm: true,
-    user_metadata: { full_name: name, role: "partner", company },
-  });
+  let authUser;
+  try {
+    const { data, error: authErr } = await supabaseAdmin.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: { full_name: name, role: "partner", company },
+    });
 
-  if (authErr) {
-    if (authErr.message?.includes("already been registered")) {
-      throw new AppError(409, "Un partenaire avec cet email existe déjà");
+    if (authErr) {
+      if (authErr.message?.includes("already been registered")) {
+        throw new AppError(409, "Un partenaire avec cet email existe déjà");
+      }
+      throw new AppError(400, authErr.message || "Erreur lors de la création du compte Supabase");
     }
-    throw new AppError(400, authErr.message || "Erreur lors de la création du compte");
+
+    if (!data?.user?.id) {
+      throw new AppError(500, "Supabase n'a pas retourné d'utilisateur");
+    }
+
+    authUser = data;
+  } catch (err) {
+    if (err instanceof AppError) throw err;
+    logger.error("Erreur Supabase Auth createUser", { message: err.message });
+    throw new AppError(500, "Erreur de connexion à Supabase Auth");
   }
 
   try {
@@ -50,7 +64,8 @@ router.post("/", adminOnly, validate(partnerCreateSchema), asyncHandler(async (r
   } catch (err) {
     // Rollback : supprimer l'utilisateur Supabase si l'insert local échoue
     await supabaseAdmin.auth.admin.deleteUser(authUser.user.id);
-    throw err;
+    logger.error("Erreur INSERT partners", { message: err.message });
+    throw new AppError(500, "Erreur lors de l'enregistrement en base de données");
   }
 }));
 
