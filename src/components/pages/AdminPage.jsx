@@ -41,39 +41,53 @@ export default function AdminPage({ currentUser, loadAll }) {
     setShowForm(true);
   };
 
+  const validatePassword = (pwd) => {
+    if (!pwd || pwd.length < 12) return "Mot de passe min. 12 caractères";
+    if (!/[A-Z]/.test(pwd)) return "Le mot de passe doit contenir au moins une majuscule";
+    if (!/[a-z]/.test(pwd)) return "Le mot de passe doit contenir au moins une minuscule";
+    if (!/[0-9]/.test(pwd)) return "Le mot de passe doit contenir au moins un chiffre";
+    return null;
+  };
+
   const handleSave = async () => {
     setError("");
     setSuccess("");
 
-    if (formType === "user") {
-      if (!form.fullName?.trim()) return setError("Nom complet requis");
-      if (!form.login?.trim()) return setError("Email requis");
-      if (!form.password || form.password.length < 12) return setError("Mot de passe requis (min. 12 car., 1 maj., 1 min., 1 chiffre)");
+    try {
+      if (formType === "user") {
+        if (!form.fullName?.trim()) return setError("Nom complet requis");
+        if (!form.login?.trim()) return setError("Email requis");
+        const pwdErr = validatePassword(form.password);
+        if (pwdErr) return setError(pwdErr);
 
-      const res = await api.post("/api/users", form);
-      if (res.ok) {
-        setSuccess(`Utilisateur "${form.fullName}" cr\u00e9\u00e9 avec succ\u00e8s`);
-        setForm({ fullName: "", login: "", password: "" });
-        await load();
-        if (loadAll) await loadAll();
+        const res = await api.post("/api/users", form);
+        if (res.ok) {
+          setSuccess(`Utilisateur "${form.fullName}" créé avec succès`);
+          setForm({ fullName: "", login: "", password: "" });
+          await load();
+          if (loadAll) await loadAll();
+        } else {
+          const d = await res.json();
+          setError(d.error || "Erreur lors de la création");
+        }
       } else {
-        const d = await res.json();
-        setError(d.error || "Erreur lors de la cr\u00e9ation");
-      }
-    } else {
-      if (!form.name?.trim()) return setError("Nom requis");
-      if (!form.email?.trim()) return setError("Email requis");
-      if (!form.password || form.password.length < 12) return setError("Mot de passe requis (min. 12 car., 1 maj., 1 min., 1 chiffre)");
+        if (!form.name?.trim()) return setError("Nom requis");
+        if (!form.email?.trim()) return setError("Email requis");
+        const pwdErr = validatePassword(form.password);
+        if (pwdErr) return setError(pwdErr);
 
-      const res = await api.post("/api/partners", form);
-      if (res.ok) {
-        setSuccess(`Partenaire "${form.name}" cr\u00e9\u00e9 avec succ\u00e8s`);
-        setForm({ name: "", email: "", password: "", company: "", phone: "" });
-        await load();
-      } else {
-        const d = await res.json();
-        setError(d.error || "Erreur lors de la cr\u00e9ation");
+        const res = await api.post("/api/partners", form);
+        if (res.ok) {
+          setSuccess(`Partenaire "${form.name}" créé avec succès`);
+          setForm({ name: "", email: "", password: "", company: "", phone: "" });
+          await load();
+        } else {
+          const d = await res.json();
+          setError(d.error || "Erreur lors de la création");
+        }
       }
+    } catch (err) {
+      setError("Erreur réseau ou serveur. Veuillez réessayer.");
     }
   };
 
