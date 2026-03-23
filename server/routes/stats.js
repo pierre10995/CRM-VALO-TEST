@@ -93,9 +93,15 @@ router.post("/users", adminOnly, validate(userCreateSchema), asyncHandler(async 
 // ─── Audit log ──────────────────────────────────────────────────────────────
 
 router.get("/audit-log", asyncHandler(async (req, res) => {
-  const { rows } = await pool.query(
-    "SELECT * FROM audit_log ORDER BY created_at DESC LIMIT 200"
-  );
+  const { entityType, entityId } = req.query;
+  let q = "SELECT * FROM audit_log";
+  const params = [];
+  if (entityType && entityId) {
+    q += " WHERE LOWER(entity_type) = LOWER($1) AND entity_id = $2";
+    params.push(entityType, entityId);
+  }
+  q += " ORDER BY created_at DESC LIMIT 200";
+  const { rows } = await pool.query(q, params);
   res.json(rows.map(r => ({
     id: r.id, userName: r.user_name, action: r.action,
     entityType: r.entity_type, entityId: r.entity_id,

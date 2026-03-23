@@ -1,7 +1,7 @@
 import { CONTRACT_TYPES, MISSION_STATUSES, PRIORITIES } from "../../utils/constants";
 import Field from "../common/Field";
 
-export default function MissionForm({ form, setForm, onSave, onCancel, contacts, users, fiscalYears, workModes = [] }) {
+export default function MissionForm({ form, setForm, onSave, onCancel, contacts, users, fiscalYears, workModes = [], saving }) {
   const f = (k, v) => setForm(p => ({ ...p, [k]: v }));
   const clientContacts = contacts.filter(c => c.status === "Client" || c.status === "Prospect");
   return (
@@ -57,7 +57,7 @@ export default function MissionForm({ form, setForm, onSave, onCancel, contacts,
       <Field label="Date limite"><input className="input" type="date" value={form.deadline || ""} onChange={e => f("deadline", e.target.value)} /></Field>
       <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
         <button className="btn btn-ghost" onClick={onCancel}>Annuler</button>
-        <button className="btn btn-primary" onClick={onSave}>{form.id ? "Enregistrer" : "Créer"}</button>
+        <button className="btn btn-primary" onClick={onSave} disabled={saving}>{saving ? "Enregistrement..." : form.id ? "Enregistrer" : "Créer"}</button>
       </div>
     </div>
   );

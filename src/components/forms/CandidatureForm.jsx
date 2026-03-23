@@ -1,7 +1,7 @@
 import { STAGES } from "../../utils/constants";
 import Field from "../common/Field";
 
-export default function CandidatureForm({ form, setForm, onSave, onCancel, candidates, missions }) {
+export default function CandidatureForm({ form, setForm, onSave, onCancel, candidates, missions, saving }) {
   const f = (k, v) => setForm(p => ({ ...p, [k]: v }));
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -29,7 +29,7 @@ export default function CandidatureForm({ form, setForm, onSave, onCancel, candi
       <Field label="Notes"><textarea className="input" style={{ resize: "vertical", minHeight: 72 }} value={form.notes || ""} onChange={e => f("notes", e.target.value)} placeholder="Commentaires..." /></Field>
       <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
         <button className="btn btn-ghost" onClick={onCancel}>Annuler</button>
-        <button className="btn btn-primary" onClick={onSave}>{form.id ? "Enregistrer" : "Créer"}</button>
+        <button className="btn btn-primary" onClick={onSave} disabled={saving}>{saving ? "Enregistrement..." : form.id ? "Enregistrer" : "Créer"}</button>
       </div>
     </div>
   );

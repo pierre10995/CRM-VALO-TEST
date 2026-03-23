@@ -12,7 +12,7 @@ const COLOR_PRESETS = [
   { bg: "#f1f5f9", color: "#64748b", name: "Gris" },
 ];
 
-export default function CandidatForm({ form, setForm, onSave, onCancel, sectors = [], validationStatuses = [], onStatusesChanged, users = [] }) {
+export default function CandidatForm({ form, setForm, onSave, onCancel, sectors = [], validationStatuses = [], onStatusesChanged, users = [], saving }) {
   const f = (k, v) => setForm(p => ({ ...p, [k]: v }));
   const [showStatusMgr, setShowStatusMgr] = useState(false);
   const [newLabel, setNewLabel] = useState("");
@@ -226,7 +226,7 @@ export default function CandidatForm({ form, setForm, onSave, onCancel, sectors 
       <Field label="Notes"><textarea className="input" style={{ resize: "vertical", minHeight: 72 }} value={form.notes || ""} onChange={e => f("notes", e.target.value)} placeholder="Informations..." /></Field>
       <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
         <button className="btn btn-ghost" onClick={onCancel}>Annuler</button>
-        <button className="btn btn-primary" onClick={onSave}>{form.id ? "Enregistrer" : "Créer"}</button>
+        <button className="btn btn-primary" onClick={onSave} disabled={saving}>{saving ? "Enregistrement..." : form.id ? "Enregistrer" : "Créer"}</button>
       </div>
     </div>
   );

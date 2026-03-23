@@ -27,6 +27,10 @@ router.post("/", validate(missionSchema), asyncHandler(async (req, res) => {
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17) RETURNING *`,
     [d.title, d.clientContactId, d.company, d.location, d.contractType, d.salaryMin, d.salaryMax, d.description, d.requirements, d.status, d.priority, d.assignedTo, d.commission, d.deadline, d.fiscalYearId, d.workMode, d.partnerNotes]
   );
+  await pool.query(
+    "INSERT INTO audit_log (user_name, action, entity_type, entity_id, details) VALUES ($1,$2,$3,$4,$5)",
+    [req.user?.login || "Système", "Création", "mission", rows[0].id, d.title]
+  );
   res.json(fmtMission(rows[0]));
 }));
 
@@ -55,6 +59,10 @@ router.put("/:id", validate(missionSchema), asyncHandler(async (req, res) => {
     }
   }
 
+  await pool.query(
+    "INSERT INTO audit_log (user_name, action, entity_type, entity_id, details) VALUES ($1,$2,$3,$4,$5)",
+    [req.user?.login || "Système", "Modification", "mission", parseInt(req.params.id), d.title]
+  );
   res.json(fmtMission(rows[0]));
 }));
 
