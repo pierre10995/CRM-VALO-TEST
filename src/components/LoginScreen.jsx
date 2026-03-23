@@ -58,7 +58,7 @@ export default function LoginScreen({ form, setForm, showPwd, setShowPwd, error,
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap'); * { box-sizing: border-box; margin: 0; padding: 0; } @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} } .input-l { width:100%; padding:12px 16px; border:1.5px solid #e2e8f0; border-radius:12px; font-size:14px; font-family:inherit; outline:none; transition:all 0.2s; color:#1e293b; background:#fafbfd; } .input-l:focus { border-color:#2563eb; box-shadow:0 0 0 4px rgba(37,99,235,0.1); }`}</style>
       <div style={{ width: "100%", maxWidth: 420, padding: 40, background: "white", borderRadius: 24, boxShadow: "0 20px 60px rgba(37,99,235,0.12)" }}>
         <div style={{ textAlign: "center", marginBottom: 32 }}>
-          <img src="/logo-valo.svg" alt="VALO" style={{ width: 80, height: 80, borderRadius: 18, objectFit: "cover", margin: "0 auto 16px", display: "block", boxShadow: "0 8px 24px rgba(37,99,235,0.2)", animation: "float 4s ease-in-out infinite" }} />
+          <img src="/logo-valo.svg" alt="VALO" style={{ height: 70, objectFit: "contain", margin: "0 auto 16px", display: "block", animation: "float 4s ease-in-out infinite" }} />
           <h1 style={{ fontSize: 24, fontWeight: 800, color: "#0f172a" }}>VALO Recrutement</h1>
           <p style={{ fontSize: 13.5, color: "#64748b", marginTop: 6 }}>
             {mode === "login" && "Connectez-vous à votre espace"}
