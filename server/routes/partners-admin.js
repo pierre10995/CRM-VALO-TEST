@@ -56,16 +56,16 @@ router.post("/", adminOnly, validate(partnerCreateSchema), asyncHandler(async (r
 
   try {
     const { rows } = await pool.query(
-      `INSERT INTO partners (name, email, company, phone, auth_id) VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO partners (name, email, password, company, phone, auth_id) VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING *, 0 as mission_count`,
-      [name, email, company, phone, authUser.user.id]
+      [name, email, password, company, phone, authUser.user.id]
     );
     res.status(201).json(fmtPartner(rows[0]));
   } catch (err) {
     // Rollback : supprimer l'utilisateur Supabase si l'insert local échoue
     await supabaseAdmin.auth.admin.deleteUser(authUser.user.id);
     logger.error("Erreur INSERT partners", { message: err.message, detail: err.detail, code: err.code });
-    throw new AppError(500, `Erreur DB: ${err.message}${err.detail ? " — " + err.detail : ""}`);
+    throw new AppError(500, "Erreur lors de l'enregistrement en base de données");
   }
 }));
 
