@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import api from "../../services/api";
+import SearchSelect from "../common/SearchSelect";
 
 export default function EvaluationPage({ candidates, missions, loadAll }) {
   const [candidateId, setCandidateId] = useState("");
@@ -52,21 +53,21 @@ export default function EvaluationPage({ candidates, missions, loadAll }) {
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: 12, alignItems: "end" }}>
           <div>
             <label style={{ fontSize: 12, fontWeight: 600, color: "#64748b", marginBottom: 6, display: "block" }}>Candidat</label>
-            <select className="input" value={candidateId} onChange={e => setCandidateId(e.target.value)}>
-              <option value="">-- Choisir un candidat --</option>
-              {candidates.map(c => (
-                <option key={c.id} value={c.id}>{c.name}{c.skills ? ` (${c.skills.split(",").slice(0, 2).join(", ")})` : ""}</option>
-              ))}
-            </select>
+            <SearchSelect
+              value={candidateId}
+              onChange={setCandidateId}
+              options={candidates.map(c => ({ value: c.id, label: c.name, sub: c.skills ? c.skills.split(",").slice(0, 3).join(", ") : "" }))}
+              placeholder="Rechercher un candidat..."
+            />
           </div>
           <div>
             <label style={{ fontSize: 12, fontWeight: 600, color: "#64748b", marginBottom: 6, display: "block" }}>Poste</label>
-            <select className="input" value={missionId} onChange={e => setMissionId(e.target.value)}>
-              <option value="">-- Choisir un poste --</option>
-              {missions.filter(m => m.status === "Ouverte" || m.status === "En cours").map(m => (
-                <option key={m.id} value={m.id}>{m.title} — {m.company}</option>
-              ))}
-            </select>
+            <SearchSelect
+              value={missionId}
+              onChange={setMissionId}
+              options={missions.filter(m => m.status === "Ouverte" || m.status === "En cours").map(m => ({ value: m.id, label: `${m.title} — ${m.company}`, sub: [m.location, m.contractType].filter(Boolean).join(" — ") }))}
+              placeholder="Rechercher un poste..."
+            />
           </div>
           <button className="btn btn-primary" style={{ padding: "10px 24px", fontSize: 13 }} onClick={generate} disabled={loading || !candidateId || !missionId}>
             {loading ? "Analyse en cours..." : "Évaluer"}

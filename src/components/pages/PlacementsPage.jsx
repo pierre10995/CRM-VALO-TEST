@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import api from "../../services/api";
+import SearchSelect from "../common/SearchSelect";
 
 export default function PlacementsPage({ candidatures, candidates, missions }) {
   const [placements, setPlacements] = useState([]);
@@ -105,12 +106,12 @@ export default function PlacementsPage({ candidatures, candidates, missions }) {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 12 }}>
             <div>
               <label style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", marginBottom: 4, display: "block" }}>CANDIDATURE PLACÉE *</label>
-              <select className="input" value={addForm.candidatureId || ""} onChange={e => setAddForm(p => ({ ...p, candidatureId: e.target.value }))}>
-                <option value="">— Sélectionner —</option>
-                {placedCandidatures.map(cd => (
-                  <option key={cd.id} value={cd.id}>{cd.candidateName} → {cd.missionTitle} ({cd.missionCompany})</option>
-                ))}
-              </select>
+              <SearchSelect
+                value={addForm.candidatureId || ""}
+                onChange={v => setAddForm(p => ({ ...p, candidatureId: v }))}
+                options={placedCandidatures.map(cd => ({ value: cd.id, label: `${cd.candidateName} → ${cd.missionTitle}`, sub: cd.missionCompany }))}
+                placeholder="Rechercher une candidature..."
+              />
             </div>
             <div>
               <label style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", marginBottom: 4, display: "block" }}>DATE DE DÉMARRAGE</label>

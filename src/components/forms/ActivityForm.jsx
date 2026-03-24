@@ -1,8 +1,13 @@
 import { ACTIVITY_TYPES } from "../../utils/constants";
 import Field from "../common/Field";
+import SearchSelect from "../common/SearchSelect";
 
 export default function ActivityForm({ form, setForm, onSave, onCancel, contacts, missions, saving }) {
   const f = (k, v) => setForm(p => ({ ...p, [k]: v }));
+
+  const contactOptions = contacts.map(c => ({ value: c.id, label: c.name, sub: [c.status, c.company].filter(Boolean).join(" — ") }));
+  const missionOptions = missions.map(m => ({ value: m.id, label: m.title, sub: m.company }));
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
@@ -13,16 +18,10 @@ export default function ActivityForm({ form, setForm, onSave, onCancel, contacts
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
         <Field label="Contact">
-          <select className="input" value={form.contactId || ""} onChange={e => f("contactId", e.target.value)}>
-            <option value="">— Aucun —</option>
-            {contacts.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-          </select>
+          <SearchSelect value={form.contactId || ""} onChange={v => f("contactId", v)} options={contactOptions} placeholder="Rechercher un contact..." />
         </Field>
         <Field label="Mission">
-          <select className="input" value={form.missionId || ""} onChange={e => f("missionId", e.target.value)}>
-            <option value="">— Aucune —</option>
-            {missions.map(m => <option key={m.id} value={m.id}>{m.title}</option>)}
-          </select>
+          <SearchSelect value={form.missionId || ""} onChange={v => f("missionId", v)} options={missionOptions} placeholder="Rechercher une mission..." />
         </Field>
       </div>
       <Field label="Description"><textarea className="input" style={{ resize: "vertical", minHeight: 72 }} value={form.description || ""} onChange={e => f("description", e.target.value)} placeholder="Détails..." /></Field>
