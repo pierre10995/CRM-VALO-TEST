@@ -287,6 +287,20 @@ async function initDB() {
       );
     `);
 
+    // ─── Row Level Security ────────────────────────────────────────────────────
+    // Toutes les requêtes passent par le backend Express (service_role).
+    // On active RLS et on n'ajoute aucune policy pour la clé anon/public,
+    // ce qui bloque tout accès direct via l'API REST PostgREST de Supabase.
+    const allTables = [
+      "users", "password_resets", "contacts", "fiscal_years", "missions",
+      "candidatures", "activities", "files", "placements", "evaluations",
+      "objectives", "validation_statuses", "partners", "partner_missions",
+      "submission_reviews", "audit_log", "tags", "contact_tags",
+    ];
+    for (const table of allTables) {
+      await client.query(`ALTER TABLE ${table} ENABLE ROW LEVEL SECURITY`);
+    }
+
     // Seed tracking
     await client.query(`CREATE TABLE IF NOT EXISTS seed_log (key VARCHAR(50) PRIMARY KEY, done_at TIMESTAMP DEFAULT NOW())`);
     const alreadySeeded = async (key) => {
