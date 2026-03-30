@@ -237,4 +237,134 @@ router.post("/submit", uploadLimiter, validate(partnerSubmitSchema), asyncHandle
   }
 }));
 
+// ─── Notifications ──────────────────────────────────────────────────────────
+
+router.get("/notifications", asyncHandler(async (req, res) => {
+  const { rows } = await pool.query(
+    `SELECT n.*, cd.stage, c.name as candidate_name, m.title as mission_title
+     FROM partner_notifications n
+     LEFT JOIN candidatures cd ON n.candidature_id = cd.id
+     LEFT JOIN contacts c ON cd.candidate_id = c.id
+     LEFT JOIN missions m ON cd.mission_id = m.id
+     WHERE n.partner_id = $1
+     ORDER BY n.created_at DESC
+     LIMIT 50`,
+    [req.partner.id]
+  );
+  res.json(rows.map(r => ({
+    id: r.id, type: r.type, message: r.message, read: r.read,
+    createdAt: r.created_at, candidatureId: r.candidature_id,
+    candidateName: r.candidate_name || "", missionTitle: r.mission_title || "",
+    stage: r.stage || "",
+  })));
+}));
+
+router.put("/notifications/read", asyncHandler(async (req, res) => {
+  await pool.query(
+    "UPDATE partner_notifications SET read = TRUE WHERE partner_id = $1 AND read = FALSE",
+    [req.partner.id]
+  );
+  res.json({ ok: true });
+}));
+
+// ─── Comments (bidirectional) ───────────────────────────────────────────────
+
+router.get("/candidatures/:id/comments", asyncHandler(async (req, res) => {
+  // Vérifier que la candidature appartient au partenaire
+  const { rows: cdCheck } = await pool.query(
+    "SELECT 1 FROM candidatures WHERE id = $1 AND partner_id = $2",
+    [req.params.id, req.partner.id]
+  );
+  if (cdCheck.length === 0) return res.status(404).json({ error: "Candidature non trouvée" });
+
+  const { rows } = await pool.query(
+    `SELECT * FROM candidature_comments
+     WHERE candidature_id = $1 AND visible_to_partner = TRUE
+     ORDER BY created_at ASC`,
+    [req.params.id]
+  );
+  res.json(rows.map(r => ({
+    id: r.id, authorType: r.author_type, authorName: r.author_name,
+    message: r.message, createdAt: r.created_at,
+  })));
+}));
+
+router.post("/candidatures/:id/comments", asyncHandler(async (req, res) => {
+  const { message } = req.body;
+  if (!message?.trim()) return res.status(400).json({ error: "Message requis" });
+
+  // Vérifier que la candidature appartient au partenaire
+  const { rows: cdCheck } = await pool.query(
+    "SELECT 1 FROM candidatures WHERE id = $1 AND partner_id = $2",
+    [req.params.id, req.partner.id]
+  );
+  if (cdCheck.length === 0) return res.status(404).json({ error: "Candidature non trouvée" });
+
+  const { rows: pRows } = await pool.query("SELECT name FROM partners WHERE id = $1", [req.partner.id]);
+  const authorName = pRows[0]?.name || "Partenaire";
+
+  const { rows } = await pool.query(
+    `INSERT INTO candidature_comments (candidature_id, author_type, author_name, message)
+     VALUES ($1, 'partner', $2, $3) RETURNING *`,
+    [req.params.id, authorName, message.trim()]
+  );
+  const r = rows[0];
+  res.status(201).json({
+    id: r.id, authorType: r.author_type, authorName: r.author_name,
+    message: r.message, createdAt: r.created_at,
+  });
+}));
+
+// ─── Stats for partner dashboard ────────────────────────────────────────────
+
+router.get("/stats", asyncHandler(async (req, res) => {
+  const pid = req.partner.id;
+
+  const [totalRes, stagesRes, recentRes, missionsRes] = await Promise.all([
+    pool.query("SELECT COUNT(*) FROM candidatures WHERE partner_id = $1", [pid]),
+    pool.query(
+      `SELECT stage, COUNT(*)::int as count FROM candidatures WHERE partner_id = $1 GROUP BY stage`,
+      [pid]
+    ),
+    pool.query(
+      `SELECT cd.id, cd.stage, cd.created_at, c.name as candidate_name, m.title as mission_title
+       FROM candidatures cd
+       LEFT JOIN contacts c ON cd.candidate_id = c.id
+       LEFT JOIN missions m ON cd.mission_id = m.id
+       WHERE cd.partner_id = $1
+       ORDER BY cd.updated_at DESC LIMIT 10`,
+      [pid]
+    ),
+    pool.query(
+      `SELECT COUNT(DISTINCT pm.mission_id)::int as count FROM partner_missions pm WHERE pm.partner_id = $1`,
+      [pid]
+    ),
+  ]);
+
+  const stages = {};
+  for (const r of stagesRes.rows) stages[r.stage] = r.count;
+
+  const total = parseInt(totalRes.rows[0].count);
+  const placed = stages["Placé"] || 0;
+  const refused = stages["Refusé"] || 0;
+  const pending = stages["En attente"] || 0;
+  const inProgress = total - placed - refused - (stages["Archivé"] || 0);
+
+  res.json({
+    totalSubmissions: total,
+    placed,
+    refused,
+    pending,
+    inProgress,
+    acceptanceRate: total > 0 ? Math.round(((total - refused) / total) * 100) : 0,
+    placementRate: total > 0 ? Math.round((placed / total) * 100) : 0,
+    affiliatedMissions: missionsRes.rows[0].count,
+    stages,
+    recentActivity: recentRes.rows.map(r => ({
+      id: r.id, stage: r.stage, createdAt: r.created_at,
+      candidateName: r.candidate_name || "", missionTitle: r.mission_title || "",
+    })),
+  });
+}));
+
 export default router;

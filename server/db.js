@@ -260,6 +260,30 @@ async function initDB() {
     `);
 
     await client.query(`
+      CREATE TABLE IF NOT EXISTS partner_notifications (
+        id SERIAL PRIMARY KEY,
+        partner_id INTEGER REFERENCES partners(id) ON DELETE CASCADE,
+        candidature_id INTEGER REFERENCES candidatures(id) ON DELETE CASCADE,
+        type VARCHAR(30) NOT NULL,
+        message TEXT NOT NULL,
+        read BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS candidature_comments (
+        id SERIAL PRIMARY KEY,
+        candidature_id INTEGER REFERENCES candidatures(id) ON DELETE CASCADE,
+        author_type VARCHAR(10) NOT NULL CHECK (author_type IN ('internal', 'partner')),
+        author_name VARCHAR(100) NOT NULL,
+        message TEXT NOT NULL,
+        visible_to_partner BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+    `);
+
+    await client.query(`
       CREATE TABLE IF NOT EXISTS audit_log (
         id SERIAL PRIMARY KEY,
         user_name VARCHAR(100) NOT NULL,
@@ -295,7 +319,8 @@ async function initDB() {
       "users", "password_resets", "contacts", "fiscal_years", "missions",
       "candidatures", "activities", "files", "placements", "evaluations",
       "objectives", "validation_statuses", "partners", "partner_missions",
-      "submission_reviews", "audit_log", "tags", "contact_tags",
+      "submission_reviews", "partner_notifications", "candidature_comments",
+      "audit_log", "tags", "contact_tags",
     ];
     for (const table of allTables) {
       await client.query(`ALTER TABLE ${table} ENABLE ROW LEVEL SECURITY`);

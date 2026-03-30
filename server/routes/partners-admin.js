@@ -212,4 +212,53 @@ router.delete("/:id/missions/:missionId", adminOnly, asyncHandler(async (req, re
   res.json({ ok: true });
 }));
 
+// ─── Comments on submissions (internal ↔ partner) ─────────────────────────
+
+router.get("/submissions/:candidatureId/comments", adminOnly, asyncHandler(async (req, res) => {
+  const { rows } = await pool.query(
+    `SELECT * FROM candidature_comments WHERE candidature_id = $1 ORDER BY created_at ASC`,
+    [req.params.candidatureId]
+  );
+  res.json(rows.map(r => ({
+    id: r.id, authorType: r.author_type, authorName: r.author_name,
+    message: r.message, visibleToPartner: r.visible_to_partner, createdAt: r.created_at,
+  })));
+}));
+
+router.post("/submissions/:candidatureId/comments", adminOnly, asyncHandler(async (req, res) => {
+  const { message, visibleToPartner = true } = req.body;
+  if (!message?.trim()) throw new AppError(400, "Message requis");
+
+  const { rows: uRows } = await pool.query("SELECT full_name FROM users WHERE id = $1", [req.user.id]);
+  const authorName = uRows[0]?.full_name || "Équipe VALO";
+
+  const { rows } = await pool.query(
+    `INSERT INTO candidature_comments (candidature_id, author_type, author_name, message, visible_to_partner)
+     VALUES ($1, 'internal', $2, $3, $4) RETURNING *`,
+    [req.params.candidatureId, authorName, message.trim(), visibleToPartner]
+  );
+
+  // Notifier le partenaire si le commentaire est visible
+  if (visibleToPartner) {
+    const { rows: cdRows } = await pool.query(
+      `SELECT cd.partner_id, c.name as candidate_name FROM candidatures cd
+       LEFT JOIN contacts c ON cd.candidate_id = c.id WHERE cd.id = $1`,
+      [req.params.candidatureId]
+    );
+    if (cdRows[0]?.partner_id) {
+      await pool.query(
+        "INSERT INTO partner_notifications (partner_id, candidature_id, type, message) VALUES ($1, $2, $3, $4)",
+        [cdRows[0].partner_id, parseInt(req.params.candidatureId), "comment",
+         `Nouveau commentaire de l'équipe VALO sur "${cdRows[0].candidate_name || "votre candidat"}".`]
+      );
+    }
+  }
+
+  const r = rows[0];
+  res.status(201).json({
+    id: r.id, authorType: r.author_type, authorName: r.author_name,
+    message: r.message, visibleToPartner: r.visible_to_partner, createdAt: r.created_at,
+  });
+}));
+
 export default router;
