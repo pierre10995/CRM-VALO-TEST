@@ -72,12 +72,29 @@ router.post("/", adminOnly, validate(partnerCreateSchema), asyncHandler(async (r
 router.put("/:id", adminOnly, validate(partnerUpdateSchema), asyncHandler(async (req, res) => {
   const { name, email, company, phone, password } = req.body;
 
-  // Si le mot de passe est fourni, le mettre à jour dans Supabase Auth
-  if (password) {
-    const { rows: partnerRows } = await pool.query("SELECT auth_id FROM partners WHERE id = $1", [req.params.id]);
-    if (partnerRows.length > 0 && partnerRows[0].auth_id) {
-      const { error } = await supabaseAdmin.auth.admin.updateUserById(partnerRows[0].auth_id, { password });
-      if (error) throw new AppError(500, "Erreur lors de la mise à jour du mot de passe");
+  // Récupérer le partenaire actuel
+  const { rows: current } = await pool.query("SELECT auth_id, email FROM partners WHERE id = $1", [req.params.id]);
+  if (current.length === 0) throw new AppError(404, "Partenaire non trouvé");
+  const partner = current[0];
+
+  // Vérifier l'unicité de l'email si modifié
+  if (email && email.toLowerCase() !== partner.email.toLowerCase()) {
+    const { rows: existing } = await pool.query(
+      "SELECT 1 FROM partners WHERE LOWER(email) = LOWER($1) AND id != $2",
+      [email, req.params.id]
+    );
+    if (existing.length > 0) throw new AppError(409, "Un partenaire avec cet email existe déjà");
+  }
+
+  // Synchroniser avec Supabase Auth (email + mot de passe)
+  if (partner.auth_id) {
+    const authUpdates = {};
+    if (password) authUpdates.password = password;
+    if (email && email.toLowerCase() !== partner.email.toLowerCase()) authUpdates.email = email;
+
+    if (Object.keys(authUpdates).length > 0) {
+      const { error } = await supabaseAdmin.auth.admin.updateUserById(partner.auth_id, authUpdates);
+      if (error) throw new AppError(500, "Erreur lors de la mise à jour dans Supabase Auth");
     }
   }
 
@@ -86,7 +103,6 @@ router.put("/:id", adminOnly, validate(partnerUpdateSchema), asyncHandler(async 
      RETURNING *, (SELECT COUNT(*) FROM partner_missions pm WHERE pm.partner_id = partners.id) as mission_count`,
     [name, email, company, phone, req.params.id]
   );
-  if (rows.length === 0) throw new AppError(404, "Partenaire non trouvé");
   res.json(fmtPartner(rows[0]));
 }));
 
