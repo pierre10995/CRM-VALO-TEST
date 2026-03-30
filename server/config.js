@@ -4,6 +4,7 @@
  */
 
 const isProduction = process.env.NODE_ENV === "production";
+const isTest = process.env.NODE_ENV === "test" || typeof process.env.VITEST !== "undefined";
 
 // --- JWT ---
 if (isProduction && !process.env.JWT_SECRET) {
@@ -13,6 +14,12 @@ if (isProduction && !process.env.JWT_SECRET) {
 
 if (!process.env.JWT_SECRET) {
   console.warn("WARN: JWT_SECRET non défini. Secret aléatoire généré (non persistant, dev only).");
+}
+
+// --- Supabase ---
+if (!isTest && (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY)) {
+  console.error("FATAL: SUPABASE_URL et SUPABASE_SERVICE_ROLE_KEY sont requis.");
+  process.exit(1);
 }
 
 export const config = {
@@ -41,6 +48,12 @@ export const config = {
 
   anthropic: {
     apiKey: process.env.ANTHROPIC_API_KEY || "",
+  },
+
+  supabase: {
+    url: process.env.SUPABASE_URL,
+    anonKey: process.env.SUPABASE_ANON_KEY || "",
+    serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
   },
 
   resend: {

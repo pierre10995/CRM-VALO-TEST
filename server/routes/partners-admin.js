@@ -1,16 +1,18 @@
 import { Router } from "express";
-import bcrypt from "bcryptjs";
 import { pool } from "../db.js";
+import { supabaseAdmin } from "../supabase.js";
 import { fmtPartner } from "../formatters.js";
 import { validate } from "../validators/validate.js";
 import { partnerCreateSchema, partnerUpdateSchema, partnerMissionSchema } from "../validators/schemas.js";
 import { asyncHandler, AppError } from "../helpers/errors.js";
+import { logger } from "../helpers/logger.js";
+import { adminOnly } from "../middleware.js";
 
 const router = Router();
 
 // ─── CRUD Partners ──────────────────────────────────────────────────────────
 
-router.get("/", asyncHandler(async (req, res) => {
+router.get("/", adminOnly, asyncHandler(async (req, res) => {
   const { rows } = await pool.query(`
     SELECT p.*, (SELECT COUNT(*) FROM partner_missions pm WHERE pm.partner_id = p.id) as mission_count
     FROM partners p ORDER BY p.created_at DESC
@@ -18,27 +20,82 @@ router.get("/", asyncHandler(async (req, res) => {
   res.json(rows.map(fmtPartner));
 }));
 
-router.post("/", validate(partnerCreateSchema), asyncHandler(async (req, res) => {
+router.post("/", adminOnly, validate(partnerCreateSchema), asyncHandler(async (req, res) => {
   const { name, email, password, company, phone } = req.body;
 
   const { rows: existing } = await pool.query("SELECT 1 FROM partners WHERE LOWER(email) = LOWER($1)", [email]);
   if (existing.length > 0) throw new AppError(409, "Un partenaire avec cet email existe déjà");
 
-  const hash = await bcrypt.hash(password, 10);
-  const { rows } = await pool.query(
-    `INSERT INTO partners (name, email, password, company, phone) VALUES ($1, $2, $3, $4, $5)
-     RETURNING *, 0 as mission_count`,
-    [name, email, hash, company, phone]
-  );
-  res.status(201).json(fmtPartner(rows[0]));
+  // Créer l'utilisateur dans Supabase Auth
+  let authUser;
+  try {
+    const { data, error: authErr } = await supabaseAdmin.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: { full_name: name, role: "partner", company },
+    });
+
+    if (authErr) {
+      if (authErr.message?.includes("already been registered")) {
+        throw new AppError(409, "Un partenaire avec cet email existe déjà");
+      }
+      throw new AppError(400, authErr.message || "Erreur lors de la création du compte Supabase");
+    }
+
+    if (!data?.user?.id) {
+      throw new AppError(500, "Supabase n'a pas retourné d'utilisateur");
+    }
+
+    authUser = data;
+  } catch (err) {
+    if (err instanceof AppError) throw err;
+    logger.error("Erreur Supabase Auth createUser", { message: err.message });
+    throw new AppError(500, "Erreur de connexion à Supabase Auth");
+  }
+
+  try {
+    const { rows } = await pool.query(
+      `INSERT INTO partners (name, email, company, phone, auth_id) VALUES ($1, $2, $3, $4, $5)
+       RETURNING *, 0 as mission_count`,
+      [name, email, company, phone, authUser.user.id]
+    );
+    res.status(201).json(fmtPartner(rows[0]));
+  } catch (err) {
+    // Rollback : supprimer l'utilisateur Supabase si l'insert local échoue
+    await supabaseAdmin.auth.admin.deleteUser(authUser.user.id);
+    logger.error("Erreur INSERT partners", { message: err.message, detail: err.detail, code: err.code });
+    throw new AppError(500, "Erreur lors de l'enregistrement en base de données");
+  }
 }));
 
-router.put("/:id", validate(partnerUpdateSchema), asyncHandler(async (req, res) => {
+router.put("/:id", adminOnly, validate(partnerUpdateSchema), asyncHandler(async (req, res) => {
   const { name, email, company, phone, password } = req.body;
 
-  if (password) {
-    const hash = await bcrypt.hash(password, 10);
-    await pool.query("UPDATE partners SET password = $1 WHERE id = $2", [hash, req.params.id]);
+  // Récupérer le partenaire actuel
+  const { rows: current } = await pool.query("SELECT auth_id, email FROM partners WHERE id = $1", [req.params.id]);
+  if (current.length === 0) throw new AppError(404, "Partenaire non trouvé");
+  const partner = current[0];
+
+  // Vérifier l'unicité de l'email si modifié
+  if (email && email.toLowerCase() !== partner.email.toLowerCase()) {
+    const { rows: existing } = await pool.query(
+      "SELECT 1 FROM partners WHERE LOWER(email) = LOWER($1) AND id != $2",
+      [email, req.params.id]
+    );
+    if (existing.length > 0) throw new AppError(409, "Un partenaire avec cet email existe déjà");
+  }
+
+  // Synchroniser avec Supabase Auth (email + mot de passe)
+  if (partner.auth_id) {
+    const authUpdates = {};
+    if (password) authUpdates.password = password;
+    if (email && email.toLowerCase() !== partner.email.toLowerCase()) authUpdates.email = email;
+
+    if (Object.keys(authUpdates).length > 0) {
+      const { error } = await supabaseAdmin.auth.admin.updateUserById(partner.auth_id, authUpdates);
+      if (error) throw new AppError(500, "Erreur lors de la mise à jour dans Supabase Auth");
+    }
   }
 
   const { rows } = await pool.query(
@@ -46,18 +103,22 @@ router.put("/:id", validate(partnerUpdateSchema), asyncHandler(async (req, res) 
      RETURNING *, (SELECT COUNT(*) FROM partner_missions pm WHERE pm.partner_id = partners.id) as mission_count`,
     [name, email, company, phone, req.params.id]
   );
-  if (rows.length === 0) throw new AppError(404, "Partenaire non trouvé");
   res.json(fmtPartner(rows[0]));
 }));
 
-router.delete("/:id", asyncHandler(async (req, res) => {
+router.delete("/:id", adminOnly, asyncHandler(async (req, res) => {
+  // Supprimer aussi dans Supabase Auth
+  const { rows } = await pool.query("SELECT auth_id FROM partners WHERE id = $1", [req.params.id]);
+  if (rows.length > 0 && rows[0].auth_id) {
+    await supabaseAdmin.auth.admin.deleteUser(rows[0].auth_id);
+  }
   await pool.query("DELETE FROM partners WHERE id = $1", [req.params.id]);
   res.json({ ok: true });
 }));
 
 // ─── Partner submissions (notifications) ────────────────────────────────────
 
-router.get("/submissions", asyncHandler(async (req, res) => {
+router.get("/submissions", adminOnly, asyncHandler(async (req, res) => {
   const { rows } = await pool.query(`
     SELECT cd.id, cd.candidate_id, cd.mission_id, cd.stage, cd.notes, cd.created_at,
            c.name as candidate_name, c.email as candidate_email, c.phone as candidate_phone,
@@ -90,7 +151,7 @@ router.get("/submissions", asyncHandler(async (req, res) => {
 
 // ─── Submission reviews (rating + comment) ──────────────────────────────────
 
-router.get("/submissions/:candidatureId/reviews", asyncHandler(async (req, res) => {
+router.get("/submissions/:candidatureId/reviews", adminOnly, asyncHandler(async (req, res) => {
   const { rows } = await pool.query(`
     SELECT sr.*, u.full_name as user_name
     FROM submission_reviews sr
@@ -105,7 +166,7 @@ router.get("/submissions/:candidatureId/reviews", asyncHandler(async (req, res) 
   })));
 }));
 
-router.post("/submissions/:candidatureId/reviews", asyncHandler(async (req, res) => {
+router.post("/submissions/:candidatureId/reviews", adminOnly, asyncHandler(async (req, res) => {
   const { rating, comment } = req.body;
   if (!rating || rating < 1 || rating > 5) throw new AppError(400, "Note de 1 à 5 requise");
 
@@ -123,7 +184,7 @@ router.post("/submissions/:candidatureId/reviews", asyncHandler(async (req, res)
 
 // ─── Mission affiliations ───────────────────────────────────────────────────
 
-router.get("/:id/missions", asyncHandler(async (req, res) => {
+router.get("/:id/missions", adminOnly, asyncHandler(async (req, res) => {
   const { rows } = await pool.query(`
     SELECT m.id, m.title, m.company, m.status, pm.created_at as affiliated_at
     FROM partner_missions pm
@@ -134,7 +195,7 @@ router.get("/:id/missions", asyncHandler(async (req, res) => {
   res.json(rows);
 }));
 
-router.post("/:id/missions", validate(partnerMissionSchema), asyncHandler(async (req, res) => {
+router.post("/:id/missions", adminOnly, validate(partnerMissionSchema), asyncHandler(async (req, res) => {
   const { missionId } = req.body;
   await pool.query(
     "INSERT INTO partner_missions (partner_id, mission_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
@@ -143,12 +204,61 @@ router.post("/:id/missions", validate(partnerMissionSchema), asyncHandler(async 
   res.status(201).json({ ok: true });
 }));
 
-router.delete("/:id/missions/:missionId", asyncHandler(async (req, res) => {
+router.delete("/:id/missions/:missionId", adminOnly, asyncHandler(async (req, res) => {
   await pool.query(
     "DELETE FROM partner_missions WHERE partner_id = $1 AND mission_id = $2",
     [req.params.id, req.params.missionId]
   );
   res.json({ ok: true });
+}));
+
+// ─── Comments on submissions (internal ↔ partner) ─────────────────────────
+
+router.get("/submissions/:candidatureId/comments", adminOnly, asyncHandler(async (req, res) => {
+  const { rows } = await pool.query(
+    `SELECT * FROM candidature_comments WHERE candidature_id = $1 ORDER BY created_at ASC`,
+    [req.params.candidatureId]
+  );
+  res.json(rows.map(r => ({
+    id: r.id, authorType: r.author_type, authorName: r.author_name,
+    message: r.message, visibleToPartner: r.visible_to_partner, createdAt: r.created_at,
+  })));
+}));
+
+router.post("/submissions/:candidatureId/comments", adminOnly, asyncHandler(async (req, res) => {
+  const { message, visibleToPartner = true } = req.body;
+  if (!message?.trim()) throw new AppError(400, "Message requis");
+
+  const { rows: uRows } = await pool.query("SELECT full_name FROM users WHERE id = $1", [req.user.id]);
+  const authorName = uRows[0]?.full_name || "Équipe VALO";
+
+  const { rows } = await pool.query(
+    `INSERT INTO candidature_comments (candidature_id, author_type, author_name, message, visible_to_partner)
+     VALUES ($1, 'internal', $2, $3, $4) RETURNING *`,
+    [req.params.candidatureId, authorName, message.trim(), visibleToPartner]
+  );
+
+  // Notifier le partenaire si le commentaire est visible
+  if (visibleToPartner) {
+    const { rows: cdRows } = await pool.query(
+      `SELECT cd.partner_id, c.name as candidate_name FROM candidatures cd
+       LEFT JOIN contacts c ON cd.candidate_id = c.id WHERE cd.id = $1`,
+      [req.params.candidatureId]
+    );
+    if (cdRows[0]?.partner_id) {
+      await pool.query(
+        "INSERT INTO partner_notifications (partner_id, candidature_id, type, message) VALUES ($1, $2, $3, $4)",
+        [cdRows[0].partner_id, parseInt(req.params.candidatureId), "comment",
+         `Nouveau commentaire de l'équipe VALO sur "${cdRows[0].candidate_name || "votre candidat"}".`]
+      );
+    }
+  }
+
+  const r = rows[0];
+  res.status(201).json({
+    id: r.id, authorType: r.author_type, authorName: r.author_name,
+    message: r.message, visibleToPartner: r.visible_to_partner, createdAt: r.created_at,
+  });
 }));
 
 export default router;

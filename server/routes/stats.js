@@ -7,6 +7,7 @@ import { validate } from "../validators/validate.js";
 import { validationStatusSchema, cvSummarySchema, userCreateSchema } from "../validators/schemas.js";
 import { asyncHandler, AppError } from "../helpers/errors.js";
 import { logger } from "../helpers/logger.js";
+import { adminOnly } from "../middleware.js";
 
 const router = Router();
 
@@ -52,21 +53,38 @@ router.get("/work-modes", asyncHandler(async (req, res) => {
 // ─── Users ───────────────────────────────────────────────────────────────────
 
 router.get("/users", asyncHandler(async (req, res) => {
-  const { rows } = await pool.query("SELECT id, login, full_name FROM users ORDER BY id");
-  res.json(rows.map(r => ({ id: r.id, login: r.login, fullName: r.full_name })));
+  const { rows } = await pool.query("SELECT id, login, full_name, role FROM users ORDER BY id");
+  res.json(rows.map(r => ({ id: r.id, login: r.login, fullName: r.full_name, userRole: r.role || "user" })));
 }));
 
-router.post("/users", validate(userCreateSchema), asyncHandler(async (req, res) => {
+router.post("/users", adminOnly, validate(userCreateSchema), asyncHandler(async (req, res) => {
   const { fullName, login, password } = req.body;
-  const { default: bcrypt } = await import("bcryptjs");
-  const hash = bcrypt.hashSync(password, 10);
+  const { supabaseAdmin } = await import("../supabase.js");
+
+  // Créer l'utilisateur dans Supabase Auth
+  const { data: authUser, error: authErr } = await supabaseAdmin.auth.admin.createUser({
+    email: login.trim(),
+    password,
+    email_confirm: true,
+    user_metadata: { full_name: fullName.trim(), role: "admin" },
+  });
+
+  if (authErr) {
+    if (authErr.message?.includes("already been registered")) {
+      return res.status(409).json({ error: "Cet email est déjà utilisé" });
+    }
+    throw authErr;
+  }
+
   try {
     const { rows } = await pool.query(
-      "INSERT INTO users (login, password, full_name) VALUES ($1, $2, $3) RETURNING id, login, full_name",
-      [login.trim(), hash, fullName.trim()]
+      "INSERT INTO users (login, full_name, auth_id) VALUES ($1, $2, $3) RETURNING id, login, full_name",
+      [login.trim(), fullName.trim(), authUser.user.id]
     );
     res.status(201).json({ id: rows[0].id, login: rows[0].login, fullName: rows[0].full_name });
   } catch (err) {
+    // Rollback : supprimer l'utilisateur Supabase si l'insert local échoue
+    await supabaseAdmin.auth.admin.deleteUser(authUser.user.id);
     if (err.code === "23505") return res.status(409).json({ error: "Cet email est déjà utilisé" });
     throw err;
   }
@@ -75,9 +93,15 @@ router.post("/users", validate(userCreateSchema), asyncHandler(async (req, res) 
 // ─── Audit log ──────────────────────────────────────────────────────────────
 
 router.get("/audit-log", asyncHandler(async (req, res) => {
-  const { rows } = await pool.query(
-    "SELECT * FROM audit_log ORDER BY created_at DESC LIMIT 200"
-  );
+  const { entityType, entityId } = req.query;
+  let q = "SELECT * FROM audit_log";
+  const params = [];
+  if (entityType && entityId) {
+    q += " WHERE LOWER(entity_type) = LOWER($1) AND entity_id = $2";
+    params.push(entityType, entityId);
+  }
+  q += " ORDER BY created_at DESC LIMIT 200";
+  const { rows } = await pool.query(q, params);
   res.json(rows.map(r => ({
     id: r.id, userName: r.user_name, action: r.action,
     entityType: r.entity_type, entityId: r.entity_id,
@@ -86,10 +110,11 @@ router.get("/audit-log", asyncHandler(async (req, res) => {
 }));
 
 router.post("/audit-log", asyncHandler(async (req, res) => {
-  const { userName, action, entityType, entityId, details } = req.body;
+  const { action, entityType, entityId, details } = req.body;
+  const userName = req.user?.login || "Système";
   await pool.query(
     "INSERT INTO audit_log (user_name, action, entity_type, entity_id, details) VALUES ($1,$2,$3,$4,$5)",
-    [userName || "Système", action, entityType, entityId || null, details || ""]
+    [userName, action, entityType, entityId || null, details || ""]
   );
   res.status(201).json({ ok: true });
 }));
@@ -101,7 +126,7 @@ router.get("/tags", asyncHandler(async (req, res) => {
   res.json(rows);
 }));
 
-router.post("/tags", asyncHandler(async (req, res) => {
+router.post("/tags", adminOnly, asyncHandler(async (req, res) => {
   const { label, color } = req.body;
   if (!label || !label.trim()) return res.status(400).json({ error: "Libellé requis" });
   try {
@@ -116,7 +141,7 @@ router.post("/tags", asyncHandler(async (req, res) => {
   }
 }));
 
-router.delete("/tags/:id", asyncHandler(async (req, res) => {
+router.delete("/tags/:id", adminOnly, asyncHandler(async (req, res) => {
   await pool.query("DELETE FROM tags WHERE id=$1", [req.params.id]);
   res.json({ ok: true });
 }));
@@ -159,7 +184,7 @@ router.get("/validation-statuses", asyncHandler(async (req, res) => {
   res.json(rows.map(r => ({ id: r.id, label: r.label, bg: r.bg_color, color: r.text_color, sortOrder: r.sort_order })));
 }));
 
-router.post("/validation-statuses", validate(validationStatusSchema), asyncHandler(async (req, res) => {
+router.post("/validation-statuses", adminOnly, validate(validationStatusSchema), asyncHandler(async (req, res) => {
   const { label, bg, color } = req.body;
   const { rows: maxRows } = await pool.query("SELECT COALESCE(MAX(sort_order), 0) + 1 as next FROM validation_statuses");
   const { rows } = await pool.query(
@@ -170,7 +195,7 @@ router.post("/validation-statuses", validate(validationStatusSchema), asyncHandl
   res.json({ id: r.id, label: r.label, bg: r.bg_color, color: r.text_color, sortOrder: r.sort_order });
 }));
 
-router.put("/validation-statuses/:id", validate(validationStatusSchema), asyncHandler(async (req, res) => {
+router.put("/validation-statuses/:id", adminOnly, validate(validationStatusSchema), asyncHandler(async (req, res) => {
   const { label, bg, color } = req.body;
   const { rows } = await pool.query(
     "UPDATE validation_statuses SET label=$1, bg_color=$2, text_color=$3 WHERE id=$4 RETURNING *",
@@ -181,7 +206,7 @@ router.put("/validation-statuses/:id", validate(validationStatusSchema), asyncHa
   res.json({ id: r.id, label: r.label, bg: r.bg_color, color: r.text_color, sortOrder: r.sort_order });
 }));
 
-router.delete("/validation-statuses/:id", asyncHandler(async (req, res) => {
+router.delete("/validation-statuses/:id", adminOnly, asyncHandler(async (req, res) => {
   await pool.query("DELETE FROM validation_statuses WHERE id=$1", [req.params.id]);
   res.json({ ok: true });
 }));

@@ -35,11 +35,37 @@ router.post("/", validate(candidatureCreateSchema), asyncHandler(async (req, res
 
 router.put("/:id", validate(candidatureUpdateSchema), asyncHandler(async (req, res) => {
   const d = req.body;
+
+  // Récupérer l'état avant mise à jour pour détecter les changements d'étape
+  const { rows: before } = await pool.query("SELECT stage, partner_id FROM candidatures WHERE id = $1", [req.params.id]);
+
   const { rows } = await pool.query(
     `UPDATE candidatures SET stage=$1, rating=$2, notes=$3, interview_date=$4, updated_at=NOW() WHERE id=$5 RETURNING *`,
     [d.stage, d.rating, d.notes, d.interviewDate, req.params.id]
   );
   if (rows.length === 0) return res.status(404).json({ error: "Candidature non trouvée" });
+
+  // Notifier le partenaire si l'étape a changé
+  if (before.length > 0 && before[0].partner_id && d.stage !== before[0].stage) {
+    const cd = rows[0];
+    const { rows: cRows } = await pool.query("SELECT name FROM contacts WHERE id = $1", [cd.candidate_id]);
+    const candidateName = cRows[0]?.name || "Candidat";
+    const stageMessages = {
+      "Proposition partenaire": `Votre candidat "${candidateName}" a été accepté et passe en proposition.`,
+      "Présélectionné": `Votre candidat "${candidateName}" a été présélectionné.`,
+      "Soumis": `Votre candidat "${candidateName}" a été soumis au client.`,
+      "Entretien": `Votre candidat "${candidateName}" est convoqué en entretien.`,
+      "Finaliste": `Votre candidat "${candidateName}" est finaliste !`,
+      "Placé": `Votre candidat "${candidateName}" a été placé avec succès !`,
+      "Refusé": `Votre candidat "${candidateName}" n'a pas été retenu.${d.notes ? ` Motif : ${d.notes}` : ""}`,
+      "Archivé": `La candidature de "${candidateName}" a été archivée.`,
+    };
+    const message = stageMessages[d.stage] || `Le statut de "${candidateName}" est passé à "${d.stage}".`;
+    await pool.query(
+      "INSERT INTO partner_notifications (partner_id, candidature_id, type, message) VALUES ($1, $2, $3, $4)",
+      [before[0].partner_id, cd.id, "stage_change", message]
+    );
+  }
 
   if (d.stage === "Placé") {
     const cd = rows[0];

@@ -24,6 +24,7 @@ export function fmtMission(r) {
     clientName: r.client_name || "", assignedName: r.assigned_name || "",
     candidatureCount: parseInt(r.candidature_count) || 0,
     fiscalYearLabel: r.fiscal_year_label || "",
+    partnerNotes: r.partner_notes || "",
   };
 }
 
@@ -91,6 +92,6 @@ export function fmtPlacement(r) {
     probationValidated: r.probation_validated || false,
     notes: r.notes || "", createdAt: r.created_at,
     candidateName: r.candidate_name || "", missionTitle: r.mission_title || "",
-    missionCompany: r.mission_company || "",
+    missionCompany: r.mission_company || "", owner: r.owner_name || "",
   };
 }

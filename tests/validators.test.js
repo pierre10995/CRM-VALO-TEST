@@ -31,7 +31,7 @@ describe("loginSchema", () => {
 
 describe("resetPasswordSchema", () => {
   it("accepts valid reset", () => {
-    const result = resetPasswordSchema.parse({ login: "u", code: "123456", newPassword: "newpass123" });
+    const result = resetPasswordSchema.parse({ login: "u", code: "123456", newPassword: "NewPass12345" });
     expect(result.code).toBe("123456");
   });
 

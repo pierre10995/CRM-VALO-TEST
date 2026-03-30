@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import api from "../../services/api";
 import { fmtCAD } from "../../utils/constants";
+import AuditHistory from "../common/AuditHistory";
 
 export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, candidatures, missions, loadAll, validationStatuses = [] }) {
   const [files, setFiles] = useState([]);
@@ -334,6 +335,9 @@ export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, c
           );
         })}
       </div>
+
+      {/* Audit history */}
+      <AuditHistory entityType="contact" entityId={c.id} />
 
       {/* Actions */}
       <div style={{ display: "flex", gap: 10 }}>

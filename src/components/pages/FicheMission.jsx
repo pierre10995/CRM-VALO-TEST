@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import api from "../../services/api";
 import { fmtCAD } from "../../utils/constants";
+import AuditHistory from "../common/AuditHistory";
 
 export default function FicheMission({ mission: m, onClose, onEdit, onDelete, candidatures }) {
   const [files, setFiles] = useState([]);
@@ -195,6 +196,9 @@ export default function FicheMission({ mission: m, onClose, onEdit, onDelete, ca
           );
         })}
       </div>
+
+      {/* Audit history */}
+      <AuditHistory entityType="mission" entityId={m.id} />
 
       <div style={{ display: "flex", gap: 10 }}>
         <button className="btn btn-ghost" style={{ flex: 1, justifyContent: "center" }} onClick={onEdit}>Modifier</button>

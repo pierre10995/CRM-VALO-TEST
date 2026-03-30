@@ -10,8 +10,8 @@ export default function DashboardPage({ stats, activities, contacts, missions, c
   const [partnerSubmissions, setPartnerSubmissions] = useState([]);
 
   useEffect(() => {
-    api.get("/api/auto-reminders").then(setReminders).catch(() => {});
-    api.get("/api/partners/submissions").then(setPartnerSubmissions).catch(() => {});
+    api.get("/api/auto-reminders").then(data => { if (Array.isArray(data)) setReminders(data); }).catch(() => {});
+    api.get("/api/partners/submissions").then(data => { if (Array.isArray(data)) setPartnerSubmissions(data); }).catch(() => {});
   }, []);
 
   const reminderKey = (r) => `${r.type}-${r.contactId || ""}-${r.missionId || ""}`;

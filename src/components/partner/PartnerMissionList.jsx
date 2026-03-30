@@ -44,7 +44,6 @@ export default function PartnerMissionList({ missions, onSelect }) {
               <span>{m.contractType}</span>
               {m.salaryMin > 0 && <span>{m.salaryMin.toLocaleString()}$ — {m.salaryMax.toLocaleString()}$</span>}
               {m.workMode && <span>{m.workMode}</span>}
-              <span>{m.candidatureCount} candidature{m.candidatureCount !== 1 ? "s" : ""}</span>
             </div>
           </div>
         ))}

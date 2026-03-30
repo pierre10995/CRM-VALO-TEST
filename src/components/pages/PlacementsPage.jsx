@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import api from "../../services/api";
+import SearchSelect from "../common/SearchSelect";
 
 export default function PlacementsPage({ candidatures, candidates, missions }) {
   const [placements, setPlacements] = useState([]);
@@ -7,13 +8,24 @@ export default function PlacementsPage({ candidatures, candidates, missions }) {
   const [form, setForm] = useState({});
   const [showAdd, setShowAdd] = useState(false);
   const [addForm, setAddForm] = useState({});
+  const [filterOwner, setFilterOwner] = useState("");
 
   const loadPlacements = async () => {
-    const data = await api.get("/api/placements");
-    setPlacements(data);
+    try {
+      const data = await api.get("/api/placements");
+      setPlacements(Array.isArray(data) ? data : []);
+    } catch { setPlacements([]); }
   };
 
   useEffect(() => { loadPlacements(); }, []);
+
+  // Unique owners for filter dropdown
+  const owners = [...new Set(placements.map(p => p.owner).filter(Boolean))].sort();
+
+  // Filtered placements
+  const filteredPlacements = filterOwner
+    ? placements.filter(p => p.owner === filterOwner)
+    : placements;
 
   // Candidatures with stage "Placé" that don't already have a placement
   const placedCandidatures = candidatures.filter(cd =>
@@ -76,11 +88,17 @@ export default function PlacementsPage({ candidatures, candidates, missions }) {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 800, color: "#0f172a" }}>Suivi des placements</h1>
-          <p style={{ fontSize: 13, color: "#64748b", marginTop: 4 }}>{placements.length} candidat{placements.length !== 1 ? "s" : ""} placé{placements.length !== 1 ? "s" : ""}</p>
+          <p style={{ fontSize: 13, color: "#64748b", marginTop: 4 }}>{filteredPlacements.length} candidat{filteredPlacements.length !== 1 ? "s" : ""} placé{filteredPlacements.length !== 1 ? "s" : ""}{filterOwner ? ` (filtre : ${filterOwner})` : ""}</p>
         </div>
-        <button className="btn btn-primary" onClick={() => { setShowAdd(true); setAddForm({}); }} disabled={placedCandidatures.length === 0}>
-          + Ajouter un placement
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <select className="input" style={{ minWidth: 160, fontSize: 13 }} value={filterOwner} onChange={e => setFilterOwner(e.target.value)}>
+            <option value="">Tous les propriétaires</option>
+            {owners.map(o => <option key={o} value={o}>{o}</option>)}
+          </select>
+          <button className="btn btn-primary" onClick={() => { setShowAdd(true); setAddForm({}); }} disabled={placedCandidatures.length === 0}>
+            + Ajouter un placement
+          </button>
+        </div>
       </div>
 
       {/* Add form */}
@@ -90,12 +108,12 @@ export default function PlacementsPage({ candidatures, candidates, missions }) {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 12 }}>
             <div>
               <label style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", marginBottom: 4, display: "block" }}>CANDIDATURE PLACÉE *</label>
-              <select className="input" value={addForm.candidatureId || ""} onChange={e => setAddForm(p => ({ ...p, candidatureId: e.target.value }))}>
-                <option value="">— Sélectionner —</option>
-                {placedCandidatures.map(cd => (
-                  <option key={cd.id} value={cd.id}>{cd.candidateName} → {cd.missionTitle} ({cd.missionCompany})</option>
-                ))}
-              </select>
+              <SearchSelect
+                value={addForm.candidatureId || ""}
+                onChange={v => setAddForm(p => ({ ...p, candidatureId: v }))}
+                options={placedCandidatures.map(cd => ({ value: cd.id, label: `${cd.candidateName} → ${cd.missionTitle}`, sub: cd.missionCompany }))}
+                placeholder="Rechercher une candidature..."
+              />
             </div>
             <div>
               <label style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", marginBottom: 4, display: "block" }}>DATE DE DÉMARRAGE</label>
@@ -121,7 +139,7 @@ export default function PlacementsPage({ candidatures, candidates, missions }) {
       )}
 
       {/* Placements list */}
-      {placements.map(p => (
+      {filteredPlacements.map(p => (
         <div key={p.id} className="card" style={{ padding: 20, marginBottom: 14 }}>
           {editing === p.id ? (
             /* Edit mode */
@@ -131,6 +149,7 @@ export default function PlacementsPage({ candidatures, candidates, missions }) {
                 <div>
                   <div style={{ fontSize: 15, fontWeight: 700, color: "#0f172a" }}>{p.candidateName}</div>
                   <div style={{ fontSize: 12, color: "#64748b" }}>{p.missionTitle} — {p.company || p.missionCompany}</div>
+                  {p.owner && <div style={{ fontSize: 11, color: "#2563eb", marginTop: 2 }}>Propriétaire : {p.owner}</div>}
                 </div>
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
@@ -205,6 +224,7 @@ export default function PlacementsPage({ candidatures, candidates, missions }) {
                   <div>
                     <div style={{ fontSize: 15, fontWeight: 700, color: "#0f172a" }}>{p.candidateName}</div>
                     <div style={{ fontSize: 12, color: "#64748b" }}>{p.missionTitle} — {p.company || p.missionCompany}</div>
+                    {p.owner && <div style={{ fontSize: 11, color: "#2563eb", marginTop: 2 }}>Propriétaire : {p.owner}</div>}
                   </div>
                 </div>
                 <div style={{ display: "flex", gap: 6 }}>

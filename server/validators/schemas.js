@@ -18,7 +18,10 @@ export const forgotPasswordSchema = z.object({
 export const resetPasswordSchema = z.object({
   login: z.string().min(1).max(100),
   code: z.string().min(6).max(6),
-  newPassword: z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères").max(200),
+  newPassword: z.string().min(12, "Le mot de passe doit contenir au moins 12 caractères").max(200)
+    .regex(/[A-Z]/, "Le mot de passe doit contenir au moins une majuscule")
+    .regex(/[a-z]/, "Le mot de passe doit contenir au moins une minuscule")
+    .regex(/[0-9]/, "Le mot de passe doit contenir au moins un chiffre"),
 });
 
 // ─── Contacts ────────────────────────────────────────────────────────────────
@@ -61,6 +64,7 @@ export const missionSchema = z.object({
   deadline: z.string().nullable().default(null),
   fiscalYearId: z.coerce.number().int().positive().nullable().default(null),
   workMode: z.string().max(50).default(""),
+  partnerNotes: z.string().max(5000).default(""),
 });
 
 // ─── Candidatures ────────────────────────────────────────────────────────────
@@ -184,10 +188,15 @@ export const evaluationGenerateSchema = z.object({
 
 // ─── Users ──────────────────────────────────────────────────────────────────
 
+const strongPassword = z.string().min(12, "Mot de passe min. 12 caractères").max(200)
+  .regex(/[A-Z]/, "Le mot de passe doit contenir au moins une majuscule")
+  .regex(/[a-z]/, "Le mot de passe doit contenir au moins une minuscule")
+  .regex(/[0-9]/, "Le mot de passe doit contenir au moins un chiffre");
+
 export const userCreateSchema = z.object({
   fullName: z.string().min(1, "Nom complet requis").max(100),
   login: z.string().email("Email invalide").max(100),
-  password: z.string().min(6, "Mot de passe min. 6 caractères").max(200),
+  password: strongPassword,
 });
 
 // ─── Validation Statuses ─────────────────────────────────────────────────────
@@ -209,7 +218,7 @@ export const cvSummarySchema = z.object({
 export const partnerCreateSchema = z.object({
   name: z.string().min(1, "Nom requis").max(100),
   email: z.string().email("Email invalide").max(100),
-  password: z.string().min(6, "Mot de passe min. 6 caractères").max(200),
+  password: strongPassword,
   company: z.string().max(100).default(""),
   phone: z.string().max(50).default(""),
 });
@@ -219,7 +228,7 @@ export const partnerUpdateSchema = z.object({
   email: z.string().email("Email invalide").max(100),
   company: z.string().max(100).default(""),
   phone: z.string().max(50).default(""),
-  password: z.string().min(6).max(200).optional(),
+  password: strongPassword.optional(),
 });
 
 export const partnerLoginSchema = z.object({

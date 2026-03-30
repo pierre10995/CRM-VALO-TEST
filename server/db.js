@@ -1,6 +1,6 @@
 import pg from "pg";
-import bcrypt from "bcryptjs";
 import { config } from "./config.js";
+import { supabaseAdmin } from "./supabase.js";
 
 const pool = new pg.Pool({
   connectionString: config.db.connectionString,
@@ -13,11 +13,16 @@ async function initDB() {
     await client.query(`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
+        auth_id UUID UNIQUE,
         login VARCHAR(50) UNIQUE NOT NULL,
-        password VARCHAR(100) NOT NULL,
+        password VARCHAR(100) DEFAULT '',
         full_name VARCHAR(100) NOT NULL
       );
     `);
+    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS auth_id UUID UNIQUE`);
+    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(20) DEFAULT 'user'`);
+    // Ensure existing admin user has admin role
+    await client.query(`UPDATE users SET role = 'admin' WHERE login = 'pierre@valo-inno.com' AND role = 'user'`);
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS password_resets (
@@ -98,6 +103,7 @@ async function initDB() {
 
     await client.query(`ALTER TABLE missions ADD COLUMN IF NOT EXISTS fiscal_year_id INTEGER REFERENCES fiscal_years(id) ON DELETE SET NULL`);
     await client.query(`ALTER TABLE missions ADD COLUMN IF NOT EXISTS work_mode VARCHAR(50) DEFAULT ''`);
+    await client.query(`ALTER TABLE missions ADD COLUMN IF NOT EXISTS partner_notes TEXT DEFAULT ''`);
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS candidatures (
@@ -217,14 +223,16 @@ async function initDB() {
     await client.query(`
       CREATE TABLE IF NOT EXISTS partners (
         id SERIAL PRIMARY KEY,
+        auth_id UUID UNIQUE,
         name VARCHAR(100) NOT NULL,
         email VARCHAR(100) UNIQUE NOT NULL,
-        password VARCHAR(100) NOT NULL,
+        password VARCHAR(100) DEFAULT '',
         company VARCHAR(100) DEFAULT '',
         phone VARCHAR(50) DEFAULT '',
         created_at TIMESTAMP DEFAULT NOW()
       );
     `);
+    await client.query(`ALTER TABLE partners ADD COLUMN IF NOT EXISTS auth_id UUID UNIQUE`);
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS partner_missions (
@@ -248,6 +256,30 @@ async function initDB() {
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW(),
         UNIQUE(candidature_id, user_id)
+      );
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS partner_notifications (
+        id SERIAL PRIMARY KEY,
+        partner_id INTEGER REFERENCES partners(id) ON DELETE CASCADE,
+        candidature_id INTEGER REFERENCES candidatures(id) ON DELETE CASCADE,
+        type VARCHAR(30) NOT NULL,
+        message TEXT NOT NULL,
+        read BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS candidature_comments (
+        id SERIAL PRIMARY KEY,
+        candidature_id INTEGER REFERENCES candidatures(id) ON DELETE CASCADE,
+        author_type VARCHAR(10) NOT NULL CHECK (author_type IN ('internal', 'partner')),
+        author_name VARCHAR(100) NOT NULL,
+        message TEXT NOT NULL,
+        visible_to_partner BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMP DEFAULT NOW()
       );
     `);
 
@@ -279,6 +311,21 @@ async function initDB() {
       );
     `);
 
+    // ─── Row Level Security ────────────────────────────────────────────────────
+    // Toutes les requêtes passent par le backend Express (service_role).
+    // On active RLS et on n'ajoute aucune policy pour la clé anon/public,
+    // ce qui bloque tout accès direct via l'API REST PostgREST de Supabase.
+    const allTables = [
+      "users", "password_resets", "contacts", "fiscal_years", "missions",
+      "candidatures", "activities", "files", "placements", "evaluations",
+      "objectives", "validation_statuses", "partners", "partner_missions",
+      "submission_reviews", "partner_notifications", "candidature_comments",
+      "audit_log", "tags", "contact_tags",
+    ];
+    for (const table of allTables) {
+      await client.query(`ALTER TABLE ${table} ENABLE ROW LEVEL SECURITY`);
+    }
+
     // Seed tracking
     await client.query(`CREATE TABLE IF NOT EXISTS seed_log (key VARCHAR(50) PRIMARY KEY, done_at TIMESTAMP DEFAULT NOW())`);
     const alreadySeeded = async (key) => {
@@ -305,15 +352,35 @@ async function initDB() {
     if (!await alreadySeeded("users")) {
       const { rows: existingUsers } = await client.query("SELECT COUNT(*) FROM users");
       if (parseInt(existingUsers[0].count) === 0) {
-        const pwd1 = process.env.SEED_PWD_OCEANE || "oceane2026";
-        const pwd2 = process.env.SEED_PWD_PIERRE || "pierre2026";
-        const hash1 = bcrypt.hashSync(pwd1, 10);
-        const hash2 = bcrypt.hashSync(pwd2, 10);
-        await client.query(
-          "INSERT INTO users (login, password, full_name) VALUES ($1, $2, $3), ($4, $5, $6)",
-          ["oceane@valo-inno.com", hash1, "Océane Le Goff", "pierre@valo-inno.com", hash2, "Pierre Scelles"]
-        );
-        console.log("Users seeded");
+        const seedUsers = [
+          { email: "oceane@valo-inno.com", password: process.env.SEED_PWD_OCEANE || "oceane2026", fullName: "Océane Le Goff" },
+          { email: "pierre@valo-inno.com", password: process.env.SEED_PWD_PIERRE || "pierre2026", fullName: "Pierre Scelles" },
+        ];
+        for (const u of seedUsers) {
+          // Créer l'utilisateur dans Supabase Auth
+          const { data: authUser, error: authErr } = await supabaseAdmin.auth.admin.createUser({
+            email: u.email,
+            password: u.password,
+            email_confirm: true,
+            user_metadata: { full_name: u.fullName, role: "admin" },
+          });
+          if (authErr) {
+            // Si l'utilisateur existe déjà dans Supabase Auth, récupérer son ID
+            const { data: listData } = await supabaseAdmin.auth.admin.listUsers();
+            const existing = listData?.users?.find(su => su.email === u.email);
+            const authId = existing?.id || null;
+            await client.query(
+              "INSERT INTO users (login, full_name, auth_id) VALUES ($1, $2, $3) ON CONFLICT (login) DO UPDATE SET auth_id = $3",
+              [u.email, u.fullName, authId]
+            );
+          } else {
+            await client.query(
+              "INSERT INTO users (login, full_name, auth_id) VALUES ($1, $2, $3)",
+              [u.email, u.fullName, authUser.user.id]
+            );
+          }
+        }
+        console.log("Users seeded (Supabase Auth)");
       }
       await markSeeded("users");
     }
