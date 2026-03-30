@@ -37,7 +37,12 @@ export default function PartenairesPage({ missions, currentUser }) {
   const handleSave = async () => {
     setError("");
     if (!form.name || !form.email) return setError("Nom et email requis");
-    if (modal === "create" && (!form.password || form.password.length < 6)) return setError("Mot de passe min. 6 caractères");
+    if (modal === "create" || form.password) {
+      if (!form.password || form.password.length < 12) return setError("Mot de passe min. 12 caractères");
+      if (!/[A-Z]/.test(form.password)) return setError("Le mot de passe doit contenir au moins une majuscule");
+      if (!/[a-z]/.test(form.password)) return setError("Le mot de passe doit contenir au moins une minuscule");
+      if (!/[0-9]/.test(form.password)) return setError("Le mot de passe doit contenir au moins un chiffre");
+    }
     try {
       let res;
       if (modal === "create") {
@@ -48,8 +53,8 @@ export default function PartenairesPage({ missions, currentUser }) {
         res = await api.put(`/api/partners/${form.id}`, payload);
       }
       if (res.ok) { await loadPartners(); setModal(null); }
-      else { const d = await res.json(); setError(d.error); }
-    } catch { setError("Erreur réseau"); }
+      else { const d = await res.json().catch(() => ({ error: "Erreur serveur" })); setError(d.error || "Erreur lors de l'enregistrement"); }
+    } catch (e) { setError(e.message || "Erreur réseau"); }
   };
 
   const handleDelete = async (id) => {
@@ -436,7 +441,7 @@ export default function PartenairesPage({ missions, currentUser }) {
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               <FormField label="Nom *" value={form.name} onChange={v => setForm(f => ({ ...f, name: v }))} />
               <FormField label="Email *" value={form.email} onChange={v => setForm(f => ({ ...f, email: v }))} type="email" />
-              <FormField label={modal === "create" ? "Mot de passe *" : "Nouveau mot de passe (laisser vide pour ne pas changer)"} value={form.password || ""} onChange={v => setForm(f => ({ ...f, password: v }))} type="password" />
+              <FormField label={modal === "create" ? "Mot de passe * (min. 12 car., 1 majuscule, 1 minuscule, 1 chiffre)" : "Nouveau mot de passe (laisser vide pour ne pas changer)"} value={form.password || ""} onChange={v => setForm(f => ({ ...f, password: v }))} type="password" />
               <FormField label="Entreprise" value={form.company} onChange={v => setForm(f => ({ ...f, company: v }))} />
               <FormField label="Téléphone" value={form.phone} onChange={v => setForm(f => ({ ...f, phone: v }))} />
               {error && <div style={{ padding: "8px 12px", background: "#fee2e2", borderRadius: 10, fontSize: 12, color: "#dc2626" }}>{error}</div>}
