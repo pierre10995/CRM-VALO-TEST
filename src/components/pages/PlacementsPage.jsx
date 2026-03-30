@@ -11,8 +11,10 @@ export default function PlacementsPage({ candidatures, candidates, missions }) {
   const [filterOwner, setFilterOwner] = useState("");
 
   const loadPlacements = async () => {
-    const data = await api.get("/api/placements");
-    setPlacements(data);
+    try {
+      const data = await api.get("/api/placements");
+      setPlacements(Array.isArray(data) ? data : []);
+    } catch { setPlacements([]); }
   };
 
   useEffect(() => { loadPlacements(); }, []);

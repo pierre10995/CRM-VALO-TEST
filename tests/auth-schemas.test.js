@@ -11,7 +11,7 @@ describe("userCreateSchema", () => {
     const result = userCreateSchema.parse({
       fullName: "Jean Dupont",
       login: "jean@valo-inno.com",
-      password: "securepass123",
+      password: "SecurePass123!",
     });
     expect(result.fullName).toBe("Jean Dupont");
     expect(result.login).toBe("jean@valo-inno.com");
@@ -59,7 +59,7 @@ describe("partnerCreateSchema", () => {
     const result = partnerCreateSchema.parse({
       name: "Partenaire Inc",
       email: "contact@partner.com",
-      password: "secure123",
+      password: "Secure12345!",
       company: "Partner Corp",
       phone: "(514) 555-1234",
     });
@@ -69,7 +69,7 @@ describe("partnerCreateSchema", () => {
 
   it("defaults company and phone to empty string", () => {
     const result = partnerCreateSchema.parse({
-      name: "Test", email: "t@t.com", password: "pass123456",
+      name: "Test", email: "t@t.com", password: "Pass12345678",
     });
     expect(result.company).toBe("");
     expect(result.phone).toBe("");
@@ -105,9 +105,9 @@ describe("partnerUpdateSchema", () => {
 
   it("accepts update with optional password", () => {
     const result = partnerUpdateSchema.parse({
-      name: "Updated", email: "u@t.com", password: "newpass123",
+      name: "Updated", email: "u@t.com", password: "NewPass12345",
     });
-    expect(result.password).toBe("newpass123");
+    expect(result.password).toBe("NewPass12345");
   });
 
   it("rejects short optional password", () => {

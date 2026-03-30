@@ -20,6 +20,10 @@ async function handleAuthResponse(r) {
 const api = {
   get: async (url) => {
     const r = await handleAuthResponse(await fetch(url, { headers: getAuthHeaders(), credentials: "include" }));
+    if (!r.ok) {
+      const err = await r.json().catch(() => ({ error: "Erreur serveur" }));
+      throw new Error(err.error || `Erreur ${r.status}`);
+    }
     return r.json();
   },
   post: async (url, data) => {

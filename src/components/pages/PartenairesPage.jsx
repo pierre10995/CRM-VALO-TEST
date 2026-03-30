@@ -19,13 +19,17 @@ export default function PartenairesPage({ missions, currentUser }) {
   const [filterMission, setFilterMission] = useState("all");
 
   const loadPartners = async () => {
-    const data = await api.get("/api/partners");
-    setPartners(data);
+    try {
+      const data = await api.get("/api/partners");
+      setPartners(Array.isArray(data) ? data : []);
+    } catch { setPartners([]); }
   };
 
   const loadSubmissions = async () => {
-    const data = await api.get("/api/partners/submissions");
-    setSubmissions(data);
+    try {
+      const data = await api.get("/api/partners/submissions");
+      setSubmissions(Array.isArray(data) ? data : []);
+    } catch { setSubmissions([]); }
   };
 
   useEffect(() => { loadPartners(); loadSubmissions(); }, []);

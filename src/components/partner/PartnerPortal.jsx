@@ -11,14 +11,18 @@ export default function PartnerPortal({ partner, onLogout }) {
 
   const loadMissions = async () => {
     setLoading(true);
-    const data = await api.get("/api/partner/missions");
-    setMissions(data);
+    try {
+      const data = await api.get("/api/partner/missions");
+      setMissions(Array.isArray(data) ? data : []);
+    } catch { setMissions([]); }
     setLoading(false);
   };
 
   const loadCandidatures = async (missionId) => {
-    const data = await api.get(`/api/partner/candidatures${missionId ? `?missionId=${missionId}` : ""}`);
-    setCandidatures(data);
+    try {
+      const data = await api.get(`/api/partner/candidatures${missionId ? `?missionId=${missionId}` : ""}`);
+      setCandidatures(Array.isArray(data) ? data : []);
+    } catch { setCandidatures([]); }
   };
 
   useEffect(() => { loadMissions(); }, []);

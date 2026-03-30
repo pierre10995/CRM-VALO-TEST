@@ -74,19 +74,23 @@ function CRMInner() {
   const clients = contacts.filter(c => c.status === "Client" || c.status === "Prospect");
 
   const loadAll = async () => {
-    const [c, m, cd, a, u, s, fy, sec, wm, vs] = await Promise.all([
-      api.get("/api/contacts"),
-      api.get("/api/missions"),
-      api.get("/api/candidatures"),
-      api.get("/api/activities"),
-      api.get("/api/users"),
-      api.get("/api/stats"),
-      api.get("/api/fiscal-years"),
-      api.get("/api/sectors"),
-      api.get("/api/work-modes"),
-      api.get("/api/validation-statuses"),
-    ]);
-    setContacts(c); setMissions(m); setCandidatures(cd); setActivities(a); setUsers(u); setStats(s); setFiscalYears(fy); setSectors(sec); setWorkModes(wm); setValidationStatuses(vs);
+    try {
+      const [c, m, cd, a, u, s, fy, sec, wm, vs] = await Promise.all([
+        api.get("/api/contacts"),
+        api.get("/api/missions"),
+        api.get("/api/candidatures"),
+        api.get("/api/activities"),
+        api.get("/api/users"),
+        api.get("/api/stats"),
+        api.get("/api/fiscal-years"),
+        api.get("/api/sectors"),
+        api.get("/api/work-modes"),
+        api.get("/api/validation-statuses"),
+      ]);
+      setContacts(c); setMissions(m); setCandidatures(cd); setActivities(a); setUsers(u); setStats(s); setFiscalYears(fy); setSectors(sec); setWorkModes(wm); setValidationStatuses(vs);
+    } catch {
+      // 401 errors are handled by api.js (page reload), other errors silently ignored on load
+    }
   };
 
   useEffect(() => {

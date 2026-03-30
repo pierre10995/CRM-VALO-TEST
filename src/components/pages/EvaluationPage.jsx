@@ -10,8 +10,10 @@ export default function EvaluationPage({ candidates, missions, loadAll }) {
   const [evaluations, setEvaluations] = useState([]);
 
   const loadEvaluations = async () => {
-    const data = await api.get("/api/evaluations");
-    setEvaluations(data);
+    try {
+      const data = await api.get("/api/evaluations");
+      setEvaluations(Array.isArray(data) ? data : []);
+    } catch { setEvaluations([]); }
   };
 
   useEffect(() => { loadEvaluations(); }, []);
