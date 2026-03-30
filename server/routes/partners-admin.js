@@ -56,7 +56,7 @@ router.post("/", adminOnly, validate(partnerCreateSchema), asyncHandler(async (r
 
   try {
     const { rows } = await pool.query(
-      `INSERT INTO partners (name, email, company, phone, auth_id) VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO partners (name, email, password, company, phone, auth_id) VALUES ($1, $2, '', $3, $4, $5)
        RETURNING *, 0 as mission_count`,
       [name, email, company, phone, authUser.user.id]
     );

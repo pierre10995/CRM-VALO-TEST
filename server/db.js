@@ -233,6 +233,8 @@ async function initDB() {
       );
     `);
     await client.query(`ALTER TABLE partners ADD COLUMN IF NOT EXISTS auth_id UUID UNIQUE`);
+    await client.query(`ALTER TABLE partners ALTER COLUMN password SET DEFAULT ''`);
+    await client.query(`ALTER TABLE partners ALTER COLUMN password DROP NOT NULL`);
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS partner_missions (
