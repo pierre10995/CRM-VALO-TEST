@@ -2,10 +2,11 @@ import { useState, useRef } from "react";
 import { exportCsv } from "../../utils/exportCsv";
 import api from "../../services/api";
 
-export default function PipelinePage({ candidatures, candidates, missions, onEdit, onAdd, onDelete, loadAll }) {
+export default function PipelinePage({ candidatures, candidates, missions, users, onEdit, onAdd, onDelete, loadAll }) {
   const [draggedId, setDraggedId] = useState(null);
   const [dropTarget, setDropTarget] = useState(null);
   const [showStats, setShowStats] = useState(false);
+  const [filterOwner, setFilterOwner] = useState("all");
   const dragRef = useRef(null);
 
   const partnerCol = { key: "Proposition partenaire", label: "Proposition partenaire", color: "#059669", bg: "#f0fdf4", border: "#a7f3d0" };
@@ -19,6 +20,10 @@ export default function PipelinePage({ candidatures, candidates, missions, onEdi
   ];
 
   const allCols = [partnerCol, ...stageConfig];
+
+  // Owners who have at least one candidature via assigned missions
+  const ownerOptions = (users || []).filter(u => candidatures.some(cd => cd.missionAssignedTo === u.id));
+  const filteredCandidatures = filterOwner === "all" ? candidatures : candidatures.filter(cd => String(cd.missionAssignedTo) === filterOwner);
 
   const handleDragStart = (e, cd) => {
     setDraggedId(cd.id);
@@ -120,9 +125,25 @@ export default function PipelinePage({ candidatures, candidates, missions, onEdi
           <h1 style={{ fontSize: 26, fontWeight: 800, color: "#0f172a" }}>Pipeline</h1>
           <p style={{ fontSize: 13.5, color: "#64748b", marginTop: 3 }}>Glissez-déposez les candidatures entre les colonnes</p>
         </div>
-        <div style={{ display: "flex", gap: 10 }}>
+        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+          {ownerOptions.length > 0 && (
+            <select
+              value={filterOwner}
+              onChange={e => setFilterOwner(e.target.value)}
+              style={{
+                padding: "8px 14px", borderRadius: 10, border: "1.5px solid #e2e8f0",
+                fontSize: 13, fontWeight: 600, color: "#0f172a", background: "white",
+                cursor: "pointer", fontFamily: "inherit",
+              }}
+            >
+              <option value="all">Tous les propriétaires</option>
+              {ownerOptions.map(u => (
+                <option key={u.id} value={String(u.id)}>{u.fullName || u.name}</option>
+              ))}
+            </select>
+          )}
           <button className="btn btn-ghost" style={{ fontSize: 13 }} onClick={() => setShowStats(s => !s)}>{showStats ? "Masquer stats" : "Analytique"}</button>
-          <button className="btn btn-ghost" style={{ fontSize: 13 }} onClick={() => exportCsv(candidatures, [
+          <button className="btn btn-ghost" style={{ fontSize: 13 }} onClick={() => exportCsv(filteredCandidatures, [
             { key: "candidateName", label: "Candidat" }, { key: "missionTitle", label: "Mission" },
             { key: "missionCompany", label: "Entreprise" }, { key: "stage", label: "Étape" },
             { key: "rating", label: "Note" }, { key: "partnerName", label: "Partenaire" },
@@ -132,13 +153,13 @@ export default function PipelinePage({ candidatures, candidates, missions, onEdi
         </div>
       </div>
       {showStats && (() => {
-        const total = candidatures.length;
-        const placed = candidatures.filter(c => c.stage === "Placé").length;
-        const refused = candidatures.filter(c => c.stage === "Refusé").length;
+        const total = filteredCandidatures.length;
+        const placed = filteredCandidatures.filter(c => c.stage === "Placé").length;
+        const refused = filteredCandidatures.filter(c => c.stage === "Refusé").length;
         const active = total - placed - refused;
         const convRate = total > 0 ? ((placed / total) * 100).toFixed(1) : 0;
         const stageCounts = {};
-        allCols.forEach(col => { stageCounts[col.key] = candidatures.filter(c => c.stage === col.key).length; });
+        allCols.forEach(col => { stageCounts[col.key] = filteredCandidatures.filter(c => c.stage === col.key).length; });
         return (
           <div className="card" style={{ marginBottom: 20, padding: 16 }}>
             <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", marginBottom: 14 }}>Analytique Pipeline</div>
@@ -169,7 +190,7 @@ export default function PipelinePage({ candidatures, candidates, missions, onEdi
       })()}
       <div style={{ display: "grid", gridTemplateColumns: `repeat(${allCols.length}, 1fr)`, gap: 12, overflowX: "auto" }}>
         {allCols.map(col => {
-          const items = candidatures.filter(cd => cd.stage === col.key);
+          const items = filteredCandidatures.filter(cd => cd.stage === col.key);
           const isOver = dropTarget === col.key;
           return (
             <div

@@ -37,6 +37,7 @@ export function fmtCandidature(r) {
     candidatePhone: r.candidate_phone || "", candidateSkills: r.candidate_skills || "",
     missionTitle: r.mission_title || "", missionCompany: r.mission_company || "",
     partnerId: r.partner_id || null, partnerName: r.partner_name || "",
+    missionAssignedTo: r.mission_assigned_to || null,
   };
 }
 
