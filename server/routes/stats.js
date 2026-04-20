@@ -4,7 +4,7 @@ import pdf from "pdf-parse/lib/pdf-parse.js";
 import { pool } from "../db.js";
 import { config } from "../config.js";
 import { validate } from "../validators/validate.js";
-import { validationStatusSchema, cvSummarySchema, userCreateSchema } from "../validators/schemas.js";
+import { validationStatusSchema, cvSummarySchema, userCreateSchema, userUpdateSchema } from "../validators/schemas.js";
 import { asyncHandler, AppError } from "../helpers/errors.js";
 import { logger } from "../helpers/logger.js";
 import { adminOnly } from "../middleware.js";
@@ -88,6 +88,44 @@ router.post("/users", adminOnly, validate(userCreateSchema), asyncHandler(async 
     if (err.code === "23505") return res.status(409).json({ error: "Cet email est déjà utilisé" });
     throw err;
   }
+}));
+
+router.put("/users/:id", adminOnly, validate(userUpdateSchema), asyncHandler(async (req, res) => {
+  const { fullName, login, password } = req.body;
+  const { supabaseAdmin } = await import("../supabase.js");
+
+  const { rows: current } = await pool.query("SELECT id, auth_id, login FROM users WHERE id = $1", [req.params.id]);
+  if (current.length === 0) throw new AppError(404, "Utilisateur non trouvé");
+  const user = current[0];
+
+  const emailChanged = login.trim().toLowerCase() !== user.login.toLowerCase();
+  if (emailChanged) {
+    const { rows: existing } = await pool.query(
+      "SELECT 1 FROM users WHERE LOWER(login) = LOWER($1) AND id <> $2",
+      [login.trim(), user.id]
+    );
+    if (existing.length > 0) throw new AppError(409, "Cet email est déjà utilisé");
+  }
+
+  // Synchroniser email/password dans Supabase Auth
+  if (user.auth_id) {
+    const authUpdates = {};
+    if (emailChanged) authUpdates.email = login.trim();
+    if (password) authUpdates.password = password;
+    if (Object.keys(authUpdates).length > 0) {
+      const { error } = await supabaseAdmin.auth.admin.updateUserById(user.auth_id, authUpdates);
+      if (error) {
+        logger.error("Erreur Supabase updateUserById", { error: error.message });
+        throw new AppError(500, "Erreur lors de la mise à jour dans Supabase Auth");
+      }
+    }
+  }
+
+  const { rows } = await pool.query(
+    "UPDATE users SET full_name = $1, login = $2 WHERE id = $3 RETURNING id, login, full_name, role",
+    [fullName.trim(), login.trim(), user.id]
+  );
+  res.json({ id: rows[0].id, login: rows[0].login, fullName: rows[0].full_name, userRole: rows[0].role || "user" });
 }));
 
 // ─── Audit log ──────────────────────────────────────────────────────────────
