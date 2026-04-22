@@ -12,7 +12,7 @@ const router = Router();
 
 // ─── CRUD Partners ──────────────────────────────────────────────────────────
 
-router.get("/", adminOnly, asyncHandler(async (req, res) => {
+router.get("/", asyncHandler(async (req, res) => {
   const { rows } = await pool.query(`
     SELECT p.*, (SELECT COUNT(*) FROM partner_missions pm WHERE pm.partner_id = p.id) as mission_count
     FROM partners p ORDER BY p.created_at DESC
@@ -118,7 +118,7 @@ router.delete("/:id", adminOnly, asyncHandler(async (req, res) => {
 
 // ─── Partner submissions (notifications) ────────────────────────────────────
 
-router.get("/submissions", adminOnly, asyncHandler(async (req, res) => {
+router.get("/submissions", asyncHandler(async (req, res) => {
   const { rows } = await pool.query(`
     SELECT cd.id, cd.candidate_id, cd.mission_id, cd.stage, cd.notes, cd.created_at,
            c.name as candidate_name, c.email as candidate_email, c.phone as candidate_phone,
@@ -151,7 +151,7 @@ router.get("/submissions", adminOnly, asyncHandler(async (req, res) => {
 
 // ─── Submission reviews (rating + comment) ──────────────────────────────────
 
-router.get("/submissions/:candidatureId/reviews", adminOnly, asyncHandler(async (req, res) => {
+router.get("/submissions/:candidatureId/reviews", asyncHandler(async (req, res) => {
   const { rows } = await pool.query(`
     SELECT sr.*, u.full_name as user_name
     FROM submission_reviews sr
@@ -166,7 +166,7 @@ router.get("/submissions/:candidatureId/reviews", adminOnly, asyncHandler(async 
   })));
 }));
 
-router.post("/submissions/:candidatureId/reviews", adminOnly, asyncHandler(async (req, res) => {
+router.post("/submissions/:candidatureId/reviews", asyncHandler(async (req, res) => {
   const { rating, comment } = req.body;
   if (!rating || rating < 1 || rating > 5) throw new AppError(400, "Note de 1 à 5 requise");
 
@@ -184,7 +184,7 @@ router.post("/submissions/:candidatureId/reviews", adminOnly, asyncHandler(async
 
 // ─── Mission affiliations ───────────────────────────────────────────────────
 
-router.get("/:id/missions", adminOnly, asyncHandler(async (req, res) => {
+router.get("/:id/missions", asyncHandler(async (req, res) => {
   const { rows } = await pool.query(`
     SELECT m.id, m.title, m.company, m.status, pm.created_at as affiliated_at
     FROM partner_missions pm
@@ -214,7 +214,7 @@ router.delete("/:id/missions/:missionId", adminOnly, asyncHandler(async (req, re
 
 // ─── Comments on submissions (internal ↔ partner) ─────────────────────────
 
-router.get("/submissions/:candidatureId/comments", adminOnly, asyncHandler(async (req, res) => {
+router.get("/submissions/:candidatureId/comments", asyncHandler(async (req, res) => {
   const { rows } = await pool.query(
     `SELECT * FROM candidature_comments WHERE candidature_id = $1 ORDER BY created_at ASC`,
     [req.params.candidatureId]
@@ -225,7 +225,7 @@ router.get("/submissions/:candidatureId/comments", adminOnly, asyncHandler(async
   })));
 }));
 
-router.post("/submissions/:candidatureId/comments", adminOnly, asyncHandler(async (req, res) => {
+router.post("/submissions/:candidatureId/comments", asyncHandler(async (req, res) => {
   const { message, visibleToPartner = true } = req.body;
   if (!message?.trim()) throw new AppError(400, "Message requis");
 
