@@ -7,6 +7,7 @@ export default function AdminPage({ currentUser, loadAll }) {
   const [partners, setPartners] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [formType, setFormType] = useState("user"); // "user" | "partner"
+  const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState({});
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -35,7 +36,17 @@ export default function AdminPage({ currentUser, loadAll }) {
 
   const resetForm = (type) => {
     setFormType(type);
+    setEditingId(null);
     setForm(type === "user" ? { fullName: "", login: "", password: "" } : { name: "", email: "", password: "", company: "", phone: "" });
+    setError("");
+    setSuccess("");
+    setShowForm(true);
+  };
+
+  const startEditUser = (u) => {
+    setFormType("user");
+    setEditingId(u.id);
+    setForm({ fullName: u.fullName || "", login: u.login || "", password: "" });
     setError("");
     setSuccess("");
     setShowForm(true);
@@ -57,18 +68,31 @@ export default function AdminPage({ currentUser, loadAll }) {
       if (formType === "user") {
         if (!form.fullName?.trim()) return setError("Nom complet requis");
         if (!form.login?.trim()) return setError("Email requis");
-        const pwdErr = validatePassword(form.password);
-        if (pwdErr) return setError(pwdErr);
+        // Password obligatoire en création, optionnel en édition
+        if (!editingId || form.password) {
+          const pwdErr = validatePassword(form.password);
+          if (pwdErr) return setError(pwdErr);
+        }
 
-        const res = await api.post("/api/users", form);
+        const payload = { ...form };
+        if (editingId && !payload.password) delete payload.password;
+
+        const res = editingId
+          ? await api.put(`/api/users/${editingId}`, payload)
+          : await api.post("/api/users", payload);
+
         if (res.ok) {
-          setSuccess(`Utilisateur "${form.fullName}" créé avec succès`);
+          setSuccess(editingId
+            ? `Utilisateur "${form.fullName}" modifié avec succès`
+            : `Utilisateur "${form.fullName}" créé avec succès`);
           setForm({ fullName: "", login: "", password: "" });
+          setEditingId(null);
+          setShowForm(false);
           await load();
           if (loadAll) await loadAll();
         } else {
-          const d = await res.json();
-          setError(d.error || "Erreur lors de la création");
+          const d = await res.json().catch(() => ({ error: "Erreur serveur" }));
+          setError(d.error || "Erreur lors de l'enregistrement");
         }
       } else {
         if (!form.name?.trim()) return setError("Nom requis");
@@ -130,7 +154,9 @@ export default function AdminPage({ currentUser, loadAll }) {
         <div className="card" style={{ marginBottom: 20, padding: 20 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
             <h3 style={{ fontSize: 15, fontWeight: 700, color: "#0f172a" }}>
-              {formType === "user" ? "Nouvel employ\u00e9" : "Nouveau recruteur externe"}
+              {formType === "user"
+                ? (editingId ? "Modifier l'employ\u00e9" : "Nouvel employ\u00e9")
+                : "Nouveau recruteur externe"}
             </h3>
             <button className="btn btn-ghost" style={{ padding: "4px 8px", fontSize: 14 }} onClick={() => setShowForm(false)}>X</button>
           </div>
@@ -147,7 +173,9 @@ export default function AdminPage({ currentUser, loadAll }) {
                   <input className="input" type="email" value={form.login || ""} onChange={e => f("login", e.target.value)} placeholder="prenom@valo-inno.com" />
                 </div>
                 <div style={{ flex: 1, minWidth: 180 }}>
-                  <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", marginBottom: 4, display: "block" }}>Mot de passe *</label>
+                  <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", marginBottom: 4, display: "block" }}>
+                    {editingId ? "Nouveau mot de passe (laisser vide pour ne pas changer)" : "Mot de passe *"}
+                  </label>
                   <input className="input" type="password" value={form.password || ""} onChange={e => f("password", e.target.value)} placeholder="Min. 12 car. (maj+min+chiffre)" onKeyDown={e => e.key === "Enter" && handleSave()} />
                 </div>
               </>
@@ -182,7 +210,9 @@ export default function AdminPage({ currentUser, loadAll }) {
 
           <div style={{ marginTop: 14, display: "flex", justifyContent: "flex-end" }}>
             <button className="btn btn-primary" onClick={handleSave}>
-              {formType === "user" ? "Cr\u00e9er l'employ\u00e9" : "Cr\u00e9er le recruteur externe"}
+              {formType === "user"
+                ? (editingId ? "Enregistrer les modifications" : "Cr\u00e9er l'employ\u00e9")
+                : "Cr\u00e9er le recruteur externe"}
             </button>
           </div>
         </div>
@@ -201,9 +231,10 @@ export default function AdminPage({ currentUser, loadAll }) {
             <thead><tr style={{ borderBottom: "1px solid #f1f5f9" }}>
               <th style={thStyle}>Nom</th>
               <th style={thStyle}>Email</th>
+              <th style={{ ...thStyle, textAlign: "right" }}>Actions</th>
             </tr></thead>
             <tbody>
-              {users.length === 0 && <tr><td colSpan={2} style={{ padding: 40, textAlign: "center", color: "#94a3b8" }}>Aucun utilisateur</td></tr>}
+              {users.length === 0 && <tr><td colSpan={3} style={{ padding: 40, textAlign: "center", color: "#94a3b8" }}>Aucun utilisateur</td></tr>}
               {users.map(u => (
                 <tr key={u.id} className="row-hover" style={{ borderBottom: "1px solid #f8fafc" }}>
                   <td style={tdStyle}>
@@ -213,6 +244,15 @@ export default function AdminPage({ currentUser, loadAll }) {
                     </div>
                   </td>
                   <td style={{ ...tdStyle, color: "#64748b" }}>{u.login}</td>
+                  <td style={{ ...tdStyle, textAlign: "right" }}>
+                    <button
+                      className="btn btn-ghost"
+                      style={{ fontSize: 12, padding: "4px 10px" }}
+                      onClick={() => startEditUser(u)}
+                    >
+                      Modifier
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>

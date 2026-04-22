@@ -199,6 +199,12 @@ export const userCreateSchema = z.object({
   password: strongPassword,
 });
 
+export const userUpdateSchema = z.object({
+  fullName: z.string().min(1, "Nom complet requis").max(100),
+  login: z.string().email("Email invalide").max(100),
+  password: strongPassword.optional(),
+});
+
 // ─── Validation Statuses ─────────────────────────────────────────────────────
 
 export const validationStatusSchema = z.object({

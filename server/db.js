@@ -233,6 +233,8 @@ async function initDB() {
       );
     `);
     await client.query(`ALTER TABLE partners ADD COLUMN IF NOT EXISTS auth_id UUID UNIQUE`);
+    await client.query(`ALTER TABLE partners ALTER COLUMN password SET DEFAULT ''`);
+    await client.query(`ALTER TABLE partners ALTER COLUMN password DROP NOT NULL`);
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS partner_missions (
@@ -313,6 +315,9 @@ async function initDB() {
 
     // ─── Row Level Security ────────────────────────────────────────────────────
     // Toutes les requêtes passent par le backend Express (service_role).
+    // Seed tracking
+    await client.query(`CREATE TABLE IF NOT EXISTS seed_log (key VARCHAR(50) PRIMARY KEY, done_at TIMESTAMP DEFAULT NOW())`);
+
     // On active RLS et on n'ajoute aucune policy pour la clé anon/public,
     // ce qui bloque tout accès direct via l'API REST PostgREST de Supabase.
     const allTables = [
@@ -320,14 +325,11 @@ async function initDB() {
       "candidatures", "activities", "files", "placements", "evaluations",
       "objectives", "validation_statuses", "partners", "partner_missions",
       "submission_reviews", "partner_notifications", "candidature_comments",
-      "audit_log", "tags", "contact_tags",
+      "audit_log", "tags", "contact_tags", "seed_log",
     ];
     for (const table of allTables) {
       await client.query(`ALTER TABLE ${table} ENABLE ROW LEVEL SECURITY`);
     }
-
-    // Seed tracking
-    await client.query(`CREATE TABLE IF NOT EXISTS seed_log (key VARCHAR(50) PRIMARY KEY, done_at TIMESTAMP DEFAULT NOW())`);
     const alreadySeeded = async (key) => {
       const { rows } = await client.query("SELECT 1 FROM seed_log WHERE key = $1", [key]);
       return rows.length > 0;

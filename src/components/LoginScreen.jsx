@@ -17,7 +17,7 @@ export default function LoginScreen({ form, setForm, showPwd, setShowPwd, error,
     try {
       const res = await fetch("/api/forgot-password", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ login: forgotLogin }) });
       if (res.ok) {
-        setMessage("Si cet identifiant existe, un code de réinitialisation a été envoyé à l'administrateur. Contactez-le pour obtenir votre code.");
+        setMessage("Si cet identifiant existe, un code de réinitialisation à 6 chiffres vient d'être envoyé par email. Vérifiez votre boîte de réception.");
         setMode("reset");
       } else {
         const err = await res.json();
@@ -30,7 +30,10 @@ export default function LoginScreen({ form, setForm, showPwd, setShowPwd, error,
   const handleReset = async () => {
     setResetError("");
     if (!resetCode || !newPassword) return setResetError("Tous les champs sont requis");
-    if (newPassword.length < 6) return setResetError("Le mot de passe doit contenir au moins 6 caractères");
+    if (newPassword.length < 12) return setResetError("Le mot de passe doit contenir au moins 12 caractères");
+    if (!/[A-Z]/.test(newPassword)) return setResetError("Le mot de passe doit contenir au moins une majuscule");
+    if (!/[a-z]/.test(newPassword)) return setResetError("Le mot de passe doit contenir au moins une minuscule");
+    if (!/[0-9]/.test(newPassword)) return setResetError("Le mot de passe doit contenir au moins un chiffre");
     if (newPassword !== confirmPassword) return setResetError("Les mots de passe ne correspondent pas");
     setLoading(true);
     try {
@@ -123,7 +126,7 @@ export default function LoginScreen({ form, setForm, showPwd, setShowPwd, error,
             </div>
             <div>
               <label style={{ fontSize: 12.5, fontWeight: 600, color: "#374151", display: "block", marginBottom: 6 }}>Nouveau mot de passe</label>
-              <input id="new-pwd" className="input-l" type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Min. 6 caractères" onKeyDown={e => e.key === "Enter" && document.getElementById("confirm-pwd")?.focus()} />
+              <input id="new-pwd" className="input-l" type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Min. 12 car., 1 majuscule, 1 minuscule, 1 chiffre" onKeyDown={e => e.key === "Enter" && document.getElementById("confirm-pwd")?.focus()} />
             </div>
             <div>
               <label style={{ fontSize: 12.5, fontWeight: 600, color: "#374151", display: "block", marginBottom: 6 }}>Confirmer le mot de passe</label>
