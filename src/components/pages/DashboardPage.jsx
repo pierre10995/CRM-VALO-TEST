@@ -42,7 +42,6 @@ export default function DashboardPage({ stats, activities, contacts, missions, c
   });
   const caFYMissions = missions.filter(m => placedMissionIds.has(m.id) && (currentFY ? String(m.fiscalYearId) === String(currentFY.id) : true));
   const totalCommissions = caFYMissions.reduce((s, m) => s + (m.commission || 0), 0);
-  const totalRecruiterCommissions = caFYMissions.reduce((s, m) => s + (m.recruiterCommission || 0), 0);
   const recentActivities = activities.slice(0, 8);
 
   const fyLabel = currentFY ? currentFY.label : "Année en cours";
@@ -52,7 +51,6 @@ export default function DashboardPage({ stats, activities, contacts, missions, c
     { label: "Missions actives", value: missionsOuvertes, color: "#3b82f6", bg: "#eff6ff" },
     { label: "Placements", value: placements, color: "#8b5cf6", bg: "#f5f3ff" },
     { label: `CA ${fyLabel}`, value: fmtCAD(totalCommissions), color: "#059669", bg: "#ecfdf5" },
-    { label: `Résultat net ${fyLabel}`, value: fmtCAD(totalCommissions - totalRecruiterCommissions), color: "#0f766e", bg: "#f0fdfa" },
   ];
 
   return (
