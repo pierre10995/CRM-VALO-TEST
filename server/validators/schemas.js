@@ -61,6 +61,7 @@ export const missionSchema = z.object({
   priority: z.string().max(20).default("Normale"),
   assignedTo: z.coerce.number().int().positive().nullable().default(null),
   commission: z.coerce.number().min(0).default(0),
+  recruiterCommission: z.coerce.number().min(0).default(0),
   deadline: z.string().nullable().default(null),
   fiscalYearId: z.coerce.number().int().positive().nullable().default(null),
   workMode: z.string().max(50).default(""),

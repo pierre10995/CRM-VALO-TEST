@@ -23,9 +23,9 @@ router.get("/", asyncHandler(async (req, res) => {
 router.post("/", validate(missionSchema), asyncHandler(async (req, res) => {
   const d = req.body;
   const { rows } = await pool.query(
-    `INSERT INTO missions (title, client_contact_id, company, location, contract_type, salary_min, salary_max, description, requirements, status, priority, assigned_to, commission, deadline, fiscal_year_id, work_mode, partner_notes)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17) RETURNING *`,
-    [d.title, d.clientContactId, d.company, d.location, d.contractType, d.salaryMin, d.salaryMax, d.description, d.requirements, d.status, d.priority, d.assignedTo, d.commission, d.deadline, d.fiscalYearId, d.workMode, d.partnerNotes]
+    `INSERT INTO missions (title, client_contact_id, company, location, contract_type, salary_min, salary_max, description, requirements, status, priority, assigned_to, commission, deadline, fiscal_year_id, work_mode, partner_notes, recruiter_commission)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18) RETURNING *`,
+    [d.title, d.clientContactId, d.company, d.location, d.contractType, d.salaryMin, d.salaryMax, d.description, d.requirements, d.status, d.priority, d.assignedTo, d.commission, d.deadline, d.fiscalYearId, d.workMode, d.partnerNotes, d.recruiterCommission || 0]
   );
   await pool.query(
     "INSERT INTO audit_log (user_name, action, entity_type, entity_id, details) VALUES ($1,$2,$3,$4,$5)",
@@ -37,8 +37,8 @@ router.post("/", validate(missionSchema), asyncHandler(async (req, res) => {
 router.put("/:id", validate(missionSchema), asyncHandler(async (req, res) => {
   const d = req.body;
   const { rows } = await pool.query(
-    `UPDATE missions SET title=$1, client_contact_id=$2, company=$3, location=$4, contract_type=$5, salary_min=$6, salary_max=$7, description=$8, requirements=$9, status=$10, priority=$11, assigned_to=$12, commission=$13, deadline=$14, fiscal_year_id=$15, work_mode=$16, partner_notes=$17 WHERE id=$18 RETURNING *`,
-    [d.title, d.clientContactId, d.company, d.location, d.contractType, d.salaryMin, d.salaryMax, d.description, d.requirements, d.status, d.priority, d.assignedTo, d.commission, d.deadline, d.fiscalYearId, d.workMode, d.partnerNotes, req.params.id]
+    `UPDATE missions SET title=$1, client_contact_id=$2, company=$3, location=$4, contract_type=$5, salary_min=$6, salary_max=$7, description=$8, requirements=$9, status=$10, priority=$11, assigned_to=$12, commission=$13, deadline=$14, fiscal_year_id=$15, work_mode=$16, partner_notes=$17, recruiter_commission=$18 WHERE id=$19 RETURNING *`,
+    [d.title, d.clientContactId, d.company, d.location, d.contractType, d.salaryMin, d.salaryMax, d.description, d.requirements, d.status, d.priority, d.assignedTo, d.commission, d.deadline, d.fiscalYearId, d.workMode, d.partnerNotes, d.recruiterCommission || 0, req.params.id]
   );
   if (rows.length === 0) return res.status(404).json({ error: "Mission non trouvée" });
 

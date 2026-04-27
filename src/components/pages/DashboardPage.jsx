@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import api from "../../services/api";
 import { fmtCAD } from "../../utils/constants";
 
-export default function DashboardPage({ stats, activities, contacts, missions, candidatures }) {
+export default function DashboardPage({ stats, activities, contacts, missions, candidatures, fiscalYears }) {
   const [reminders, setReminders] = useState([]);
   const [dismissedKeys, setDismissedKeys] = useState(() => {
     try { return JSON.parse(localStorage.getItem("crm_dismissed_reminders") || "[]"); } catch { return []; }
@@ -34,16 +34,25 @@ export default function DashboardPage({ stats, activities, contacts, missions, c
   const placements = candidatures.filter(cd => cd.stage === "Placé").length;
   const totalRevenue = contacts.filter(c => c.status === "Client").reduce((s, c) => s + (c.revenue || 0), 0);
   const placedMissionIds = new Set(candidatures.filter(cd => cd.stage === "Placé").map(cd => cd.missionId));
-  const totalCommissions = missions.filter(m => placedMissionIds.has(m.id)).reduce((s, m) => s + (m.commission || 0), 0);
+
+  // CA année 3 : filtrer sur les missions de l'année fiscale courante (Année 3)
+  const currentFY = (fiscalYears || []).find(fy => {
+    const now = new Date();
+    return new Date(fy.startDate) <= now && now <= new Date(fy.endDate);
+  });
+  const caFYMissions = missions.filter(m => placedMissionIds.has(m.id) && (currentFY ? String(m.fiscalYearId) === String(currentFY.id) : true));
+  const totalCommissions = caFYMissions.reduce((s, m) => s + (m.commission || 0), 0);
+  const totalRecruiterCommissions = caFYMissions.reduce((s, m) => s + (m.recruiterCommission || 0), 0);
   const recentActivities = activities.slice(0, 8);
 
+  const fyLabel = currentFY ? currentFY.label : "Année en cours";
   const kpis = [
     { label: "Clients", value: totalClients, color: "#10b981", bg: "#ecfdf5" },
     { label: "Candidats", value: totalCandidats, color: "#f59e0b", bg: "#fffbeb" },
     { label: "Missions actives", value: missionsOuvertes, color: "#3b82f6", bg: "#eff6ff" },
     { label: "Placements", value: placements, color: "#8b5cf6", bg: "#f5f3ff" },
-    { label: "CA Total (placements)", value: fmtCAD(totalCommissions), color: "#059669", bg: "#ecfdf5" },
-    { label: "CA Clients", value: fmtCAD(totalRevenue), color: "#dc2626", bg: "#fef2f2" },
+    { label: `CA ${fyLabel}`, value: fmtCAD(totalCommissions), color: "#059669", bg: "#ecfdf5" },
+    { label: `Résultat net ${fyLabel}`, value: fmtCAD(totalCommissions - totalRecruiterCommissions), color: "#0f766e", bg: "#f0fdfa" },
   ];
 
   return (

@@ -28,10 +28,11 @@ export default function MissionForm({ form, setForm, onSave, onCancel, contacts,
           </select>
         </Field>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 12 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr 1fr", gap: 12 }}>
         <Field label="Salaire min ($)"><input className="input" type="number" value={form.salaryMin || ""} onChange={e => f("salaryMin", e.target.value)} placeholder="50000" /></Field>
         <Field label="Salaire max ($)"><input className="input" type="number" value={form.salaryMax || ""} onChange={e => f("salaryMax", e.target.value)} placeholder="80000" /></Field>
-        <Field label="Commission ($)"><input className="input" type="number" value={form.commission || ""} onChange={e => f("commission", e.target.value)} placeholder="5000" /></Field>
+        <Field label="Commission VALO ($)"><input className="input" type="number" value={form.commission || ""} onChange={e => f("commission", e.target.value)} placeholder="5000" /></Field>
+        <Field label="Commission recruteurs ($)"><input className="input" type="number" value={form.recruiterCommission || ""} onChange={e => f("recruiterCommission", e.target.value)} placeholder="2000" /></Field>
         <Field label="Mode de travail">
           <input className="input" list="work-modes-list" value={form.workMode || ""} onChange={e => f("workMode", e.target.value)} placeholder="Taper ou choisir..." />
           <datalist id="work-modes-list">{workModes.map(w => <option key={w} value={w} />)}</datalist>

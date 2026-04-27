@@ -115,8 +115,12 @@ export default function FicheMission({ mission: m, onClose, onEdit, onDelete, ca
           <div style={{ fontSize: 13, color: "#0f172a", fontWeight: 600 }}>{m.salaryMin > 0 ? `${fmtCAD(m.salaryMin)} - ${fmtCAD(m.salaryMax)}` : "—"}</div>
         </div>
         <div style={{ background: "#f8fafc", borderRadius: 10, padding: 12 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", marginBottom: 4 }}>COMMISSION</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", marginBottom: 4 }}>COMMISSION VALO</div>
           <div style={{ fontSize: 13, color: "#0f172a", fontWeight: 600 }}>{m.commission > 0 ? fmtCAD(m.commission) : "—"}</div>
+        </div>
+        <div style={{ background: "#f8fafc", borderRadius: 10, padding: 12 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", marginBottom: 4 }}>COMMISSION RECRUTEURS</div>
+          <div style={{ fontSize: 13, color: "#0f172a", fontWeight: 600 }}>{m.recruiterCommission > 0 ? fmtCAD(m.recruiterCommission) : "—"}</div>
         </div>
         <div style={{ background: "#f8fafc", borderRadius: 10, padding: 12 }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", marginBottom: 4 }}>STATUT</div>
