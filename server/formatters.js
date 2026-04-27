@@ -19,6 +19,7 @@ export function fmtMission(r) {
     description: r.description || "", requirements: r.requirements || "",
     status: r.status, priority: r.priority || "Normale",
     assignedTo: r.assigned_to, commission: Number(r.commission) || 0,
+    recruiterCommission: Number(r.recruiter_commission) || 0,
     createdAt: r.created_at, deadline: r.deadline,
     fiscalYearId: r.fiscal_year_id || null, workMode: r.work_mode || "",
     clientName: r.client_name || "", assignedName: r.assigned_name || "",

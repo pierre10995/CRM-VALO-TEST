@@ -15,6 +15,13 @@ export default function useRevenue(missions, users, fiscalYears, selectedFYId) {
     return filtered.reduce((s, m) => s + (m.commission || 0), 0);
   }, [wonMissions, activeFY]);
 
+  const globalRecruiterCommission = useMemo(() => {
+    const filtered = activeFY
+      ? wonMissions.filter(m => String(m.fiscalYearId) === String(activeFY.id))
+      : wonMissions;
+    return filtered.reduce((s, m) => s + (m.recruiterCommission || 0), 0);
+  }, [wonMissions, activeFY]);
+
   const caByUser = useMemo(() => {
     return users.map(u => {
       let userMissions = wonMissions.filter(m => m.assignedTo === u.id);
@@ -37,5 +44,5 @@ export default function useRevenue(missions, users, fiscalYears, selectedFYId) {
       : wonMissions;
   }, [wonMissions, activeFY]);
 
-  return { wonMissions, activeFY, globalCA, caByUser, fyWithCA, filteredWonMissions };
+  return { wonMissions, activeFY, globalCA, globalRecruiterCommission, caByUser, fyWithCA, filteredWonMissions };
 }

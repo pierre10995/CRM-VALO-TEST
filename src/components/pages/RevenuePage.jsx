@@ -17,7 +17,7 @@ export default function RevenuePage({ contacts, missions, candidatures, users, f
 
   useEffect(() => { setFiscalYears(propFiscalYears || []); }, [propFiscalYears]);
 
-  const { wonMissions, activeFY, globalCA, caByUser, fyWithCA, filteredWonMissions } = useRevenue(missions, users, fiscalYears, selectedYear);
+  const { wonMissions, activeFY, globalCA, globalRecruiterCommission, caByUser, fyWithCA, filteredWonMissions } = useRevenue(missions, users, fiscalYears, selectedYear);
 
   const addFiscalYear = async () => {
     if (!newYear.label || !newYear.startDate || !newYear.endDate) return;
@@ -179,10 +179,11 @@ export default function RevenuePage({ contacts, missions, candidatures, users, f
       </div>
 
       {/* KPIs */}
-      <div style={{ display: "grid", gridTemplateColumns: activeFY ? "repeat(4, 1fr)" : "repeat(3, 1fr)", gap: 16, marginBottom: 24 }}>
+      <div style={{ display: "grid", gridTemplateColumns: activeFY ? "repeat(5, 1fr)" : "repeat(4, 1fr)", gap: 16, marginBottom: 24 }}>
         <KPICard label={`CA ${currentLabel}`} value={fmtCAD(currentCA)} bg="#ecfdf5" color="#059669" />
+        <KPICard label="Commission recruteurs" value={fmtCAD(globalRecruiterCommission)} bg="#fef2f2" color="#dc2626" />
+        <KPICard label="Résultat net" value={fmtCAD(currentCA - globalRecruiterCommission)} bg="#f0fdfa" color="#0f766e" />
         <KPICard label="Postes gagnés" value={currentMissions.length} bg="#eff6ff" color="#2563eb" />
-        <KPICard label="Postes ouverts" value={missions.filter(m => m.status === "Ouverte" || m.status === "En cours").length} bg="#f5f3ff" color="#8b5cf6" />
         {activeFY && (
           <KPICard
             label={`Objectif ${activeFY.label}`}
@@ -228,7 +229,12 @@ export default function RevenuePage({ contacts, missions, candidatures, users, f
                   <div style={{ fontSize: 14, fontWeight: 600, color: "#0f172a" }}>{m.title}</div>
                   <div style={{ fontSize: 12.5, color: "#64748b" }}>{m.company} — {m.location || "—"}</div>
                 </div>
-                <div style={{ fontSize: 16, fontWeight: 800, color: "#059669", whiteSpace: "nowrap" }}>{fmtCAD(m.commission)}</div>
+                <div style={{ textAlign: "right" }}>
+                  <div style={{ fontSize: 16, fontWeight: 800, color: "#059669", whiteSpace: "nowrap" }}>{fmtCAD(m.commission)}</div>
+                  {m.recruiterCommission > 0 && (
+                    <div style={{ fontSize: 11, color: "#dc2626", whiteSpace: "nowrap" }}>- {fmtCAD(m.recruiterCommission)} recruteur</div>
+                  )}
+                </div>
               </div>
               <div style={{ height: 7, background: "#f1f5f9", borderRadius: 4 }}>
                 <div style={{ width: `${((m.commission || 0) / maxCommission) * 100}%`, height: "100%", background: "linear-gradient(90deg, #059669, #34d399)", borderRadius: 4 }} />
