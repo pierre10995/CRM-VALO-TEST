@@ -314,6 +314,17 @@ async function initDB() {
       );
     `);
 
+    // ─── Index pour accélérer les recherches/filtres fréquents ─────────────────
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_contacts_status ON contacts(status)`);
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_contacts_email ON contacts(LOWER(email))`);
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_missions_status ON missions(status)`);
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_missions_fiscal_year ON missions(fiscal_year_id)`);
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_candidatures_stage ON candidatures(stage)`);
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_candidatures_mission ON candidatures(mission_id)`);
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_candidatures_candidate ON candidatures(candidate_id)`);
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_activities_contact ON activities(contact_id)`);
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_audit_log_created ON audit_log(created_at DESC)`);
+
     // ─── Row Level Security ────────────────────────────────────────────────────
     // Toutes les requêtes passent par le backend Express (service_role).
     // Seed tracking
@@ -355,6 +366,10 @@ async function initDB() {
     if (!await alreadySeeded("users")) {
       const { rows: existingUsers } = await client.query("SELECT COUNT(*) FROM users");
       if (parseInt(existingUsers[0].count) === 0) {
+        // En production, refuser de seeder avec des mots de passe par défaut codés en dur.
+        if (process.env.NODE_ENV === "production" && (!process.env.SEED_PWD_OCEANE || !process.env.SEED_PWD_PIERRE)) {
+          throw new Error("SEED_PWD_OCEANE et SEED_PWD_PIERRE doivent être définis en production pour le seed des utilisateurs.");
+        }
         const seedUsers = [
           { email: "oceane@valo-inno.com", password: process.env.SEED_PWD_OCEANE || "oceane2026", fullName: "Océane Le Goff" },
           { email: "pierre@valo-inno.com", password: process.env.SEED_PWD_PIERRE || "pierre2026", fullName: "Pierre Scelles" },

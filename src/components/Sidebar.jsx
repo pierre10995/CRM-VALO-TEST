@@ -83,11 +83,11 @@ export default function Sidebar({ activeTab, setActiveTab, currentUser, onLogout
   };
 
   return (
-    <aside style={{ width: 220, background: "white", padding: "24px 12px", display: "flex", flexDirection: "column", gap: 4, boxShadow: "1px 0 0 #e2e8f0", flexShrink: 0 }}>
+    <aside className="app-sidebar" style={{ width: 220, background: "white", padding: "24px 12px", display: "flex", flexDirection: "column", gap: 4, boxShadow: "1px 0 0 #e2e8f0", flexShrink: 0 }}>
       <div style={{ padding: "0 6px 20px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <img src="/logo-valo.svg" alt="VALO" style={{ width: 36, height: 36, borderRadius: 8, objectFit: "cover" }} />
-          <div>
+          <div className="sidebar-text">
             <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>VALO Recrutement</div>
             <div style={{ fontSize: 10.5, color: "#94a3b8" }}>CRM v2.0</div>
           </div>
@@ -95,7 +95,7 @@ export default function Sidebar({ activeTab, setActiveTab, currentUser, onLogout
       </div>
 
       {/* Global search */}
-      <div style={{ padding: "0 4px 12px", position: "relative" }}>
+      <div className="sidebar-text" style={{ padding: "0 4px 12px", position: "relative" }}>
         <div style={{ position: "relative" }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)" }}>
             <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
@@ -154,14 +154,14 @@ export default function Sidebar({ activeTab, setActiveTab, currentUser, onLogout
         )}
       </div>
 
-      <div style={{ fontSize: 10, fontWeight: 700, color: "#94a3b8", padding: "0 8px 6px", letterSpacing: "0.08em", textTransform: "uppercase" }}>Navigation</div>
+      <div className="sidebar-text" style={{ fontSize: 10, fontWeight: 700, color: "#94a3b8", padding: "0 8px 6px", letterSpacing: "0.08em", textTransform: "uppercase" }}>Navigation</div>
       {visibleItems.map(item => (
-        <div key={item.id} className={`nav-item ${activeTab === item.id ? "active" : ""}`} onClick={() => { setActiveTab(item.id); setDetailId(null); setSearch(""); setFilterStatus("Tous"); }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d={item.icon}/></svg>
-          {item.label}
+        <div key={item.id} className={`nav-item ${activeTab === item.id ? "active" : ""}`} title={item.label} onClick={() => { setActiveTab(item.id); setDetailId(null); setSearch(""); setFilterStatus("Tous"); }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d={item.icon}/></svg>
+          <span className="sidebar-text">{item.label}</span>
         </div>
       ))}
-      <div style={{ marginTop: "auto" }}>
+      <div className="sidebar-text" style={{ marginTop: "auto" }}>
         <div style={{ padding: "12px 8px", borderTop: "1px solid #f1f5f9" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
             <div style={{ width: 30, height: 30, background: "linear-gradient(135deg, #dbeafe, #bfdbfe)", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "#1d4ed8" }}>{currentUser?.fullName?.[0] || "?"}</div>

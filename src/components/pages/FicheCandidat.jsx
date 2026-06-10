@@ -2,8 +2,10 @@ import { useState, useEffect } from "react";
 import api from "../../services/api";
 import { fmtCAD } from "../../utils/constants";
 import AuditHistory from "../common/AuditHistory";
+import { useToast } from "../common/Toast";
 
 export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, candidatures, missions, loadAll, validationStatuses = [] }) {
+  const toast = useToast();
   const [files, setFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [evaluations, setEvaluations] = useState([]);
@@ -75,7 +77,7 @@ export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, c
       a.download = name || "fichier.pdf";
       a.click();
       URL.revokeObjectURL(url);
-    } catch { alert("Erreur lors du téléchargement"); }
+    } catch { toast.error("Erreur lors du téléchargement"); }
   };
 
   const previewFile = async (id, name) => {
@@ -84,7 +86,7 @@ export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, c
       const url = URL.createObjectURL(blob);
       setPreviewUrl(url);
       setPreviewName(name || "Document");
-    } catch { alert("Erreur lors de la prévisualisation"); }
+    } catch { toast.error("Erreur lors de la prévisualisation"); }
   };
 
   const closePreview = () => {
@@ -98,8 +100,8 @@ export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, c
     try {
       const res = await api.post(`/api/matching/candidate/${c.id}`);
       if (res.ok) { const data = await res.json(); setSuggestions(data); }
-      else { const err = await res.json(); alert(err.error || "Erreur"); }
-    } catch { alert("Erreur réseau"); }
+      else { const err = await res.json(); toast.error(err.error || "Erreur"); }
+    } catch { toast.error("Erreur réseau"); }
     setLoadingSuggestions(false);
   };
 
@@ -108,8 +110,8 @@ export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, c
     try {
       const res = await api.post("/api/cv-summary/generate", { candidateId: c.id });
       if (res.ok) { const data = await res.json(); setCvSummary(data); if (loadAll) loadAll(); }
-      else { const err = await res.json(); alert(err.error || "Erreur"); }
-    } catch { alert("Erreur réseau"); }
+      else { const err = await res.json(); toast.error(err.error || "Erreur"); }
+    } catch { toast.error("Erreur réseau"); }
     setLoadingSummary(false);
   };
 

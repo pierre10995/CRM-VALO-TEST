@@ -85,7 +85,20 @@ router.put("/:id", validate(candidatureUpdateSchema), asyncHandler(async (req, r
 }));
 
 router.delete("/:id", asyncHandler(async (req, res) => {
+  const { rows: existing } = await pool.query(
+    `SELECT c.name as candidate_name, m.title as mission_title
+     FROM candidatures cd
+     LEFT JOIN contacts c ON cd.candidate_id = c.id
+     LEFT JOIN missions m ON cd.mission_id = m.id
+     WHERE cd.id = $1`,
+    [req.params.id]
+  );
   await pool.query("DELETE FROM candidatures WHERE id = $1", [req.params.id]);
+  const detail = existing[0] ? `${existing[0].candidate_name || "?"} — ${existing[0].mission_title || "?"}` : "";
+  await pool.query(
+    "INSERT INTO audit_log (user_name, action, entity_type, entity_id, details) VALUES ($1,$2,$3,$4,$5)",
+    [req.user?.login || "Système", "Supprimer", "Candidature", parseInt(req.params.id), detail]
+  );
   res.json({ ok: true });
 }));
 

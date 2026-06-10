@@ -24,4 +24,11 @@ export const GLOBAL_STYLES = `
 @keyframes toastIn { from { opacity: 0; transform: translateX(60px); } to { opacity: 1; transform: translateX(0); } }
 @keyframes toastOut { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(60px); } }
 .btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+.table-wrap { width: 100%; overflow-x: auto; }
+@media (max-width: 768px) {
+  .app-main { padding: 16px !important; }
+  .app-sidebar { width: 72px !important; padding: 20px 6px !important; }
+  .app-sidebar .sidebar-text { display: none !important; }
+  .app-sidebar .nav-item { justify-content: center; padding: 10px !important; }
+}
 `;

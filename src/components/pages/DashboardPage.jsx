@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import api from "../../services/api";
 import { fmtCAD } from "../../utils/constants";
+import { wonMissionsForFY, sumCommission, findCurrentFY } from "../../utils/revenue";
 
 export default function DashboardPage({ stats, activities, contacts, missions, candidatures, fiscalYears }) {
   const [reminders, setReminders] = useState([]);
@@ -32,16 +33,11 @@ export default function DashboardPage({ stats, activities, contacts, missions, c
   const totalCandidats = contacts.filter(c => c.status === "Candidat").length;
   const missionsOuvertes = missions.filter(m => m.status === "Ouverte" || m.status === "En cours").length;
   const placements = candidatures.filter(cd => cd.stage === "Placé").length;
-  const totalRevenue = contacts.filter(c => c.status === "Client").reduce((s, c) => s + (c.revenue || 0), 0);
-  const placedMissionIds = new Set(candidatures.filter(cd => cd.stage === "Placé").map(cd => cd.missionId));
 
-  // CA année 3 : filtrer sur les missions de l'année fiscale courante (Année 3)
-  const currentFY = (fiscalYears || []).find(fy => {
-    const now = new Date();
-    return new Date(fy.startDate) <= now && now <= new Date(fy.endDate);
-  });
-  const caFYMissions = missions.filter(m => placedMissionIds.has(m.id) && (currentFY ? String(m.fiscalYearId) === String(currentFY.id) : true));
-  const totalCommissions = caFYMissions.reduce((s, m) => s + (m.commission || 0), 0);
+  // CA de l'année fiscale en cours — même source de vérité que la page Chiffre d'affaires
+  const currentFY = findCurrentFY(fiscalYears);
+  const caFYMissions = wonMissionsForFY(missions, currentFY ? currentFY.id : "all");
+  const totalCommissions = sumCommission(caFYMissions);
   const recentActivities = activities.slice(0, 8);
 
   const fyLabel = currentFY ? currentFY.label : "Année en cours";
