@@ -74,23 +74,24 @@ function CRMInner() {
   const clients = contacts.filter(c => c.status === "Client" || c.status === "Prospect");
 
   const loadAll = async () => {
-    try {
-      const [c, m, cd, a, u, s, fy, sec, wm, vs] = await Promise.all([
-        api.get("/api/contacts"),
-        api.get("/api/missions"),
-        api.get("/api/candidatures"),
-        api.get("/api/activities"),
-        api.get("/api/users"),
-        api.get("/api/stats"),
-        api.get("/api/fiscal-years"),
-        api.get("/api/sectors"),
-        api.get("/api/work-modes"),
-        api.get("/api/validation-statuses"),
-      ]);
-      setContacts(c); setMissions(m); setCandidatures(cd); setActivities(a); setUsers(u); setStats(s); setFiscalYears(fy); setSectors(sec); setWorkModes(wm); setValidationStatuses(vs);
-    } catch {
-      // 401 errors are handled by api.js (page reload), other errors silently ignored on load
-    }
+    // allSettled : un endpoint en échec (ex. endpoint réservé admin pour un
+    // utilisateur non-admin) ne doit pas empêcher le chargement du reste.
+    const endpoints = [
+      ["/api/contacts", setContacts],
+      ["/api/missions", setMissions],
+      ["/api/candidatures", setCandidatures],
+      ["/api/activities", setActivities],
+      ["/api/users", setUsers],
+      ["/api/stats", setStats],
+      ["/api/fiscal-years", setFiscalYears],
+      ["/api/sectors", setSectors],
+      ["/api/work-modes", setWorkModes],
+      ["/api/validation-statuses", setValidationStatuses],
+    ];
+    const results = await Promise.allSettled(endpoints.map(([url]) => api.get(url)));
+    results.forEach((r, i) => {
+      if (r.status === "fulfilled") endpoints[i][1](r.value);
+    });
   };
 
   useEffect(() => {
@@ -99,6 +100,13 @@ function CRMInner() {
   }, []);
 
   useEffect(() => { if (authed && currentUser?.role !== "partner") loadAll(); }, [authed]);
+
+  // Onglets réservés aux admins (financier + partenaires)
+  const ADMIN_TABS = ["revenue", "objectifs", "partenaires", "admin"];
+  const isAdmin = currentUser?.userRole === "admin";
+  useEffect(() => {
+    if (!isAdmin && ADMIN_TABS.includes(activeTab)) setActiveTab("dashboard");
+  }, [isAdmin, activeTab]);
 
   const handleLogin = async () => {
     // Try internal user login first

@@ -66,7 +66,7 @@ export default function MissionsPage({ missions, contacts, users, candidatures, 
           <option value="salary">Trier : Salaire décroissant</option>
         </select>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}>
+      <div className="resp-grid" style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}>
         {filtered.map(m => {
           const sc = statusColors[m.status] || statusColors["Ouverte"];
           const mCandidatures = candidatures.filter(cd => cd.missionId === m.id);

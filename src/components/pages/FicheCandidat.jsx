@@ -133,7 +133,7 @@ export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, c
       </div>
 
       {/* Info section */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
+      <div className="resp-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
         <div style={{ background: "#f8fafc", borderRadius: 10, padding: 12 }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", marginBottom: 4 }}>EMAIL</div>
           <div style={{ fontSize: 13, color: "#0f172a" }}>{c.email || "—"}</div>
@@ -233,7 +233,7 @@ export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, c
           {cvSummary && (
             <div style={{ background: "#f0f9ff", borderRadius: 10, padding: 14, border: "1px solid #bae6fd" }}>
               <p style={{ fontSize: 13, color: "#0f172a", lineHeight: 1.6, marginBottom: 10 }}>{cvSummary.summary}</p>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
+              <div className="resp-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
                 {cvSummary.current_role && <div><span style={{ fontSize: 10, fontWeight: 700, color: "#94a3b8" }}>POSTE ACTUEL</span><div style={{ fontSize: 12, color: "#0f172a" }}>{cvSummary.current_role}</div></div>}
                 {cvSummary.experience_years && <div><span style={{ fontSize: 10, fontWeight: 700, color: "#94a3b8" }}>EXPERIENCE</span><div style={{ fontSize: 12, color: "#0f172a" }}>{cvSummary.experience_years} ans</div></div>}
                 {cvSummary.education && <div><span style={{ fontSize: 10, fontWeight: 700, color: "#94a3b8" }}>FORMATION</span><div style={{ fontSize: 12, color: "#0f172a" }}>{cvSummary.education}</div></div>}

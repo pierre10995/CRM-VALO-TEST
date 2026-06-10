@@ -105,7 +105,7 @@ export default function PlacementsPage({ candidatures, candidates, missions }) {
       {showAdd && (
         <div className="card" style={{ padding: 20, marginBottom: 20 }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", marginBottom: 12 }}>Nouveau placement</div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 12 }}>
+          <div className="resp-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 12 }}>
             <div>
               <label style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", marginBottom: 4, display: "block" }}>CANDIDATURE PLACÉE *</label>
               <SearchSelect
@@ -152,7 +152,7 @@ export default function PlacementsPage({ candidatures, candidates, missions }) {
                   {p.owner && <div style={{ fontSize: 11, color: "#2563eb", marginTop: 2 }}>Propriétaire : {p.owner}</div>}
                 </div>
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
+              <div className="resp-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
                 {/* Start section */}
                 <div style={{ background: "#f8fafc", borderRadius: 10, padding: 14 }}>
                   <div style={{ fontSize: 12, fontWeight: 700, color: "#2563eb", marginBottom: 10 }}>DÉMARRAGE</div>
@@ -232,7 +232,7 @@ export default function PlacementsPage({ candidatures, candidates, missions }) {
                   <button className="btn btn-danger" style={{ padding: "4px 10px", fontSize: 11 }} onClick={() => handleDelete(p.id)}>Suppr.</button>
                 </div>
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+              <div className="resp-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
                 {/* Start info */}
                 <div style={{ background: "#f8fafc", borderRadius: 10, padding: 14 }}>
                   <div style={{ fontSize: 12, fontWeight: 700, color: "#2563eb", marginBottom: 8 }}>DÉMARRAGE</div>

@@ -12,7 +12,7 @@ const router = Router();
 
 // ─── CRUD Partners ──────────────────────────────────────────────────────────
 
-router.get("/", asyncHandler(async (req, res) => {
+router.get("/", adminOnly, asyncHandler(async (req, res) => {
   const { rows } = await pool.query(`
     SELECT p.*, (SELECT COUNT(*) FROM partner_missions pm WHERE pm.partner_id = p.id) as mission_count
     FROM partners p ORDER BY p.created_at DESC

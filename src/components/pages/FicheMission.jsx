@@ -107,7 +107,7 @@ export default function FicheMission({ mission: m, onClose, onEdit, onDelete, ca
         <button className="btn btn-ghost" style={{ padding: "6px 8px" }} onClick={onClose}>X</button>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
+      <div className="resp-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
         <div style={{ background: "#f8fafc", borderRadius: 10, padding: 12 }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", marginBottom: 4 }}>TYPE DE CONTRAT</div>
           <div style={{ fontSize: 13, color: "#0f172a" }}>{m.contractType}</div>

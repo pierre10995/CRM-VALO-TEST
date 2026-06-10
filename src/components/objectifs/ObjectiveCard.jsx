@@ -35,7 +35,7 @@ export default function ObjectiveCard({ obj, actuals, userCA, periodLabel, onEdi
 
       {isEditing ? (
         <div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 10 }}>
+          <div className="resp-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 10 }}>
             <div>
               <label style={{ fontSize: 10, fontWeight: 600, color: "#64748b", display: "block", marginBottom: 3 }}>Nouveaux clients</label>
               <input className="input" type="number" style={{ fontSize: 12, padding: "6px 8px" }} value={editForm.targetNewClients || ""} onChange={e => setEditForm(p => ({ ...p, targetNewClients: e.target.value }))} />

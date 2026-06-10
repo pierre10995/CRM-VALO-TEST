@@ -145,7 +145,7 @@ export default function ObjectifsPage({ contacts, missions, candidatures, users,
       </div>
 
       {/* KPIs */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 24 }}>
+      <div className="resp-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 24 }}>
         <KPICard label="Clients actuels" value={clients.length} bg="#eff6ff" color="#2563eb" />
         <KPICard label={`CA ${activeFY ? activeFY.label : "Total"}`} value={fmtCAD(globalCA)} bg="#ecfdf5" color="#059669" />
         <KPICard
@@ -216,7 +216,7 @@ export default function ObjectifsPage({ contacts, missions, candidatures, users,
               </div>
             )}
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+            <div className="resp-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
               {periodObjs.map(obj => (
                 <ObjectiveCard
                   key={obj.id}

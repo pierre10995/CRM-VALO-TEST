@@ -42,7 +42,7 @@ export default function ObjectiveForm({ form, setForm, users, fiscalYears, selec
   return (
     <div className="card" style={{ marginBottom: 20, padding: 20, background: "#f0fdf4", border: "1px solid #bbf7d0" }}>
       <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", marginBottom: 14 }}>Nouvel objectif</div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 12, marginBottom: 12 }}>
+      <div className="resp-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 12, marginBottom: 12 }}>
         <div>
           <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", marginBottom: 4, display: "block" }}>Utilisateur *</label>
           <select className="input" value={form.userId || ""} onChange={e => setForm(p => ({ ...p, userId: e.target.value }))}>
@@ -72,7 +72,7 @@ export default function ObjectiveForm({ form, setForm, users, fiscalYears, selec
           </select>
         </div>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 12, marginBottom: 12 }}>
+      <div className="resp-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 12, marginBottom: 12 }}>
         <div>
           <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", marginBottom: 4, display: "block" }}>Obj. nouveaux clients</label>
           <input className="input" type="number" value={form.targetNewClients || ""} onChange={e => setForm(p => ({ ...p, targetNewClients: e.target.value }))} placeholder="5" />

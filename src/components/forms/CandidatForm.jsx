@@ -131,7 +131,7 @@ export default function CandidatForm({ form, setForm, onSave, onCancel, sectors 
         )}
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+      <div className="resp-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
         <Field label="Nom *"><input className="input" value={form.name || ""} onChange={e => f("name", e.target.value)} placeholder="Prénom Nom" /></Field>
         <Field label="Email"><input className="input" type="email" value={form.email || ""} onChange={e => f("email", e.target.value)} onBlur={checkDuplicate} placeholder="email@exemple.ca" /></Field>
       </div>
@@ -140,11 +140,11 @@ export default function CandidatForm({ form, setForm, onSave, onCancel, sectors 
           <strong>Doublon potentiel :</strong> {duplicates.map(d => `${d.name} (${d.email || d.phone})`).join(", ")}
         </div>
       )}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+      <div className="resp-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
         <Field label="Telephone"><input className="input" value={form.phone || ""} onChange={e => f("phone", e.target.value)} onBlur={checkDuplicate} placeholder="(514) 555-0000" /></Field>
         <Field label="Ville"><input className="input" value={form.city || ""} onChange={e => f("city", e.target.value)} placeholder="Montréal" /></Field>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+      <div className="resp-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
         <Field label="Salaire souhaité ($ CAD)"><input className="input" type="number" value={form.salaryExpectation || ""} onChange={e => f("salaryExpectation", e.target.value)} placeholder="75000" /></Field>
         <Field label="Disponibilité"><input className="input" value={form.availability || ""} onChange={e => f("availability", e.target.value)} placeholder="Immédiate, 2 semaines..." /></Field>
       </div>

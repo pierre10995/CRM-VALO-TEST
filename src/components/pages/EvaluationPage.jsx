@@ -52,7 +52,7 @@ export default function EvaluationPage({ candidates, missions, loadAll }) {
 
       <div className="card" style={{ marginBottom: 24 }}>
         <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", marginBottom: 16 }}>Lancer une évaluation</div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: 12, alignItems: "end" }}>
+        <div className="resp-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: 12, alignItems: "end" }}>
           <div>
             <label style={{ fontSize: 12, fontWeight: 600, color: "#64748b", marginBottom: 6, display: "block" }}>Candidat</label>
             <SearchSelect
@@ -104,7 +104,7 @@ export default function EvaluationPage({ candidates, missions, loadAll }) {
 
             {ev.summary && <div style={{ fontSize: 13, color: "#374151", marginBottom: 14, lineHeight: 1.6, fontStyle: "italic", background: "#f8fafc", borderRadius: 8, padding: 12 }}>{ev.summary}</div>}
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+            <div className="resp-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
               <div>
                 <div style={{ fontSize: 11, fontWeight: 700, color: "#059669", marginBottom: 6 }}>POINTS POSITIFS</div>
                 {positives.map((p, i) => (

@@ -130,7 +130,7 @@ export default function PipelinePage({ candidatures, candidates, missions, users
           <h1 style={{ fontSize: 26, fontWeight: 800, color: "#0f172a" }}>Pipeline</h1>
           <p style={{ fontSize: 13.5, color: "#64748b", marginTop: 3 }}>Glissez-déposez les candidatures entre les colonnes</p>
         </div>
-        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+        <div className="page-header-actions" style={{ display: "flex", gap: 10, alignItems: "center" }}>
           {ownerOptions.length > 0 && (
             <select
               value={filterOwner}
@@ -168,7 +168,7 @@ export default function PipelinePage({ candidatures, candidates, missions, users
         return (
           <div className="card" style={{ marginBottom: 20, padding: 16 }}>
             <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", marginBottom: 14 }}>Analytique Pipeline</div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 16 }}>
+            <div className="resp-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 16 }}>
               {[
                 { label: "Total candidatures", value: total, color: "#3b82f6" },
                 { label: "En cours", value: active, color: "#f59e0b" },
@@ -193,7 +193,7 @@ export default function PipelinePage({ candidatures, candidates, missions, users
           </div>
         );
       })()}
-      <div style={{ display: "grid", gridTemplateColumns: `repeat(${allCols.length}, 1fr)`, gap: 12, overflowX: "auto" }}>
+      <div className="resp-grid" style={{ display: "grid", gridTemplateColumns: `repeat(${allCols.length}, 1fr)`, gap: 12, overflowX: "auto" }}>
         {allCols.map(col => {
           const items = filteredCandidatures.filter(cd => cd.stage === col.key);
           const isOver = dropTarget === col.key;

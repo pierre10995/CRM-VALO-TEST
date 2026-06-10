@@ -107,7 +107,7 @@ export default function CandidatsPage({ contacts, search, setSearch, onAdd, onEd
           <h1 style={{ fontSize: 26, fontWeight: 800, color: "#0f172a" }}>Candidats</h1>
           <p style={{ fontSize: 13.5, color: "#64748b", marginTop: 3 }}>{filtered.length} candidat{filtered.length > 1 ? "s" : ""}</p>
         </div>
-        <div style={{ display: "flex", gap: 10 }}>
+        <div className="page-header-actions" style={{ display: "flex", gap: 10 }}>
           <button
             className={`btn ${showBulkUpload ? "btn-ghost" : "btn-primary"}`}
             style={{ fontSize: 13 }}

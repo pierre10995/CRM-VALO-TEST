@@ -31,4 +31,9 @@ export const GLOBAL_STYLES = `
   .app-sidebar .sidebar-text { display: none !important; }
   .app-sidebar .nav-item { justify-content: center; padding: 10px !important; }
 }
+/* Les grilles (KPI, formulaires, fiches) passent en une colonne sur mobile */
+@media (max-width: 640px) {
+  .resp-grid { grid-template-columns: 1fr !important; }
+  .page-header-actions { flex-wrap: wrap; }
+}
 `;
