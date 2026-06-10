@@ -2,13 +2,14 @@ import { useState, useRef } from "react";
 import { exportCsv } from "../../utils/exportCsv";
 import api from "../../services/api";
 import { useToast } from "../common/Toast";
+import usePersistedState from "../../hooks/usePersistedState";
 
 export default function PipelinePage({ candidatures, candidates, missions, users, onEdit, onAdd, onDelete, loadAll }) {
   const toast = useToast();
   const [draggedId, setDraggedId] = useState(null);
   const [dropTarget, setDropTarget] = useState(null);
   const [showStats, setShowStats] = useState(false);
-  const [filterOwner, setFilterOwner] = useState("all");
+  const [filterOwner, setFilterOwner] = usePersistedState("pipeline.filterOwner", "all");
   const dragRef = useRef(null);
 
   const partnerCol = { key: "Proposition partenaire", label: "Proposition partenaire", color: "#059669", bg: "#f0fdf4", border: "#a7f3d0" };

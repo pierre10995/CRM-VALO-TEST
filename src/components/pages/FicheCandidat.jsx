@@ -3,9 +3,11 @@ import api from "../../services/api";
 import { fmtCAD } from "../../utils/constants";
 import AuditHistory from "../common/AuditHistory";
 import { useToast } from "../common/Toast";
+import { useConfirm } from "../common/ConfirmDialog";
 
 export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, candidatures, missions, loadAll, validationStatuses = [] }) {
   const toast = useToast();
+  const confirm = useConfirm();
   const [files, setFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [evaluations, setEvaluations] = useState([]);
@@ -135,44 +137,44 @@ export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, c
       {/* Info section */}
       <div className="resp-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
         <div style={{ background: "#f8fafc", borderRadius: 10, padding: 12 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", marginBottom: 4 }}>EMAIL</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", marginBottom: 4 }}>EMAIL</div>
           <div style={{ fontSize: 13, color: "#0f172a" }}>{c.email || "—"}</div>
         </div>
         <div style={{ background: "#f8fafc", borderRadius: 10, padding: 12 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", marginBottom: 4 }}>TELEPHONE</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", marginBottom: 4 }}>TELEPHONE</div>
           <div style={{ fontSize: 13, color: "#0f172a" }}>{c.phone || "—"}</div>
         </div>
         <div style={{ background: "#f8fafc", borderRadius: 10, padding: 12 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", marginBottom: 4 }}>VILLE</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", marginBottom: 4 }}>VILLE</div>
           <div style={{ fontSize: 13, color: "#0f172a" }}>{c.city || "—"}</div>
         </div>
         <div style={{ background: "#f8fafc", borderRadius: 10, padding: 12 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", marginBottom: 4 }}>SALAIRE SOUHAITE</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", marginBottom: 4 }}>SALAIRE SOUHAITE</div>
           <div style={{ fontSize: 13, color: "#0f172a", fontWeight: 600 }}>{c.salaryExpectation > 0 ? fmtCAD(c.salaryExpectation) : "—"}</div>
         </div>
         <div style={{ background: "#f8fafc", borderRadius: 10, padding: 12 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", marginBottom: 4 }}>DISPONIBILITE</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", marginBottom: 4 }}>DISPONIBILITE</div>
           <div style={{ fontSize: 13, color: "#0f172a" }}>{c.availability || "—"}</div>
         </div>
         <div style={{ background: "#f8fafc", borderRadius: 10, padding: 12 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", marginBottom: 4 }}>SECTEUR</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", marginBottom: 4 }}>SECTEUR</div>
           <div style={{ fontSize: 13, color: "#0f172a" }}>{c.sector || "—"}</div>
         </div>
         <div style={{ background: "#f8fafc", borderRadius: 10, padding: 12, gridColumn: "1 / -1" }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", marginBottom: 4 }}>LINKEDIN</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", marginBottom: 4 }}>LINKEDIN</div>
           <div style={{ fontSize: 13 }}>
             {c.linkedin ? <a href={c.linkedin} target="_blank" rel="noopener noreferrer" style={{ color: "#2563eb", textDecoration: "none" }}>{c.linkedin}</a> : <span style={{ color: "#0f172a" }}>—</span>}
           </div>
         </div>
         <div style={{ background: "#f8fafc", borderRadius: 10, padding: 12, gridColumn: "1 / -1" }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", marginBottom: 4 }}>POSTE CIBLÉ</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", marginBottom: 4 }}>POSTE CIBLÉ</div>
           <div style={{ fontSize: 13, color: "#0f172a", fontWeight: 600 }}>{c.targetPosition || "—"}</div>
         </div>
       </div>
 
       {/* Statut validation */}
       <div style={{ marginBottom: 20 }}>
-        <div style={{ fontSize: 12, fontWeight: 700, color: "#94a3b8", marginBottom: 8 }}>STATUT VALIDATION</div>
+        <div style={{ fontSize: 12, fontWeight: 700, color: "#64748b", marginBottom: 8 }}>STATUT VALIDATION</div>
         {c.validationStatus ? (() => {
           const vs = validationStatuses.find(s => s.label === c.validationStatus);
           const vc = vs ? { bg: vs.bg, color: vs.color } : { bg: "#f1f5f9", color: "#64748b" };
@@ -183,7 +185,7 @@ export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, c
       {/* Skills */}
       {c.skills && (
         <div style={{ marginBottom: 20 }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: "#94a3b8", marginBottom: 8 }}>COMPETENCES</div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "#64748b", marginBottom: 8 }}>COMPETENCES</div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
             {c.skills.split(",").filter(Boolean).map((s, i) => (
               <span key={i} style={{ fontSize: 12, background: "#eff6ff", color: "#2563eb", padding: "4px 12px", borderRadius: 16, fontWeight: 500 }}>{s.trim()}</span>
@@ -195,7 +197,7 @@ export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, c
       {/* Notes */}
       {c.notes && (
         <div style={{ background: "#f8fafc", borderRadius: 10, padding: 12, marginBottom: 20 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", marginBottom: 4 }}>NOTES</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", marginBottom: 4 }}>NOTES</div>
           <div style={{ fontSize: 13, color: "#374151", lineHeight: 1.5 }}>{c.notes}</div>
         </div>
       )}
@@ -215,7 +217,7 @@ export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, c
             <span style={{ fontSize: 11, color: "#94a3b8" }}>{new Date(f.created_at).toLocaleDateString("fr-CA")}</span>
             <button className="btn btn-primary" style={{ padding: "4px 10px", fontSize: 11 }} onClick={() => previewFile(f.id, f.file_name)}>Voir</button>
             <button className="btn btn-ghost" style={{ padding: "4px 10px", fontSize: 11 }} onClick={() => downloadFile(f.id, f.file_name)}>Télécharger</button>
-            <button className="btn btn-danger" style={{ padding: "4px 10px", fontSize: 11 }} onClick={() => window.confirm("Attention : cette suppression est définitive. Voulez-vous continuer ?") && deleteFile(f.id)}>Suppr.</button>
+            <button className="btn btn-danger" style={{ padding: "4px 10px", fontSize: 11 }} onClick={async () => (await confirm("Cette suppression est définitive. Voulez-vous continuer ?", { title: "Supprimer définitivement", confirmLabel: "Supprimer" })) && deleteFile(f.id)}>Suppr.</button>
           </div>
         ))}
       </div>
@@ -234,14 +236,14 @@ export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, c
             <div style={{ background: "#f0f9ff", borderRadius: 10, padding: 14, border: "1px solid #bae6fd" }}>
               <p style={{ fontSize: 13, color: "#0f172a", lineHeight: 1.6, marginBottom: 10 }}>{cvSummary.summary}</p>
               <div className="resp-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
-                {cvSummary.current_role && <div><span style={{ fontSize: 10, fontWeight: 700, color: "#94a3b8" }}>POSTE ACTUEL</span><div style={{ fontSize: 12, color: "#0f172a" }}>{cvSummary.current_role}</div></div>}
-                {cvSummary.experience_years && <div><span style={{ fontSize: 10, fontWeight: 700, color: "#94a3b8" }}>EXPERIENCE</span><div style={{ fontSize: 12, color: "#0f172a" }}>{cvSummary.experience_years} ans</div></div>}
-                {cvSummary.education && <div><span style={{ fontSize: 10, fontWeight: 700, color: "#94a3b8" }}>FORMATION</span><div style={{ fontSize: 12, color: "#0f172a" }}>{cvSummary.education}</div></div>}
-                {cvSummary.salary_estimate && <div><span style={{ fontSize: 10, fontWeight: 700, color: "#94a3b8" }}>SALAIRE ESTIME</span><div style={{ fontSize: 12, color: "#0f172a" }}>{cvSummary.salary_estimate}</div></div>}
+                {cvSummary.current_role && <div><span style={{ fontSize: 10, fontWeight: 700, color: "#64748b" }}>POSTE ACTUEL</span><div style={{ fontSize: 12, color: "#0f172a" }}>{cvSummary.current_role}</div></div>}
+                {cvSummary.experience_years && <div><span style={{ fontSize: 10, fontWeight: 700, color: "#64748b" }}>EXPERIENCE</span><div style={{ fontSize: 12, color: "#0f172a" }}>{cvSummary.experience_years} ans</div></div>}
+                {cvSummary.education && <div><span style={{ fontSize: 10, fontWeight: 700, color: "#64748b" }}>FORMATION</span><div style={{ fontSize: 12, color: "#0f172a" }}>{cvSummary.education}</div></div>}
+                {cvSummary.salary_estimate && <div><span style={{ fontSize: 10, fontWeight: 700, color: "#64748b" }}>SALAIRE ESTIME</span><div style={{ fontSize: 12, color: "#0f172a" }}>{cvSummary.salary_estimate}</div></div>}
               </div>
               {cvSummary.key_skills?.length > 0 && (
                 <div style={{ marginBottom: 8 }}>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: "#94a3b8" }}>COMPETENCES CLES</span>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: "#64748b" }}>COMPETENCES CLES</span>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 4 }}>
                     {cvSummary.key_skills.map((s, i) => <span key={i} style={{ fontSize: 11, background: "#dbeafe", color: "#2563eb", padding: "2px 8px", borderRadius: 10 }}>{s}</span>)}
                   </div>
@@ -249,13 +251,13 @@ export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, c
               )}
               {cvSummary.languages?.length > 0 && (
                 <div style={{ marginBottom: 8 }}>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: "#94a3b8" }}>LANGUES</span>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: "#64748b" }}>LANGUES</span>
                   <div style={{ fontSize: 12, color: "#0f172a", marginTop: 2 }}>{cvSummary.languages.join(", ")}</div>
                 </div>
               )}
               {cvSummary.strengths?.length > 0 && (
                 <div>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: "#94a3b8" }}>POINTS FORTS</span>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: "#64748b" }}>POINTS FORTS</span>
                   <ul style={{ margin: "4px 0 0 16px", padding: 0 }}>
                     {cvSummary.strengths.map((s, i) => <li key={i} style={{ fontSize: 12, color: "#374151", lineHeight: 1.5 }}>{s}</li>)}
                   </ul>
@@ -281,7 +283,7 @@ export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, c
             <span style={{ fontSize: 11, color: "#94a3b8" }}>{new Date(f.created_at).toLocaleDateString("fr-CA")}</span>
             <button className="btn btn-primary" style={{ padding: "4px 10px", fontSize: 11 }} onClick={() => previewFile(f.id, f.file_name)}>Voir</button>
             <button className="btn btn-ghost" style={{ padding: "4px 10px", fontSize: 11 }} onClick={() => downloadFile(f.id, f.file_name)}>Télécharger</button>
-            <button className="btn btn-danger" style={{ padding: "4px 10px", fontSize: 11 }} onClick={() => window.confirm("Attention : cette suppression est définitive. Voulez-vous continuer ?") && deleteFile(f.id)}>Suppr.</button>
+            <button className="btn btn-danger" style={{ padding: "4px 10px", fontSize: 11 }} onClick={async () => (await confirm("Cette suppression est définitive. Voulez-vous continuer ?", { title: "Supprimer définitivement", confirmLabel: "Supprimer" })) && deleteFile(f.id)}>Suppr.</button>
           </div>
         ))}
       </div>
@@ -308,7 +310,7 @@ export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, c
               <div key={ev.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "#f8fafc", borderRadius: 8, marginBottom: 6 }}>
                 <div style={{ width: 32, height: 32, borderRadius: "50%", background: ev.score >= 70 ? "#ecfdf5" : ev.score >= 40 ? "#fffbeb" : "#fef2f2", border: `2px solid ${scoreColor}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 800, color: scoreColor }}>{ev.score}</div>
                 <span style={{ fontSize: 13, color: "#0f172a", flex: 1 }}>{ev.missionTitle} — {ev.missionCompany}</span>
-                <button className="btn btn-danger" style={{ padding: "4px 8px", fontSize: 10 }} onClick={() => window.confirm("Attention : cette suppression est définitive. Voulez-vous continuer ?") && deleteEvaluation(ev.id)}>Suppr.</button>
+                <button className="btn btn-danger" style={{ padding: "4px 8px", fontSize: 10 }} onClick={async () => (await confirm("Cette suppression est définitive. Voulez-vous continuer ?", { title: "Supprimer définitivement", confirmLabel: "Supprimer" })) && deleteEvaluation(ev.id)}>Suppr.</button>
               </div>
             );
           })}
@@ -344,7 +346,7 @@ export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, c
       {/* Actions */}
       <div style={{ display: "flex", gap: 10 }}>
         <button className="btn btn-ghost" style={{ flex: 1, justifyContent: "center" }} onClick={onEdit}>Modifier</button>
-        <button className="btn btn-danger" style={{ flex: 1, justifyContent: "center" }} onClick={() => window.confirm("Attention : cette suppression est définitive. Voulez-vous continuer ?") && onDelete()}>Supprimer</button>
+        <button className="btn btn-danger" style={{ flex: 1, justifyContent: "center" }} onClick={async () => (await confirm("Cette suppression est définitive. Voulez-vous continuer ?", { title: "Supprimer définitivement", confirmLabel: "Supprimer" })) && onDelete()}>Supprimer</button>
       </div>
 
       {/* PDF Preview Modal */}

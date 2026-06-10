@@ -5,8 +5,10 @@ import useRevenue from "../../hooks/useRevenue";
 import KPICard from "../common/KPICard";
 import RevenueChart from "../revenue/RevenueChart";
 import FiscalYearTable from "../revenue/FiscalYearTable";
+import { useConfirm } from "../common/ConfirmDialog";
 
 export default function RevenuePage({ contacts, missions, candidatures, users, fiscalYears: propFiscalYears, loadAll }) {
+  const confirm = useConfirm();
   const [activeOnglet, setActiveOnglet] = useState("total");
   const [fiscalYears, setFiscalYears] = useState(propFiscalYears || []);
   const [selectedYear, setSelectedYear] = useState("all");
@@ -40,7 +42,7 @@ export default function RevenuePage({ contacts, missions, candidatures, users, f
   };
 
   const deleteFiscalYear = async (id) => {
-    if (!window.confirm("Supprimer cette année fiscale ?")) return;
+    if (!(await confirm("Supprimer cette année fiscale ?", { confirmLabel: "Supprimer" }))) return;
     await api.del(`/api/fiscal-years/${id}`);
     if (selectedYear === String(id)) setSelectedYear("all");
     if (loadAll) await loadAll();

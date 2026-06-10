@@ -1,14 +1,25 @@
+import { useState } from "react";
 import { CONTRACT_TYPES, MISSION_STATUSES, PRIORITIES } from "../../utils/constants";
 import Field from "../common/Field";
 
 export default function MissionForm({ form, setForm, onSave, onCancel, contacts, users, fiscalYears, workModes = [], saving }) {
   const f = (k, v) => setForm(p => ({ ...p, [k]: v }));
+  const [errors, setErrors] = useState({});
+
+  const handleSave = () => {
+    const errs = {};
+    if (!form.title?.trim()) errs.title = "Le titre du poste est requis";
+    if (!form.company?.trim()) errs.company = "L'entreprise est requise";
+    setErrors(errs);
+    if (Object.keys(errs).length > 0) return;
+    onSave();
+  };
   const clientContacts = contacts.filter(c => c.status === "Client" || c.status === "Prospect");
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-      <Field label="Titre du poste *"><input className="input" value={form.title || ""} onChange={e => f("title", e.target.value)} placeholder="Développeur Full Stack" /></Field>
+      <Field label="Titre du poste *" error={errors.title}><input className="input" value={form.title || ""} onChange={e => f("title", e.target.value)} placeholder="Développeur Full Stack" /></Field>
       <div className="resp-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-        <Field label="Entreprise *"><input className="input" value={form.company || ""} onChange={e => f("company", e.target.value)} placeholder="Nom entreprise" /></Field>
+        <Field label="Entreprise *" error={errors.company}><input className="input" value={form.company || ""} onChange={e => f("company", e.target.value)} placeholder="Nom entreprise" /></Field>
         <Field label="Lieu"><input className="input" value={form.location || ""} onChange={e => f("location", e.target.value)} placeholder="Montréal" /></Field>
       </div>
       <div className="resp-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 12 }}>
@@ -58,7 +69,7 @@ export default function MissionForm({ form, setForm, onSave, onCancel, contacts,
       <Field label="Date limite"><input className="input" type="date" value={form.deadline || ""} onChange={e => f("deadline", e.target.value)} /></Field>
       <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
         <button className="btn btn-ghost" onClick={onCancel}>Annuler</button>
-        <button className="btn btn-primary" onClick={onSave} disabled={saving}>{saving ? "Enregistrement..." : form.id ? "Enregistrer" : "Créer"}</button>
+        <button className="btn btn-primary" onClick={handleSave} disabled={saving}>{saving && <span className="spinner" />}{saving ? "Enregistrement..." : form.id ? "Enregistrer" : "Créer"}</button>
       </div>
     </div>
   );

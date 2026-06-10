@@ -1,7 +1,9 @@
 import { useState } from "react";
 import api from "../../services/api";
+import { useConfirm } from "../common/ConfirmDialog";
 
 export default function PartnerSubmitForm({ missionId, missionTitle, onClose, onSubmitted }) {
+  const confirm = useConfirm();
   const [form, setForm] = useState({ name: "", email: "", phone: "", summary: "" });
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -56,8 +58,8 @@ export default function PartnerSubmitForm({ missionId, missionTitle, onClose, on
 
   const formDirty = form.name || form.email || form.phone || form.summary || file;
 
-  const handleClose = () => {
-    if (formDirty && !window.confirm("Êtes-vous sûr de vouloir quitter ? Les informations saisies seront perdues.")) return;
+  const handleClose = async () => {
+    if (formDirty && !(await confirm("Les informations saisies seront perdues. Quitter quand même ?", { title: "Modifications non enregistrées", confirmLabel: "Quitter sans enregistrer" }))) return;
     onClose();
   };
 
@@ -68,7 +70,7 @@ export default function PartnerSubmitForm({ missionId, missionTitle, onClose, on
     if (emailBlocked) return setError("Ce candidat est déjà connu de notre entreprise. Soumission impossible.");
     if (!file) return setError("Veuillez joindre un CV (PDF).");
 
-    if (!window.confirm(`Confirmez-vous la soumission du candidat « ${form.name.trim()} » pour la mission « ${missionTitle} » ?`)) return;
+    if (!(await confirm(`Confirmez-vous la soumission du candidat « ${form.name.trim()} » pour la mission « ${missionTitle} » ?`, { title: "Soumettre le candidat", danger: false, confirmLabel: "Soumettre" }))) return;
 
     setLoading(true);
     try {

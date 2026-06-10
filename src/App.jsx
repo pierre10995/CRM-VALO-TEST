@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import api from "./services/api";
 import { GLOBAL_STYLES } from "./utils/styles";
 
@@ -7,6 +7,7 @@ import LoginScreen from "./components/LoginScreen";
 import Sidebar from "./components/Sidebar";
 import ModalWrapper from "./components/common/ModalWrapper";
 import { ToastProvider, useToast } from "./components/common/Toast";
+import { ConfirmProvider, useConfirm } from "./components/common/ConfirmDialog";
 
 // Pages
 import DashboardPage from "./components/pages/DashboardPage";
@@ -36,13 +37,16 @@ import ActivityForm from "./components/forms/ActivityForm";
 export default function CRM() {
   return (
     <ToastProvider>
-      <CRMInner />
+      <ConfirmProvider>
+        <CRMInner />
+      </ConfirmProvider>
     </ToastProvider>
   );
 }
 
 function CRMInner() {
   const toast = useToast();
+  const confirm = useConfirm();
   const [authed, setAuthed] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [loginForm, setLoginForm] = useState({ login: "", password: "" });
@@ -61,10 +65,13 @@ function CRMInner() {
   const [sectors, setSectors] = useState([]);
   const [workModes, setWorkModes] = useState([]);
   const [validationStatuses, setValidationStatuses] = useState([]);
+  const [loaded, setLoaded] = useState(false);
 
   // UI state
   const [modal, setModal] = useState(null);
   const [form, setForm] = useState({});
+  // Instantané du formulaire à l'ouverture, pour détecter les modifications non enregistrées
+  const initialFormRef = useRef("");
   const [detailId, setDetailId] = useState(null);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("Tous");
@@ -92,6 +99,7 @@ function CRMInner() {
     results.forEach((r, i) => {
       if (r.status === "fulfilled") endpoints[i][1](r.value);
     });
+    setLoaded(true);
   };
 
   useEffect(() => {
@@ -157,6 +165,20 @@ function CRMInner() {
       throw new Error(err.error || "L'opération a échoué");
     }
     return res;
+  };
+
+  // Ouverture/fermeture des modales de formulaire avec garde-fou :
+  // fermer un formulaire modifié demande confirmation avant de perdre la saisie.
+  const openModal = (type, data) => {
+    setModal(type);
+    setForm(data);
+    initialFormRef.current = JSON.stringify(data);
+  };
+
+  const closeModal = async () => {
+    const dirty = JSON.stringify(form) !== initialFormRef.current;
+    if (dirty && !(await confirm("Des modifications n'ont pas été enregistrées. Fermer quand même ?", { title: "Modifications non enregistrées", confirmLabel: "Fermer sans enregistrer" }))) return;
+    setModal(null);
   };
 
   const saveContact = withSaving(async () => {
@@ -256,12 +278,12 @@ function CRMInner() {
 
       {/* Main Content */}
       <main className="app-main" style={{ flex: 1, overflow: "auto", padding: 28 }}>
-        {activeTab === "dashboard" && <DashboardPage stats={stats} activities={activities} contacts={contacts} missions={missions} candidatures={candidatures} fiscalYears={fiscalYears} />}
-        {activeTab === "clients" && <ClientsPage contacts={clients} missions={missions} candidatures={candidatures} users={users} search={search} setSearch={setSearch} filterStatus={filterStatus} setFilterStatus={setFilterStatus} onAdd={() => { setModal("client"); setForm({ status: "Prospect", sector: "Tech", revenue: 0 }); }} onEdit={c => { setModal("client"); setForm({ ...c }); }} onDelete={deleteContact} onDetail={id => setDetailId(id)} detailId={detailId} setDetailId={setDetailId} />}
-        {activeTab === "candidats" && <CandidatsPage contacts={candidates} search={search} setSearch={setSearch} onAdd={() => { setModal("candidat"); setForm({ status: "Candidat", sector: "Tech", salaryExpectation: 0 }); }} onEdit={c => { setModal("candidat"); setForm({ ...c }); }} onDelete={deleteContact} onDetail={id => setDetailId(id)} detailId={detailId} setDetailId={setDetailId} candidatures={candidatures} missions={missions} loadAll={loadAll} validationStatuses={validationStatuses} users={users} />}
-        {activeTab === "missions" && <MissionsPage missions={missions} contacts={contacts} users={users} candidatures={candidatures} onAdd={() => { setModal("mission"); setForm({ status: "Ouverte", priority: "Normale", contractType: "CDI" }); }} onEdit={m => { setModal("mission"); setForm({ ...m }); }} onDelete={deleteMission} />}
-        {activeTab === "pipeline" && <PipelinePage candidatures={candidatures} candidates={candidates} missions={missions} users={users} onEdit={cd => { setModal("candidature"); setForm({ ...cd }); }} onAdd={() => { setModal("candidature"); setForm({ stage: "Présélectionné", rating: 0 }); }} onDelete={deleteCandidature} loadAll={loadAll} />}
-        {activeTab === "activites" && <ActivitesPage activities={activities} contacts={contacts} missions={missions} users={users} currentUser={currentUser} onAdd={() => { setModal("activity"); setForm({ type: "Appel" }); }} onToggle={toggleActivity} onDelete={deleteActivity} />}
+        {activeTab === "dashboard" && <DashboardPage stats={stats} activities={activities} contacts={contacts} missions={missions} candidatures={candidatures} fiscalYears={fiscalYears} loaded={loaded} />}
+        {activeTab === "clients" && <ClientsPage contacts={clients} missions={missions} candidatures={candidatures} users={users} search={search} setSearch={setSearch} filterStatus={filterStatus} setFilterStatus={setFilterStatus} onAdd={() => openModal("client", { status: "Prospect", sector: "Tech", revenue: 0 })} onEdit={c => openModal("client", { ...c })} onDelete={deleteContact} onDetail={id => setDetailId(id)} detailId={detailId} setDetailId={setDetailId} />}
+        {activeTab === "candidats" && <CandidatsPage contacts={candidates} search={search} setSearch={setSearch} onAdd={() => openModal("candidat", { status: "Candidat", sector: "Tech", salaryExpectation: 0 })} onEdit={c => openModal("candidat", { ...c })} onDelete={deleteContact} onDetail={id => setDetailId(id)} detailId={detailId} setDetailId={setDetailId} candidatures={candidatures} missions={missions} loadAll={loadAll} validationStatuses={validationStatuses} users={users} />}
+        {activeTab === "missions" && <MissionsPage missions={missions} contacts={contacts} users={users} candidatures={candidatures} onAdd={() => openModal("mission", { status: "Ouverte", priority: "Normale", contractType: "CDI" })} onEdit={m => openModal("mission", { ...m })} onDelete={deleteMission} />}
+        {activeTab === "pipeline" && <PipelinePage candidatures={candidatures} candidates={candidates} missions={missions} users={users} onEdit={cd => openModal("candidature", { ...cd })} onAdd={() => openModal("candidature", { stage: "Présélectionné", rating: 0 })} onDelete={deleteCandidature} loadAll={loadAll} />}
+        {activeTab === "activites" && <ActivitesPage activities={activities} contacts={contacts} missions={missions} users={users} currentUser={currentUser} onAdd={() => openModal("activity", { type: "Appel" })} onToggle={toggleActivity} onDelete={deleteActivity} />}
         {activeTab === "evaluation" && <EvaluationPage candidates={candidates} missions={missions} loadAll={loadAll} />}
         {activeTab === "placements" && <PlacementsPage candidatures={candidatures} candidates={candidates} missions={missions} />}
         {activeTab === "revenue" && <RevenuePage contacts={contacts} missions={missions} candidatures={candidatures} users={users} fiscalYears={fiscalYears} loadAll={loadAll} />}
@@ -273,28 +295,28 @@ function CRMInner() {
 
       {/* Modals */}
       {modal === "client" && (
-        <ModalWrapper onClose={() => setModal(null)} title={form.id ? "Modifier le client" : "Nouveau client"}>
-          <ClientForm form={form} setForm={setForm} onSave={saveContact} onCancel={() => setModal(null)} sectors={sectors} users={users} saving={saving} />
+        <ModalWrapper onClose={closeModal} title={form.id ? "Modifier le client" : "Nouveau client"}>
+          <ClientForm form={form} setForm={setForm} onSave={saveContact} onCancel={closeModal} sectors={sectors} users={users} saving={saving} />
         </ModalWrapper>
       )}
       {modal === "candidat" && (
-        <ModalWrapper onClose={() => setModal(null)} title={form.id ? "Modifier le candidat" : "Nouveau candidat"}>
-          <CandidatForm form={form} setForm={setForm} onSave={saveContact} onCancel={() => setModal(null)} sectors={sectors} validationStatuses={validationStatuses} onStatusesChanged={loadAll} users={users} saving={saving} />
+        <ModalWrapper onClose={closeModal} title={form.id ? "Modifier le candidat" : "Nouveau candidat"}>
+          <CandidatForm form={form} setForm={setForm} onSave={saveContact} onCancel={closeModal} sectors={sectors} validationStatuses={validationStatuses} onStatusesChanged={loadAll} users={users} saving={saving} />
         </ModalWrapper>
       )}
       {modal === "mission" && (
-        <ModalWrapper onClose={() => setModal(null)} title={form.id ? "Modifier le poste" : "Nouveau poste"}>
-          <MissionForm form={form} setForm={setForm} onSave={saveMission} onCancel={() => setModal(null)} contacts={contacts} users={users} fiscalYears={fiscalYears} workModes={workModes} saving={saving} />
+        <ModalWrapper onClose={closeModal} title={form.id ? "Modifier le poste" : "Nouveau poste"}>
+          <MissionForm form={form} setForm={setForm} onSave={saveMission} onCancel={closeModal} contacts={contacts} users={users} fiscalYears={fiscalYears} workModes={workModes} saving={saving} />
         </ModalWrapper>
       )}
       {modal === "candidature" && (
-        <ModalWrapper onClose={() => setModal(null)} title={form.id ? "Modifier la candidature" : "Nouvelle candidature"}>
-          <CandidatureForm form={form} setForm={setForm} onSave={saveCandidature} onCancel={() => setModal(null)} candidates={candidates} missions={missions} saving={saving} />
+        <ModalWrapper onClose={closeModal} title={form.id ? "Modifier la candidature" : "Nouvelle candidature"}>
+          <CandidatureForm form={form} setForm={setForm} onSave={saveCandidature} onCancel={closeModal} candidates={candidates} missions={missions} saving={saving} />
         </ModalWrapper>
       )}
       {modal === "activity" && (
-        <ModalWrapper onClose={() => setModal(null)} title="Nouvelle activité">
-          <ActivityForm form={form} setForm={setForm} onSave={saveActivity} onCancel={() => setModal(null)} contacts={contacts} missions={missions} saving={saving} />
+        <ModalWrapper onClose={closeModal} title="Nouvelle activité">
+          <ActivityForm form={form} setForm={setForm} onSave={saveActivity} onCancel={closeModal} contacts={contacts} missions={missions} saving={saving} />
         </ModalWrapper>
       )}
     </div>

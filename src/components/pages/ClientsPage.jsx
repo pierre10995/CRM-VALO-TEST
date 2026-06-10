@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { fmtCAD } from "../../utils/constants";
 import Pagination from "../common/Pagination";
+import { useConfirm } from "../common/ConfirmDialog";
+import usePersistedState from "../../hooks/usePersistedState";
 
 const PAGE_SIZE = 25;
 
 export default function ClientsPage({ contacts, missions, candidatures, users, search, setSearch, filterStatus, setFilterStatus, onAdd, onEdit, onDelete, onDetail, detailId, setDetailId }) {
-  const [filterOwner, setFilterOwner] = useState("");
+  const confirm = useConfirm();
+  const [filterOwner, setFilterOwner] = usePersistedState("clients.filterOwner", "");
   const [page, setPage] = useState(1);
   // Compute total commissions from placed candidates per company
   const companyRevenue = {};
@@ -52,15 +55,15 @@ export default function ClientsPage({ contacts, missions, candidatures, users, s
       </div>
       <div className="card table-wrap" style={{ padding: 0, overflow: "auto" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 640 }}>
-          <thead><tr style={{ borderBottom: "1px solid #f1f5f9" }}>
+          <thead><tr style={{ borderBottom: "1px solid #e2e8f0" }}>
             {["Entreprise", "Secteur", "Statut", "CA ($ CAD)", "Actions"].map(h => (
-              <th key={h} style={{ padding: "14px 20px", textAlign: "left", fontSize: 11.5, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase" }}>{h}</th>
+              <th key={h} style={{ padding: "14px 20px", textAlign: "left", fontSize: 11.5, fontWeight: 700, color: "#64748b", textTransform: "uppercase" }}>{h}</th>
             ))}
           </tr></thead>
           <tbody>
             {filtered.length === 0 && <tr><td colSpan={5} style={{ padding: 40, textAlign: "center", color: "#94a3b8" }}>Aucune entreprise</td></tr>}
             {paged.map(c => (
-              <tr key={c.id} className="row-hover" style={{ borderBottom: "1px solid #f8fafc" }} onClick={() => onDetail(c.id)}>
+              <tr key={c.id} className="row-hover" style={{ borderBottom: "1px solid #eef2f7" }} onClick={() => onDetail(c.id)}>
                 <td style={{ padding: "14px 20px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                     <div style={{ width: 34, height: 34, background: "#dbeafe", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: "#1d4ed8" }}>{(c.company || c.name)[0]}</div>
@@ -76,7 +79,7 @@ export default function ClientsPage({ contacts, missions, candidatures, users, s
                 <td style={{ padding: "14px 20px" }} onClick={e => e.stopPropagation()}>
                   <div style={{ display: "flex", gap: 6 }}>
                     <button className="btn btn-ghost" style={{ padding: "6px 10px", fontSize: 12 }} onClick={() => onEdit(c)}>Modifier</button>
-                    <button className="btn btn-danger" style={{ padding: "6px 10px", fontSize: 12 }} onClick={() => window.confirm("Attention : cette suppression est définitive. Voulez-vous continuer ?") && onDelete(c.id)}>Suppr.</button>
+                    <button className="btn btn-danger" style={{ padding: "6px 10px", fontSize: 12 }} onClick={async () => (await confirm("Cette suppression est définitive. Voulez-vous continuer ?", { title: "Supprimer définitivement", confirmLabel: "Supprimer" })) && onDelete(c.id)}>Suppr.</button>
                   </div>
                 </td>
               </tr>
@@ -107,7 +110,7 @@ export default function ClientsPage({ contacts, missions, candidatures, users, s
             </div>
             <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
               <button className="btn btn-ghost" style={{ flex: 1, justifyContent: "center" }} onClick={() => { onEdit(detail); setDetailId(null); }}>Modifier</button>
-              <button className="btn btn-danger" style={{ flex: 1, justifyContent: "center" }} onClick={() => window.confirm("Attention : cette suppression est définitive. Voulez-vous continuer ?") && onDelete(detail.id)}>Supprimer</button>
+              <button className="btn btn-danger" style={{ flex: 1, justifyContent: "center" }} onClick={async () => (await confirm("Cette suppression est définitive. Voulez-vous continuer ?", { title: "Supprimer définitivement", confirmLabel: "Supprimer" })) && onDelete(detail.id)}>Supprimer</button>
             </div>
           </div>
         </div>

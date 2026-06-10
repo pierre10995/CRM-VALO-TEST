@@ -5,6 +5,9 @@ import api from "../../services/api";
 import FicheCandidat from "./FicheCandidat";
 import BulkCvUpload from "../BulkCvUpload";
 import Pagination from "../common/Pagination";
+import usePersistedState from "../../hooks/usePersistedState";
+import { useConfirm } from "../common/ConfirmDialog";
+import { useToast } from "../common/Toast";
 
 const PAGE_SIZE = 25;
 
@@ -19,17 +22,19 @@ const COLOR_PRESETS = [
 ];
 
 export default function CandidatsPage({ contacts, search, setSearch, onAdd, onEdit, onDelete, onDetail, detailId, setDetailId, candidatures, missions, loadAll, validationStatuses = [], users = [] }) {
-  const [filterSkill, setFilterSkill] = useState("");
-  const [filterValidation, setFilterValidation] = useState("");
-  const [filterOwner, setFilterOwner] = useState("");
+  const confirm = useConfirm();
+  const toast = useToast();
+  const [filterSkill, setFilterSkill] = usePersistedState("candidats.filterSkill", "");
+  const [filterValidation, setFilterValidation] = usePersistedState("candidats.filterValidation", "");
+  const [filterOwner, setFilterOwner] = usePersistedState("candidats.filterOwner", "");
   const [showStatusManager, setShowStatusManager] = useState(false);
   const [newStatusLabel, setNewStatusLabel] = useState("");
   const [newStatusColorIdx, setNewStatusColorIdx] = useState(0);
   const [showBulkUpload, setShowBulkUpload] = useState(false);
-  const [sortBy, setSortBy] = useState("name");
-  const [sortDir, setSortDir] = useState("asc");
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
+  const [sortBy, setSortBy] = usePersistedState("candidats.sortBy", "name");
+  const [sortDir, setSortDir] = usePersistedState("candidats.sortDir", "asc");
+  const [dateFrom, setDateFrom] = usePersistedState("candidats.dateFrom", "");
+  const [dateTo, setDateTo] = usePersistedState("candidats.dateTo", "");
   const [page, setPage] = useState(1);
   // Build color map from dynamic statuses
   const VALIDATION_COLORS = {};
@@ -45,12 +50,12 @@ export default function CandidatsPage({ contacts, search, setSearch, onAdd, onEd
       if (loadAll) await loadAll();
     } else {
       const err = await res.json();
-      alert(err.error || "Erreur");
+      toast.error(err.error || "Erreur");
     }
   };
 
   const deleteStatus = async (id) => {
-    if (!window.confirm("Supprimer ce statut de validation ?")) return;
+    if (!(await confirm("Supprimer ce statut de validation ?", { confirmLabel: "Supprimer" }))) return;
     await api.del(`/api/validation-statuses/${id}`);
     if (loadAll) await loadAll();
   };
@@ -182,9 +187,9 @@ export default function CandidatsPage({ contacts, search, setSearch, onAdd, onEd
       )}
       <div className="card table-wrap" style={{ padding: 0, overflow: "auto" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 640 }}>
-          <thead><tr style={{ borderBottom: "1px solid #f1f5f9" }}>
+          <thead><tr style={{ borderBottom: "1px solid #e2e8f0" }}>
             {[{ label: "Candidat", col: "name" }, { label: "Ville", col: "city" }, { label: "Compétences", col: null }, { label: "Statut", col: null }, { label: "Salaire", col: "salary" }, { label: "Actions", col: null }].map(h => (
-              <th key={h.label} onClick={() => h.col && handleSort(h.col)} style={{ padding: "14px 20px", textAlign: "left", fontSize: 11.5, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", cursor: h.col ? "pointer" : "default", userSelect: "none" }}>
+              <th key={h.label} onClick={() => h.col && handleSort(h.col)} style={{ padding: "14px 20px", textAlign: "left", fontSize: 11.5, fontWeight: 700, color: "#64748b", textTransform: "uppercase", cursor: h.col ? "pointer" : "default", userSelect: "none" }}>
                 {h.label}{h.col ? sortIcon(h.col) : ""}
               </th>
             ))}
@@ -194,7 +199,7 @@ export default function CandidatsPage({ contacts, search, setSearch, onAdd, onEd
             {paged.map(c => {
               const vc = VALIDATION_COLORS[c.validationStatus];
               return (
-              <tr key={c.id} className="row-hover" style={{ borderBottom: "1px solid #f8fafc" }} onClick={() => onDetail(c.id)}>
+              <tr key={c.id} className="row-hover" style={{ borderBottom: "1px solid #eef2f7" }} onClick={() => onDetail(c.id)}>
                 <td style={{ padding: "14px 20px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                     <div style={{ width: 34, height: 34, background: "#fef3c7", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: "#d97706" }}>{c.name[0]}</div>
@@ -219,7 +224,7 @@ export default function CandidatsPage({ contacts, search, setSearch, onAdd, onEd
                 <td style={{ padding: "14px 20px" }} onClick={e => e.stopPropagation()}>
                   <div style={{ display: "flex", gap: 6 }}>
                     <button className="btn btn-ghost" style={{ padding: "6px 10px", fontSize: 12 }} onClick={() => onEdit(c)}>Modifier</button>
-                    <button className="btn btn-danger" style={{ padding: "6px 10px", fontSize: 12 }} onClick={() => window.confirm("Attention : cette suppression est définitive. Voulez-vous continuer ?") && onDelete(c.id)}>Suppr.</button>
+                    <button className="btn btn-danger" style={{ padding: "6px 10px", fontSize: 12 }} onClick={async () => (await confirm("Cette suppression est définitive. Voulez-vous continuer ?", { title: "Supprimer définitivement", confirmLabel: "Supprimer" })) && onDelete(c.id)}>Suppr.</button>
                   </div>
                 </td>
               </tr>

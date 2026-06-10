@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import api from "../../services/api";
 import SearchSelect from "../common/SearchSelect";
+import { useConfirm } from "../common/ConfirmDialog";
 
 export default function PlacementsPage({ candidatures, candidates, missions }) {
+  const confirm = useConfirm();
   const [placements, setPlacements] = useState([]);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({});
@@ -62,7 +64,7 @@ export default function PlacementsPage({ candidatures, candidates, missions }) {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Attention : cette suppression est définitive. Voulez-vous continuer ?")) return;
+    if (!(await confirm("Cette suppression est définitive. Voulez-vous continuer ?", { title: "Supprimer définitivement", confirmLabel: "Supprimer" }))) return;
     await api.del(`/api/placements/${id}`);
     await loadPlacements();
   };
@@ -107,7 +109,7 @@ export default function PlacementsPage({ candidatures, candidates, missions }) {
           <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", marginBottom: 12 }}>Nouveau placement</div>
           <div className="resp-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 12 }}>
             <div>
-              <label style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", marginBottom: 4, display: "block" }}>CANDIDATURE PLACÉE *</label>
+              <label style={{ fontSize: 11, fontWeight: 700, color: "#64748b", marginBottom: 4, display: "block" }}>CANDIDATURE PLACÉE *</label>
               <SearchSelect
                 value={addForm.candidatureId || ""}
                 onChange={v => setAddForm(p => ({ ...p, candidatureId: v }))}
@@ -116,11 +118,11 @@ export default function PlacementsPage({ candidatures, candidates, missions }) {
               />
             </div>
             <div>
-              <label style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", marginBottom: 4, display: "block" }}>DATE DE DÉMARRAGE</label>
+              <label style={{ fontSize: 11, fontWeight: 700, color: "#64748b", marginBottom: 4, display: "block" }}>DATE DE DÉMARRAGE</label>
               <input className="input" type="date" value={addForm.startDate || ""} onChange={e => setAddForm(p => ({ ...p, startDate: e.target.value }))} />
             </div>
             <div>
-              <label style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", marginBottom: 4, display: "block" }}>FIN PÉRIODE D'ESSAI</label>
+              <label style={{ fontSize: 11, fontWeight: 700, color: "#64748b", marginBottom: 4, display: "block" }}>FIN PÉRIODE D'ESSAI</label>
               <input className="input" type="date" value={addForm.probationDate || ""} onChange={e => setAddForm(p => ({ ...p, probationDate: e.target.value }))} />
             </div>
           </div>

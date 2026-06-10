@@ -1,9 +1,19 @@
+import { useState } from "react";
 import { ACTIVITY_TYPES } from "../../utils/constants";
 import Field from "../common/Field";
 import SearchSelect from "../common/SearchSelect";
 
 export default function ActivityForm({ form, setForm, onSave, onCancel, contacts, missions, saving }) {
   const f = (k, v) => setForm(p => ({ ...p, [k]: v }));
+  const [errors, setErrors] = useState({});
+
+  const handleSave = () => {
+    const errs = {};
+    if (!form.subject?.trim()) errs.subject = "Le sujet est requis";
+    setErrors(errs);
+    if (Object.keys(errs).length > 0) return;
+    onSave();
+  };
 
   const contactOptions = contacts.map(c => ({ value: c.id, label: c.name, sub: [c.status, c.company].filter(Boolean).join(" — ") }));
   const missionOptions = missions.map(m => ({ value: m.id, label: m.title, sub: m.company }));
@@ -14,7 +24,7 @@ export default function ActivityForm({ form, setForm, onSave, onCancel, contacts
         <Field label="Type *">
           <select className="input" value={form.type || "Appel"} onChange={e => f("type", e.target.value)}>{ACTIVITY_TYPES.map(t => <option key={t}>{t}</option>)}</select>
         </Field>
-        <Field label="Sujet *"><input className="input" value={form.subject || ""} onChange={e => f("subject", e.target.value)} placeholder="Objet de l'activité" /></Field>
+        <Field label="Sujet *" error={errors.subject}><input className="input" value={form.subject || ""} onChange={e => f("subject", e.target.value)} placeholder="Objet de l'activité" /></Field>
       </div>
       <div className="resp-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
         <Field label="Contact">
@@ -28,7 +38,7 @@ export default function ActivityForm({ form, setForm, onSave, onCancel, contacts
       <Field label="Échéance"><input className="input" type="datetime-local" value={form.dueDate || ""} onChange={e => f("dueDate", e.target.value)} /></Field>
       <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
         <button className="btn btn-ghost" onClick={onCancel}>Annuler</button>
-        <button className="btn btn-primary" onClick={onSave} disabled={saving}>{saving ? "Enregistrement..." : form.id ? "Enregistrer" : "Créer"}</button>
+        <button className="btn btn-primary" onClick={handleSave} disabled={saving}>{saving && <span className="spinner" />}{saving ? "Enregistrement..." : form.id ? "Enregistrer" : "Créer"}</button>
       </div>
     </div>
   );

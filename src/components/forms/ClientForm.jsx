@@ -1,10 +1,20 @@
+import { useState } from "react";
 import Field from "../common/Field";
 
 export default function ClientForm({ form, setForm, onSave, onCancel, sectors = [], users = [], saving }) {
   const f = (k, v) => setForm(p => ({ ...p, [k]: v }));
+  const [errors, setErrors] = useState({});
+
+  const handleSave = () => {
+    const errs = {};
+    if (!form.company?.trim()) errs.company = "L'entreprise est requise";
+    setErrors(errs);
+    if (Object.keys(errs).length > 0) return;
+    onSave();
+  };
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-      <Field label="Entreprise *"><input className="input" style={{ fontSize: 15, fontWeight: 600, padding: "12px 14px" }} value={form.company || ""} onChange={e => f("company", e.target.value)} placeholder="Nom de l'entreprise" /></Field>
+      <Field label="Entreprise *" error={errors.company}><input className="input" style={{ fontSize: 15, fontWeight: 600, padding: "12px 14px" }} value={form.company || ""} onChange={e => f("company", e.target.value)} placeholder="Nom de l'entreprise" /></Field>
       <Field label="Nom du contact"><input className="input" value={form.name || ""} onChange={e => f("name", e.target.value)} placeholder="Prénom Nom (optionnel)" /></Field>
       <div className="resp-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
         <Field label="Email"><input className="input" type="email" value={form.email || ""} onChange={e => f("email", e.target.value)} placeholder="email@exemple.ca" /></Field>
@@ -32,7 +42,7 @@ export default function ClientForm({ form, setForm, onSave, onCancel, sectors = 
       <Field label="Notes"><textarea className="input" style={{ resize: "vertical", minHeight: 72 }} value={form.notes || ""} onChange={e => f("notes", e.target.value)} placeholder="Informations..." /></Field>
       <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
         <button className="btn btn-ghost" onClick={onCancel}>Annuler</button>
-        <button className="btn btn-primary" onClick={onSave} disabled={saving}>{saving ? "Enregistrement..." : form.id ? "Enregistrer" : "Créer"}</button>
+        <button className="btn btn-primary" onClick={handleSave} disabled={saving}>{saving && <span className="spinner" />}{saving ? "Enregistrement..." : form.id ? "Enregistrer" : "Créer"}</button>
       </div>
     </div>
   );

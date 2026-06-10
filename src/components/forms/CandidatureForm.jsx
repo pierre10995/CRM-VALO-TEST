@@ -1,19 +1,30 @@
+import { useState } from "react";
 import { STAGES } from "../../utils/constants";
 import Field from "../common/Field";
 import SearchSelect from "../common/SearchSelect";
 
 export default function CandidatureForm({ form, setForm, onSave, onCancel, candidates, missions, saving }) {
   const f = (k, v) => setForm(p => ({ ...p, [k]: v }));
+  const [errors, setErrors] = useState({});
+
+  const handleSave = () => {
+    const errs = {};
+    if (!form.candidateId) errs.candidateId = "Sélectionnez un candidat";
+    if (!form.missionId) errs.missionId = "Sélectionnez un poste";
+    setErrors(errs);
+    if (Object.keys(errs).length > 0) return;
+    onSave();
+  };
 
   const candidateOptions = candidates.map(c => ({ value: c.id, label: c.name, sub: [c.skills, c.city].filter(Boolean).join(" — ") }));
   const missionOptions = missions.map(m => ({ value: m.id, label: `${m.title} — ${m.company}`, sub: [m.location, m.contractType].filter(Boolean).join(" — ") }));
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-      <Field label="Candidat *">
+      <Field label="Candidat *" error={errors.candidateId}>
         <SearchSelect value={form.candidateId || ""} onChange={v => f("candidateId", v)} options={candidateOptions} placeholder="Rechercher un candidat..." />
       </Field>
-      <Field label="Poste *">
+      <Field label="Poste *" error={errors.missionId}>
         <SearchSelect value={form.missionId || ""} onChange={v => f("missionId", v)} options={missionOptions} placeholder="Rechercher un poste..." />
       </Field>
       <Field label="Étape">
@@ -28,7 +39,7 @@ export default function CandidatureForm({ form, setForm, onSave, onCancel, candi
       <Field label="Notes"><textarea className="input" style={{ resize: "vertical", minHeight: 72 }} value={form.notes || ""} onChange={e => f("notes", e.target.value)} placeholder="Commentaires..." /></Field>
       <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
         <button className="btn btn-ghost" onClick={onCancel}>Annuler</button>
-        <button className="btn btn-primary" onClick={onSave} disabled={saving}>{saving ? "Enregistrement..." : form.id ? "Enregistrer" : "Créer"}</button>
+        <button className="btn btn-primary" onClick={handleSave} disabled={saving}>{saving && <span className="spinner" />}{saving ? "Enregistrement..." : form.id ? "Enregistrer" : "Créer"}</button>
       </div>
     </div>
   );
