@@ -1,8 +1,10 @@
 import { useState, useRef } from "react";
 import { exportCsv } from "../../utils/exportCsv";
 import api from "../../services/api";
+import { useToast } from "../common/Toast";
 
 export default function PipelinePage({ candidatures, candidates, missions, users, onEdit, onAdd, onDelete, loadAll }) {
+  const toast = useToast();
   const [draggedId, setDraggedId] = useState(null);
   const [dropTarget, setDropTarget] = useState(null);
   const [showStats, setShowStats] = useState(false);
@@ -39,35 +41,38 @@ export default function PipelinePage({ candidatures, candidates, missions, users
 
   const handleDragLeave = () => setDropTarget(null);
 
+  const moveStage = async (cd, newStage) => {
+    const previousStage = cd.stage;
+    try {
+      const res = await api.put(`/api/candidatures/${cd.id}`, {
+        stage: newStage, rating: cd.rating || 0, notes: cd.notes || "", interviewDate: cd.interviewDate || null,
+      });
+      if (res && res.ok === false) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Déplacement impossible");
+      }
+      if (loadAll) await loadAll();
+      toast.success(`${cd.candidateName} → ${newStage}`);
+      return previousStage;
+    } catch (e) {
+      toast.error(e.message || "Erreur lors du déplacement");
+      return null;
+    }
+  };
+
   const handleDrop = async (e, stageKey) => {
     e.preventDefault();
     setDropTarget(null);
     const cd = dragRef.current;
     if (!cd || cd.stage === stageKey) { setDraggedId(null); return; }
-
-    if (!window.confirm(`Déplacer cette candidature vers "${stageKey}" ?`)) { setDraggedId(null); dragRef.current = null; return; }
-
-    try {
-      await api.put(`/api/candidatures/${cd.id}`, {
-        stage: stageKey, rating: cd.rating || 0, notes: cd.notes || "", interviewDate: cd.interviewDate || null,
-      });
-      if (loadAll) await loadAll();
-    } catch { /* silent */ }
+    await moveStage(cd, stageKey);
     setDraggedId(null);
     dragRef.current = null;
   };
 
   const handleDragEnd = () => { setDraggedId(null); setDropTarget(null); dragRef.current = null; };
 
-  const quickMove = async (cd, newStage) => {
-    if (!window.confirm(`Déplacer cette candidature vers "${newStage}" ?`)) return;
-    try {
-      await api.put(`/api/candidatures/${cd.id}`, {
-        stage: newStage, rating: cd.rating || 0, notes: cd.notes || "", interviewDate: cd.interviewDate || null,
-      });
-      if (loadAll) await loadAll();
-    } catch { /* silent */ }
-  };
+  const quickMove = (cd, newStage) => moveStage(cd, newStage);
 
   const renderCard = (cd, col) => {
     // Quick-action: show next logical stage buttons
@@ -125,7 +130,7 @@ export default function PipelinePage({ candidatures, candidates, missions, users
           <h1 style={{ fontSize: 26, fontWeight: 800, color: "#0f172a" }}>Pipeline</h1>
           <p style={{ fontSize: 13.5, color: "#64748b", marginTop: 3 }}>Glissez-déposez les candidatures entre les colonnes</p>
         </div>
-        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+        <div className="page-header-actions" style={{ display: "flex", gap: 10, alignItems: "center" }}>
           {ownerOptions.length > 0 && (
             <select
               value={filterOwner}
@@ -163,7 +168,7 @@ export default function PipelinePage({ candidatures, candidates, missions, users
         return (
           <div className="card" style={{ marginBottom: 20, padding: 16 }}>
             <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", marginBottom: 14 }}>Analytique Pipeline</div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 16 }}>
+            <div className="resp-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 16 }}>
               {[
                 { label: "Total candidatures", value: total, color: "#3b82f6" },
                 { label: "En cours", value: active, color: "#f59e0b" },
@@ -188,7 +193,7 @@ export default function PipelinePage({ candidatures, candidates, missions, users
           </div>
         );
       })()}
-      <div style={{ display: "grid", gridTemplateColumns: `repeat(${allCols.length}, 1fr)`, gap: 12, overflowX: "auto" }}>
+      <div className="resp-grid" style={{ display: "grid", gridTemplateColumns: `repeat(${allCols.length}, 1fr)`, gap: 12, overflowX: "auto" }}>
         {allCols.map(col => {
           const items = filteredCandidatures.filter(cd => cd.stage === col.key);
           const isOver = dropTarget === col.key;

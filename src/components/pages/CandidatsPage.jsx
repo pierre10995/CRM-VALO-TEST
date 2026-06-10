@@ -4,6 +4,9 @@ import { exportCsv } from "../../utils/exportCsv";
 import api from "../../services/api";
 import FicheCandidat from "./FicheCandidat";
 import BulkCvUpload from "../BulkCvUpload";
+import Pagination from "../common/Pagination";
+
+const PAGE_SIZE = 25;
 
 const COLOR_PRESETS = [
   { bg: "#d1fae5", color: "#059669", name: "Vert" },
@@ -27,6 +30,7 @@ export default function CandidatsPage({ contacts, search, setSearch, onAdd, onEd
   const [sortDir, setSortDir] = useState("asc");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  const [page, setPage] = useState(1);
   // Build color map from dynamic statuses
   const VALIDATION_COLORS = {};
   validationStatuses.forEach(s => { VALIDATION_COLORS[s.label] = { bg: s.bg, color: s.color }; });
@@ -71,6 +75,10 @@ export default function CandidatsPage({ contacts, search, setSearch, onAdd, onEd
   });
   const detail = contacts.find(c => c.id === detailId);
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const paged = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+
   const handleSort = (col) => {
     if (sortBy === col) setSortDir(d => d === "asc" ? "desc" : "asc");
     else { setSortBy(col); setSortDir("asc"); }
@@ -99,7 +107,7 @@ export default function CandidatsPage({ contacts, search, setSearch, onAdd, onEd
           <h1 style={{ fontSize: 26, fontWeight: 800, color: "#0f172a" }}>Candidats</h1>
           <p style={{ fontSize: 13.5, color: "#64748b", marginTop: 3 }}>{filtered.length} candidat{filtered.length > 1 ? "s" : ""}</p>
         </div>
-        <div style={{ display: "flex", gap: 10 }}>
+        <div className="page-header-actions" style={{ display: "flex", gap: 10 }}>
           <button
             className={`btn ${showBulkUpload ? "btn-ghost" : "btn-primary"}`}
             style={{ fontSize: 13 }}
@@ -172,8 +180,8 @@ export default function CandidatsPage({ contacts, search, setSearch, onAdd, onEd
           </div>
         </div>
       )}
-      <div className="card" style={{ padding: 0, overflow: "hidden" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+      <div className="card table-wrap" style={{ padding: 0, overflow: "auto" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 640 }}>
           <thead><tr style={{ borderBottom: "1px solid #f1f5f9" }}>
             {[{ label: "Candidat", col: "name" }, { label: "Ville", col: "city" }, { label: "Compétences", col: null }, { label: "Statut", col: null }, { label: "Salaire", col: "salary" }, { label: "Actions", col: null }].map(h => (
               <th key={h.label} onClick={() => h.col && handleSort(h.col)} style={{ padding: "14px 20px", textAlign: "left", fontSize: 11.5, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", cursor: h.col ? "pointer" : "default", userSelect: "none" }}>
@@ -183,7 +191,7 @@ export default function CandidatsPage({ contacts, search, setSearch, onAdd, onEd
           </tr></thead>
           <tbody>
             {filtered.length === 0 && <tr><td colSpan={6} style={{ padding: 40, textAlign: "center", color: "#94a3b8" }}>Aucun candidat</td></tr>}
-            {filtered.map(c => {
+            {paged.map(c => {
               const vc = VALIDATION_COLORS[c.validationStatus];
               return (
               <tr key={c.id} className="row-hover" style={{ borderBottom: "1px solid #f8fafc" }} onClick={() => onDetail(c.id)}>
@@ -220,6 +228,7 @@ export default function CandidatsPage({ contacts, search, setSearch, onAdd, onEd
           </tbody>
         </table>
       </div>
+      <Pagination page={safePage} pageSize={PAGE_SIZE} total={filtered.length} onChange={setPage} />
 
       {detail && (
         <div className="modal-bg" onClick={e => e.target === e.currentTarget && setDetailId(null)}>

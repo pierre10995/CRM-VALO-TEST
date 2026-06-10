@@ -74,23 +74,24 @@ function CRMInner() {
   const clients = contacts.filter(c => c.status === "Client" || c.status === "Prospect");
 
   const loadAll = async () => {
-    try {
-      const [c, m, cd, a, u, s, fy, sec, wm, vs] = await Promise.all([
-        api.get("/api/contacts"),
-        api.get("/api/missions"),
-        api.get("/api/candidatures"),
-        api.get("/api/activities"),
-        api.get("/api/users"),
-        api.get("/api/stats"),
-        api.get("/api/fiscal-years"),
-        api.get("/api/sectors"),
-        api.get("/api/work-modes"),
-        api.get("/api/validation-statuses"),
-      ]);
-      setContacts(c); setMissions(m); setCandidatures(cd); setActivities(a); setUsers(u); setStats(s); setFiscalYears(fy); setSectors(sec); setWorkModes(wm); setValidationStatuses(vs);
-    } catch {
-      // 401 errors are handled by api.js (page reload), other errors silently ignored on load
-    }
+    // allSettled : un endpoint en échec (ex. endpoint réservé admin pour un
+    // utilisateur non-admin) ne doit pas empêcher le chargement du reste.
+    const endpoints = [
+      ["/api/contacts", setContacts],
+      ["/api/missions", setMissions],
+      ["/api/candidatures", setCandidatures],
+      ["/api/activities", setActivities],
+      ["/api/users", setUsers],
+      ["/api/stats", setStats],
+      ["/api/fiscal-years", setFiscalYears],
+      ["/api/sectors", setSectors],
+      ["/api/work-modes", setWorkModes],
+      ["/api/validation-statuses", setValidationStatuses],
+    ];
+    const results = await Promise.allSettled(endpoints.map(([url]) => api.get(url)));
+    results.forEach((r, i) => {
+      if (r.status === "fulfilled") endpoints[i][1](r.value);
+    });
   };
 
   useEffect(() => {
@@ -99,6 +100,13 @@ function CRMInner() {
   }, []);
 
   useEffect(() => { if (authed && currentUser?.role !== "partner") loadAll(); }, [authed]);
+
+  // Onglets réservés aux admins (financier + partenaires)
+  const ADMIN_TABS = ["revenue", "objectifs", "partenaires", "admin"];
+  const isAdmin = currentUser?.userRole === "admin";
+  useEffect(() => {
+    if (!isAdmin && ADMIN_TABS.includes(activeTab)) setActiveTab("dashboard");
+  }, [isAdmin, activeTab]);
 
   const handleLogin = async () => {
     // Try internal user login first
@@ -140,57 +148,66 @@ function CRMInner() {
     try { await fn(...args); } catch (e) { toast.error(e.message || "Une erreur est survenue"); } finally { setSaving(false); }
   }, [saving, toast]);
 
+  // Vérifie qu'une réponse api.post/put/del a réussi, sinon lève l'erreur serveur
+  // (api.post/put/del renvoient un Response sans throw par eux-mêmes).
+  const expectOk = async (resPromise) => {
+    const res = await resPromise;
+    if (res && res.ok === false) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || "L'opération a échoué");
+    }
+    return res;
+  };
+
   const saveContact = withSaving(async () => {
     if (!form.company && !form.name) return;
     const cvFile = form._cvFile;
     const { _cvFile, ...formData } = form;
     let contactId = form.id;
     if (contactId) {
-      await api.put(`/api/contacts/${contactId}`, formData);
+      await expectOk(api.put(`/api/contacts/${contactId}`, formData));
     } else {
-      const res = await api.post("/api/contacts", formData);
-      if (res.ok) {
-        const created = await res.json();
-        contactId = created.id;
-      }
+      const res = await expectOk(api.post("/api/contacts", formData));
+      const created = await res.json();
+      contactId = created.id;
     }
     if (cvFile && contactId) {
-      await api.post("/api/files", { contactId, fileType: "cv", fileName: cvFile.fileName, mimeType: cvFile.mimeType, fileData: cvFile.fileData });
+      await expectOk(api.post("/api/files", { contactId, fileType: "cv", fileName: cvFile.fileName, mimeType: cvFile.mimeType, fileData: cvFile.fileData }));
     }
     await loadAll(); setModal(null);
     toast.success(form.id ? "Contact mis à jour" : "Contact créé");
   });
 
   const deleteContact = withSaving(async (id) => {
-    await api.del(`/api/contacts/${id}`);
+    await expectOk(api.del(`/api/contacts/${id}`));
     await loadAll(); setDetailId(null);
     toast.success("Contact supprimé");
   });
 
   const saveMission = withSaving(async () => {
     if (!form.title || !form.company) return;
-    if (form.id) await api.put(`/api/missions/${form.id}`, form);
-    else await api.post("/api/missions", form);
+    if (form.id) await expectOk(api.put(`/api/missions/${form.id}`, form));
+    else await expectOk(api.post("/api/missions", form));
     await loadAll(); setModal(null);
     toast.success(form.id ? "Poste mis à jour" : "Poste créé");
   });
 
   const deleteMission = withSaving(async (id) => {
-    await api.del(`/api/missions/${id}`);
+    await expectOk(api.del(`/api/missions/${id}`));
     await loadAll();
     toast.success("Poste supprimé");
   });
 
   const saveCandidature = withSaving(async () => {
     if (!form.candidateId || !form.missionId) return;
-    if (form.id) await api.put(`/api/candidatures/${form.id}`, form);
-    else await api.post("/api/candidatures", form);
+    if (form.id) await expectOk(api.put(`/api/candidatures/${form.id}`, form));
+    else await expectOk(api.post("/api/candidatures", form));
     await loadAll(); setModal(null);
     toast.success(form.id ? "Candidature mise à jour" : "Candidature créée");
   });
 
   const deleteCandidature = withSaving(async (id) => {
-    await api.del(`/api/candidatures/${id}`);
+    await expectOk(api.del(`/api/candidatures/${id}`));
     await loadAll();
     toast.success("Candidature supprimée");
   });
@@ -198,21 +215,23 @@ function CRMInner() {
   const saveActivity = withSaving(async () => {
     if (!form.type || !form.subject) return;
     if (form.id) {
-      await api.put(`/api/activities/${form.id}`, form);
+      await expectOk(api.put(`/api/activities/${form.id}`, form));
     } else {
-      await api.post("/api/activities", { ...form, userId: currentUser?.id });
+      await expectOk(api.post("/api/activities", { ...form, userId: currentUser?.id }));
     }
     await loadAll(); setModal(null);
     toast.success(form.id ? "Activité mise à jour" : "Activité créée");
   });
 
   const toggleActivity = async (act) => {
-    await api.put(`/api/activities/${act.id}`, { completed: !act.completed });
-    await loadAll();
+    try {
+      await expectOk(api.put(`/api/activities/${act.id}`, { completed: !act.completed }));
+      await loadAll();
+    } catch (e) { toast.error(e.message || "Une erreur est survenue"); }
   };
 
   const deleteActivity = withSaving(async (id) => {
-    await api.del(`/api/activities/${id}`);
+    await expectOk(api.del(`/api/activities/${id}`));
     await loadAll();
     toast.success("Activité supprimée");
   });
@@ -236,7 +255,7 @@ function CRMInner() {
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} currentUser={currentUser} onLogout={handleLogout} setDetailId={setDetailId} setSearch={setSearch} setFilterStatus={setFilterStatus} contacts={contacts} missions={missions} />
 
       {/* Main Content */}
-      <main style={{ flex: 1, overflow: "auto", padding: 28 }}>
+      <main className="app-main" style={{ flex: 1, overflow: "auto", padding: 28 }}>
         {activeTab === "dashboard" && <DashboardPage stats={stats} activities={activities} contacts={contacts} missions={missions} candidatures={candidatures} fiscalYears={fiscalYears} />}
         {activeTab === "clients" && <ClientsPage contacts={clients} missions={missions} candidatures={candidatures} users={users} search={search} setSearch={setSearch} filterStatus={filterStatus} setFilterStatus={setFilterStatus} onAdd={() => { setModal("client"); setForm({ status: "Prospect", sector: "Tech", revenue: 0 }); }} onEdit={c => { setModal("client"); setForm({ ...c }); }} onDelete={deleteContact} onDetail={id => setDetailId(id)} detailId={detailId} setDetailId={setDetailId} />}
         {activeTab === "candidats" && <CandidatsPage contacts={candidates} search={search} setSearch={setSearch} onAdd={() => { setModal("candidat"); setForm({ status: "Candidat", sector: "Tech", salaryExpectation: 0 }); }} onEdit={c => { setModal("candidat"); setForm({ ...c }); }} onDelete={deleteContact} onDetail={id => setDetailId(id)} detailId={detailId} setDetailId={setDetailId} candidatures={candidatures} missions={missions} loadAll={loadAll} validationStatuses={validationStatuses} users={users} />}

@@ -101,7 +101,7 @@ export default function RevenuePage({ contacts, missions, candidatures, users, f
 
         {/* Add form */}
         {showAddYear && (
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr auto", gap: 10, marginBottom: 16, padding: 14, background: "#f0fdf4", borderRadius: 10, border: "1px solid #bbf7d0" }}>
+          <div className="resp-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr auto", gap: 10, marginBottom: 16, padding: 14, background: "#f0fdf4", borderRadius: 10, border: "1px solid #bbf7d0" }}>
             <div>
               <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", marginBottom: 4, display: "block" }}>Libellé</label>
               <input className="input" placeholder="2027-2028" value={newYear.label} onChange={e => setNewYear(p => ({ ...p, label: e.target.value }))} />
@@ -179,7 +179,7 @@ export default function RevenuePage({ contacts, missions, candidatures, users, f
       </div>
 
       {/* KPIs */}
-      <div style={{ display: "grid", gridTemplateColumns: activeFY ? "repeat(5, 1fr)" : "repeat(4, 1fr)", gap: 16, marginBottom: 24 }}>
+      <div className="resp-grid" style={{ display: "grid", gridTemplateColumns: activeFY ? "repeat(5, 1fr)" : "repeat(4, 1fr)", gap: 16, marginBottom: 24 }}>
         <KPICard label={`CA ${currentLabel}`} value={fmtCAD(currentCA)} bg="#ecfdf5" color="#059669" />
         <KPICard label="Commission recruteurs" value={fmtCAD(globalRecruiterCommission)} bg="#fef2f2" color="#dc2626" />
         <KPICard label="Résultat net" value={fmtCAD(currentCA - globalRecruiterCommission)} bg="#f0fdfa" color="#0f766e" />
@@ -197,7 +197,7 @@ export default function RevenuePage({ contacts, missions, candidatures, users, f
 
       {/* User summary (total tab) */}
       {activeOnglet === "total" && (
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 24 }}>
+        <div className="resp-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 24 }}>
           {caByUser.map(u => (
             <div key={u.id} className="card" style={{ cursor: "pointer", border: "1.5px solid transparent", transition: "border 0.2s" }} onClick={() => setActiveOnglet(`user-${u.id}`)}>
               <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>

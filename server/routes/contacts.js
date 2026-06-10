@@ -56,7 +56,12 @@ router.put("/:id", validate(contactSchema), asyncHandler(async (req, res) => {
 }));
 
 router.delete("/:id", asyncHandler(async (req, res) => {
+  const { rows: existing } = await pool.query("SELECT name FROM contacts WHERE id = $1", [req.params.id]);
   await pool.query("DELETE FROM contacts WHERE id = $1", [req.params.id]);
+  await pool.query(
+    "INSERT INTO audit_log (user_name, action, entity_type, entity_id, details) VALUES ($1,$2,$3,$4,$5)",
+    [req.user?.login || "Système", "Supprimer", "Contact", parseInt(req.params.id), existing[0]?.name || ""]
+  );
   res.json({ ok: true });
 }));
 

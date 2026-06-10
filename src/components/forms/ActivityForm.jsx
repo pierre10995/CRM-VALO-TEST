@@ -10,13 +10,13 @@ export default function ActivityForm({ form, setForm, onSave, onCancel, contacts
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+      <div className="resp-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
         <Field label="Type *">
           <select className="input" value={form.type || "Appel"} onChange={e => f("type", e.target.value)}>{ACTIVITY_TYPES.map(t => <option key={t}>{t}</option>)}</select>
         </Field>
         <Field label="Sujet *"><input className="input" value={form.subject || ""} onChange={e => f("subject", e.target.value)} placeholder="Objet de l'activité" /></Field>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+      <div className="resp-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
         <Field label="Contact">
           <SearchSelect value={form.contactId || ""} onChange={v => f("contactId", v)} options={contactOptions} placeholder="Rechercher un contact..." />
         </Field>

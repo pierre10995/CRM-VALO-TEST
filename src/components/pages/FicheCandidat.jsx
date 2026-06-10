@@ -2,8 +2,10 @@ import { useState, useEffect } from "react";
 import api from "../../services/api";
 import { fmtCAD } from "../../utils/constants";
 import AuditHistory from "../common/AuditHistory";
+import { useToast } from "../common/Toast";
 
 export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, candidatures, missions, loadAll, validationStatuses = [] }) {
+  const toast = useToast();
   const [files, setFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [evaluations, setEvaluations] = useState([]);
@@ -75,7 +77,7 @@ export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, c
       a.download = name || "fichier.pdf";
       a.click();
       URL.revokeObjectURL(url);
-    } catch { alert("Erreur lors du téléchargement"); }
+    } catch { toast.error("Erreur lors du téléchargement"); }
   };
 
   const previewFile = async (id, name) => {
@@ -84,7 +86,7 @@ export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, c
       const url = URL.createObjectURL(blob);
       setPreviewUrl(url);
       setPreviewName(name || "Document");
-    } catch { alert("Erreur lors de la prévisualisation"); }
+    } catch { toast.error("Erreur lors de la prévisualisation"); }
   };
 
   const closePreview = () => {
@@ -98,8 +100,8 @@ export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, c
     try {
       const res = await api.post(`/api/matching/candidate/${c.id}`);
       if (res.ok) { const data = await res.json(); setSuggestions(data); }
-      else { const err = await res.json(); alert(err.error || "Erreur"); }
-    } catch { alert("Erreur réseau"); }
+      else { const err = await res.json(); toast.error(err.error || "Erreur"); }
+    } catch { toast.error("Erreur réseau"); }
     setLoadingSuggestions(false);
   };
 
@@ -108,8 +110,8 @@ export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, c
     try {
       const res = await api.post("/api/cv-summary/generate", { candidateId: c.id });
       if (res.ok) { const data = await res.json(); setCvSummary(data); if (loadAll) loadAll(); }
-      else { const err = await res.json(); alert(err.error || "Erreur"); }
-    } catch { alert("Erreur réseau"); }
+      else { const err = await res.json(); toast.error(err.error || "Erreur"); }
+    } catch { toast.error("Erreur réseau"); }
     setLoadingSummary(false);
   };
 
@@ -131,7 +133,7 @@ export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, c
       </div>
 
       {/* Info section */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
+      <div className="resp-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
         <div style={{ background: "#f8fafc", borderRadius: 10, padding: 12 }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", marginBottom: 4 }}>EMAIL</div>
           <div style={{ fontSize: 13, color: "#0f172a" }}>{c.email || "—"}</div>
@@ -231,7 +233,7 @@ export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, c
           {cvSummary && (
             <div style={{ background: "#f0f9ff", borderRadius: 10, padding: 14, border: "1px solid #bae6fd" }}>
               <p style={{ fontSize: 13, color: "#0f172a", lineHeight: 1.6, marginBottom: 10 }}>{cvSummary.summary}</p>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
+              <div className="resp-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
                 {cvSummary.current_role && <div><span style={{ fontSize: 10, fontWeight: 700, color: "#94a3b8" }}>POSTE ACTUEL</span><div style={{ fontSize: 12, color: "#0f172a" }}>{cvSummary.current_role}</div></div>}
                 {cvSummary.experience_years && <div><span style={{ fontSize: 10, fontWeight: 700, color: "#94a3b8" }}>EXPERIENCE</span><div style={{ fontSize: 12, color: "#0f172a" }}>{cvSummary.experience_years} ans</div></div>}
                 {cvSummary.education && <div><span style={{ fontSize: 10, fontWeight: 700, color: "#94a3b8" }}>FORMATION</span><div style={{ fontSize: 12, color: "#0f172a" }}>{cvSummary.education}</div></div>}

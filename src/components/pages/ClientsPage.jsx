@@ -1,8 +1,12 @@
 import { useState } from "react";
 import { fmtCAD } from "../../utils/constants";
+import Pagination from "../common/Pagination";
+
+const PAGE_SIZE = 25;
 
 export default function ClientsPage({ contacts, missions, candidatures, users, search, setSearch, filterStatus, setFilterStatus, onAdd, onEdit, onDelete, onDetail, detailId, setDetailId }) {
   const [filterOwner, setFilterOwner] = useState("");
+  const [page, setPage] = useState(1);
   // Compute total commissions from placed candidates per company
   const companyRevenue = {};
   (candidatures || []).filter(cd => cd.stage === "Placé").forEach(cd => {
@@ -23,6 +27,10 @@ export default function ClientsPage({ contacts, missions, candidatures, users, s
   });
   const detail = contacts.find(c => c.id === detailId);
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const paged = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+
   return (
     <div>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
@@ -42,8 +50,8 @@ export default function ClientsPage({ contacts, missions, candidatures, users, s
           {(users || []).map(u => <option key={u.id} value={u.fullName}>{u.fullName}</option>)}
         </select>
       </div>
-      <div className="card" style={{ padding: 0, overflow: "hidden" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+      <div className="card table-wrap" style={{ padding: 0, overflow: "auto" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 640 }}>
           <thead><tr style={{ borderBottom: "1px solid #f1f5f9" }}>
             {["Entreprise", "Secteur", "Statut", "CA ($ CAD)", "Actions"].map(h => (
               <th key={h} style={{ padding: "14px 20px", textAlign: "left", fontSize: 11.5, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase" }}>{h}</th>
@@ -51,7 +59,7 @@ export default function ClientsPage({ contacts, missions, candidatures, users, s
           </tr></thead>
           <tbody>
             {filtered.length === 0 && <tr><td colSpan={5} style={{ padding: 40, textAlign: "center", color: "#94a3b8" }}>Aucune entreprise</td></tr>}
-            {filtered.map(c => (
+            {paged.map(c => (
               <tr key={c.id} className="row-hover" style={{ borderBottom: "1px solid #f8fafc" }} onClick={() => onDetail(c.id)}>
                 <td style={{ padding: "14px 20px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -76,6 +84,7 @@ export default function ClientsPage({ contacts, missions, candidatures, users, s
           </tbody>
         </table>
       </div>
+      <Pagination page={safePage} pageSize={PAGE_SIZE} total={filtered.length} onChange={setPage} />
 
       {detail && (
         <div className="modal-bg" onClick={e => e.target === e.currentTarget && setDetailId(null)}>

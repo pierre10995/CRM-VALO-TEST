@@ -7,11 +7,11 @@ export default function MissionForm({ form, setForm, onSave, onCancel, contacts,
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       <Field label="Titre du poste *"><input className="input" value={form.title || ""} onChange={e => f("title", e.target.value)} placeholder="Développeur Full Stack" /></Field>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+      <div className="resp-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
         <Field label="Entreprise *"><input className="input" value={form.company || ""} onChange={e => f("company", e.target.value)} placeholder="Nom entreprise" /></Field>
         <Field label="Lieu"><input className="input" value={form.location || ""} onChange={e => f("location", e.target.value)} placeholder="Montréal" /></Field>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 12 }}>
+      <div className="resp-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 12 }}>
         <Field label="Type de contrat">
           <select className="input" value={form.contractType || "CDI"} onChange={e => f("contractType", e.target.value)}>{CONTRACT_TYPES.map(t => <option key={t}>{t}</option>)}</select>
         </Field>
@@ -28,7 +28,7 @@ export default function MissionForm({ form, setForm, onSave, onCancel, contacts,
           </select>
         </Field>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr 1fr", gap: 12 }}>
+      <div className="resp-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr 1fr", gap: 12 }}>
         <Field label="Salaire min ($)"><input className="input" type="number" value={form.salaryMin || ""} onChange={e => f("salaryMin", e.target.value)} placeholder="50000" /></Field>
         <Field label="Salaire max ($)"><input className="input" type="number" value={form.salaryMax || ""} onChange={e => f("salaryMax", e.target.value)} placeholder="80000" /></Field>
         <Field label="Commission VALO ($)"><input className="input" type="number" value={form.commission || ""} onChange={e => f("commission", e.target.value)} placeholder="5000" /></Field>
@@ -38,7 +38,7 @@ export default function MissionForm({ form, setForm, onSave, onCancel, contacts,
           <datalist id="work-modes-list">{workModes.map(w => <option key={w} value={w} />)}</datalist>
         </Field>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+      <div className="resp-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
         <Field label="Contact client">
           <select className="input" value={form.clientContactId || ""} onChange={e => f("clientContactId", e.target.value)}>
             <option value="">— Aucun —</option>

@@ -99,7 +99,13 @@ export const activityCreateSchema = z.object({
 });
 
 export const activityUpdateSchema = z.object({
-  completed: z.boolean(),
+  contactId: z.coerce.number().int().positive().nullable().optional(),
+  missionId: z.coerce.number().int().positive().nullable().optional(),
+  type: z.string().min(1).max(30).optional(),
+  subject: z.string().min(1).max(200).optional(),
+  description: z.string().max(5000).optional(),
+  dueDate: z.string().nullable().optional(),
+  completed: z.boolean().optional(),
 });
 
 // ─── Objectives ──────────────────────────────────────────────────────────────

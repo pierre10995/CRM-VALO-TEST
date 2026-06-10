@@ -1,48 +1,39 @@
 import { useMemo } from "react";
+import { wonMissionsForFY, sumCommission, sumRecruiterCommission } from "../utils/revenue";
 
 export default function useRevenue(missions, users, fiscalYears, selectedFYId) {
-  const wonMissions = useMemo(() => missions.filter(m => m.status === "Gagné"), [missions]);
+  const wonMissions = useMemo(() => wonMissionsForFY(missions, "all"), [missions]);
 
   const activeFY = useMemo(
     () => selectedFYId !== "all" ? fiscalYears.find(fy => String(fy.id) === selectedFYId) : null,
     [fiscalYears, selectedFYId]
   );
 
-  const globalCA = useMemo(() => {
-    const filtered = activeFY
-      ? wonMissions.filter(m => String(m.fiscalYearId) === String(activeFY.id))
-      : wonMissions;
-    return filtered.reduce((s, m) => s + (m.commission || 0), 0);
-  }, [wonMissions, activeFY]);
+  const filteredWonMissions = useMemo(
+    () => wonMissionsForFY(missions, activeFY ? activeFY.id : "all"),
+    [missions, activeFY]
+  );
 
-  const globalRecruiterCommission = useMemo(() => {
-    const filtered = activeFY
-      ? wonMissions.filter(m => String(m.fiscalYearId) === String(activeFY.id))
-      : wonMissions;
-    return filtered.reduce((s, m) => s + (m.recruiterCommission || 0), 0);
-  }, [wonMissions, activeFY]);
+  const globalCA = useMemo(() => sumCommission(filteredWonMissions), [filteredWonMissions]);
+
+  const globalRecruiterCommission = useMemo(
+    () => sumRecruiterCommission(filteredWonMissions),
+    [filteredWonMissions]
+  );
 
   const caByUser = useMemo(() => {
     return users.map(u => {
-      let userMissions = wonMissions.filter(m => m.assignedTo === u.id);
-      if (activeFY) userMissions = userMissions.filter(m => String(m.fiscalYearId) === String(activeFY.id));
-      return { ...u, ca: userMissions.reduce((s, m) => s + (m.commission || 0), 0), count: userMissions.length };
+      const userMissions = filteredWonMissions.filter(m => m.assignedTo === u.id);
+      return { ...u, ca: sumCommission(userMissions), count: userMissions.length };
     });
-  }, [wonMissions, users, activeFY]);
+  }, [filteredWonMissions, users]);
 
   const fyWithCA = useMemo(() => {
     return fiscalYears.map(fy => {
-      const fyMissions = wonMissions.filter(m => String(m.fiscalYearId) === String(fy.id));
-      const ca = fyMissions.reduce((s, m) => s + (m.commission || 0), 0);
-      return { ...fy, ca, count: fyMissions.length };
+      const fyMissions = wonMissionsForFY(missions, fy.id);
+      return { ...fy, ca: sumCommission(fyMissions), count: fyMissions.length };
     });
-  }, [wonMissions, fiscalYears]);
-
-  const filteredWonMissions = useMemo(() => {
-    return activeFY
-      ? wonMissions.filter(m => String(m.fiscalYearId) === String(activeFY.id))
-      : wonMissions;
-  }, [wonMissions, activeFY]);
+  }, [missions, fiscalYears]);
 
   return { wonMissions, activeFY, globalCA, globalRecruiterCommission, caByUser, fyWithCA, filteredWonMissions };
 }

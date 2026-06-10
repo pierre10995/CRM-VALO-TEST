@@ -13,7 +13,7 @@ const router = Router();
 
 // ─── Dashboard stats ─────────────────────────────────────────────────────────
 
-router.get("/stats", asyncHandler(async (req, res) => {
+router.get("/stats", adminOnly, asyncHandler(async (req, res) => {
   const contacts = await pool.query("SELECT status, COUNT(*) as count FROM contacts GROUP BY status");
   const missions = await pool.query("SELECT status, COUNT(*) as count FROM missions GROUP BY status");
   const revenue = await pool.query("SELECT COALESCE(SUM(revenue),0) as total FROM contacts WHERE status='Client'");

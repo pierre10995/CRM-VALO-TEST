@@ -4,8 +4,12 @@ import { fmtObjective } from "../formatters.js";
 import { validate } from "../validators/validate.js";
 import { objectiveCreateSchema, objectiveUpdateSchema } from "../validators/schemas.js";
 import { asyncHandler } from "../helpers/errors.js";
+import { adminOnly } from "../middleware.js";
 
 const router = Router();
+
+// Les objectifs (cibles financières) sont réservés aux admins.
+router.use(adminOnly);
 
 router.get("/", asyncHandler(async (req, res) => {
   const { rows } = await pool.query(`

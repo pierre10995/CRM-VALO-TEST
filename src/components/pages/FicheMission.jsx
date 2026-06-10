@@ -2,8 +2,10 @@ import { useState, useEffect } from "react";
 import api from "../../services/api";
 import { fmtCAD } from "../../utils/constants";
 import AuditHistory from "../common/AuditHistory";
+import { useToast } from "../common/Toast";
 
 export default function FicheMission({ mission: m, onClose, onEdit, onDelete, candidatures }) {
+  const toast = useToast();
   const [files, setFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
@@ -62,7 +64,7 @@ export default function FicheMission({ mission: m, onClose, onEdit, onDelete, ca
       a.download = name || "fichier.pdf";
       a.click();
       URL.revokeObjectURL(url);
-    } catch { alert("Erreur lors du téléchargement"); }
+    } catch { toast.error("Erreur lors du téléchargement"); }
   };
 
   const previewFile = async (id, name) => {
@@ -71,7 +73,7 @@ export default function FicheMission({ mission: m, onClose, onEdit, onDelete, ca
       const url = URL.createObjectURL(blob);
       setPreviewUrl(url);
       setPreviewName(name || "Document");
-    } catch { alert("Erreur lors de la prévisualisation"); }
+    } catch { toast.error("Erreur lors de la prévisualisation"); }
   };
 
   const closePreview = () => {
@@ -85,8 +87,8 @@ export default function FicheMission({ mission: m, onClose, onEdit, onDelete, ca
     try {
       const res = await api.post(`/api/matching/mission/${m.id}`);
       if (res.ok) { const data = await res.json(); setSuggestions(data); }
-      else { const err = await res.json(); alert(err.error || "Erreur"); }
-    } catch { alert("Erreur réseau"); }
+      else { const err = await res.json(); toast.error(err.error || "Erreur"); }
+    } catch { toast.error("Erreur réseau"); }
     setLoadingSuggestions(false);
   };
 
@@ -105,7 +107,7 @@ export default function FicheMission({ mission: m, onClose, onEdit, onDelete, ca
         <button className="btn btn-ghost" style={{ padding: "6px 8px" }} onClick={onClose}>X</button>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
+      <div className="resp-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
         <div style={{ background: "#f8fafc", borderRadius: 10, padding: 12 }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", marginBottom: 4 }}>TYPE DE CONTRAT</div>
           <div style={{ fontSize: 13, color: "#0f172a" }}>{m.contractType}</div>
