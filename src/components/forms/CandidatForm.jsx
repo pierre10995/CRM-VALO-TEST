@@ -1,6 +1,8 @@
 import { useState, useRef } from "react";
 import api from "../../services/api";
 import Field from "../common/Field";
+import { useConfirm } from "../common/ConfirmDialog";
+import { useToast } from "../common/Toast";
 
 const COLOR_PRESETS = [
   { bg: "#d1fae5", color: "#059669", name: "Vert" },
@@ -13,6 +15,17 @@ const COLOR_PRESETS = [
 ];
 
 export default function CandidatForm({ form, setForm, onSave, onCancel, sectors = [], validationStatuses = [], onStatusesChanged, users = [], saving }) {
+  const confirm = useConfirm();
+  const toast = useToast();
+  const [errors, setErrors] = useState({});
+
+  const handleSave = () => {
+    const errs = {};
+    if (!form.name?.trim()) errs.name = "Le nom est requis";
+    setErrors(errs);
+    if (Object.keys(errs).length > 0) return;
+    onSave();
+  };
   const f = (k, v) => setForm(p => ({ ...p, [k]: v }));
   const [showStatusMgr, setShowStatusMgr] = useState(false);
   const [newLabel, setNewLabel] = useState("");
@@ -50,12 +63,12 @@ export default function CandidatForm({ form, setForm, onSave, onCancel, sectors 
       await refreshStatuses();
     } else {
       const err = await res.json();
-      alert(err.error || "Erreur");
+      toast.error(err.error || "Erreur");
     }
   };
 
   const deleteStatus = async (id, label) => {
-    if (!window.confirm(`Supprimer le statut « ${label} » ?`)) return;
+    if (!(await confirm(`Supprimer le statut « ${label} » ?`, { confirmLabel: "Supprimer" }))) return;
     await api.del(`/api/validation-statuses/${id}`);
     if (form.validationStatus === label) f("validationStatus", "");
     await refreshStatuses();
@@ -75,7 +88,7 @@ export default function CandidatForm({ form, setForm, onSave, onCancel, sectors 
       await refreshStatuses();
     } else {
       const err = await res.json();
-      alert(err.error || "Erreur");
+      toast.error(err.error || "Erreur");
     }
   };
 
@@ -132,7 +145,7 @@ export default function CandidatForm({ form, setForm, onSave, onCancel, sectors 
       </div>
 
       <div className="resp-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-        <Field label="Nom *"><input className="input" value={form.name || ""} onChange={e => f("name", e.target.value)} placeholder="Prénom Nom" /></Field>
+        <Field label="Nom *" error={errors.name}><input className="input" value={form.name || ""} onChange={e => f("name", e.target.value)} placeholder="Prénom Nom" /></Field>
         <Field label="Email"><input className="input" type="email" value={form.email || ""} onChange={e => f("email", e.target.value)} onBlur={checkDuplicate} placeholder="email@exemple.ca" /></Field>
       </div>
       {duplicates.length > 0 && (
@@ -226,7 +239,7 @@ export default function CandidatForm({ form, setForm, onSave, onCancel, sectors 
       <Field label="Notes"><textarea className="input" style={{ resize: "vertical", minHeight: 72 }} value={form.notes || ""} onChange={e => f("notes", e.target.value)} placeholder="Informations..." /></Field>
       <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
         <button className="btn btn-ghost" onClick={onCancel}>Annuler</button>
-        <button className="btn btn-primary" onClick={onSave} disabled={saving}>{saving ? "Enregistrement..." : form.id ? "Enregistrer" : "Créer"}</button>
+        <button className="btn btn-primary" onClick={handleSave} disabled={saving}>{saving && <span className="spinner" />}{saving ? "Enregistrement..." : form.id ? "Enregistrer" : "Créer"}</button>
       </div>
     </div>
   );

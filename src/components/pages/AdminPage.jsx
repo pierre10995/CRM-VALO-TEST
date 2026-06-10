@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import api from "../../services/api";
+import { useConfirm } from "../common/ConfirmDialog";
 
 export default function AdminPage({ currentUser, loadAll }) {
+  const confirm = useConfirm();
   const [tab, setTab] = useState("users"); // "users" | "partners"
   const [users, setUsers] = useState([]);
   const [partners, setPartners] = useState([]);
@@ -116,7 +118,7 @@ export default function AdminPage({ currentUser, loadAll }) {
   };
 
   const handleDeletePartner = async (partner) => {
-    if (!window.confirm(`Supprimer le recruteur externe "${partner.name}" ?`)) return;
+    if (!(await confirm(`Supprimer le recruteur externe « ${partner.name} » ?`, { confirmLabel: "Supprimer" }))) return;
     const res = await api.del(`/api/partners/${partner.id}`);
     if (res.ok) {
       await load();
@@ -228,7 +230,7 @@ export default function AdminPage({ currentUser, loadAll }) {
       {tab === "users" && (
         <div className="card" style={{ padding: 0, overflow: "hidden" }}>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead><tr style={{ borderBottom: "1px solid #f1f5f9" }}>
+            <thead><tr style={{ borderBottom: "1px solid #e2e8f0" }}>
               <th style={thStyle}>Nom</th>
               <th style={thStyle}>Email</th>
               <th style={{ ...thStyle, textAlign: "right" }}>Actions</th>
@@ -236,7 +238,7 @@ export default function AdminPage({ currentUser, loadAll }) {
             <tbody>
               {users.length === 0 && <tr><td colSpan={3} style={{ padding: 40, textAlign: "center", color: "#94a3b8" }}>Aucun utilisateur</td></tr>}
               {users.map(u => (
-                <tr key={u.id} className="row-hover" style={{ borderBottom: "1px solid #f8fafc" }}>
+                <tr key={u.id} className="row-hover" style={{ borderBottom: "1px solid #eef2f7" }}>
                   <td style={tdStyle}>
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                       <div style={{ width: 32, height: 32, background: "linear-gradient(135deg, #dbeafe, #bfdbfe)", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "#1d4ed8" }}>{u.fullName?.[0] || "?"}</div>
@@ -264,7 +266,7 @@ export default function AdminPage({ currentUser, loadAll }) {
       {tab === "partners" && (
         <div className="card" style={{ padding: 0, overflow: "hidden" }}>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead><tr style={{ borderBottom: "1px solid #f1f5f9" }}>
+            <thead><tr style={{ borderBottom: "1px solid #e2e8f0" }}>
               <th style={thStyle}>Nom</th>
               <th style={thStyle}>Email</th>
               <th style={thStyle}>Entreprise</th>
@@ -274,7 +276,7 @@ export default function AdminPage({ currentUser, loadAll }) {
             <tbody>
               {partners.length === 0 && <tr><td colSpan={5} style={{ padding: 40, textAlign: "center", color: "#94a3b8" }}>Aucun partenaire</td></tr>}
               {partners.map(p => (
-                <tr key={p.id} className="row-hover" style={{ borderBottom: "1px solid #f8fafc" }}>
+                <tr key={p.id} className="row-hover" style={{ borderBottom: "1px solid #eef2f7" }}>
                   <td style={tdStyle}>
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                       <div style={{ width: 32, height: 32, background: "linear-gradient(135deg, #ede9fe, #ddd6fe)", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "#7c3aed" }}>{p.name?.[0] || "?"}</div>
@@ -303,5 +305,5 @@ export default function AdminPage({ currentUser, loadAll }) {
   );
 }
 
-const thStyle = { padding: "14px 20px", textAlign: "left", fontSize: 11.5, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase" };
+const thStyle = { padding: "14px 20px", textAlign: "left", fontSize: 11.5, fontWeight: 700, color: "#64748b", textTransform: "uppercase" };
 const tdStyle = { padding: "14px 20px", fontSize: 13.5 };

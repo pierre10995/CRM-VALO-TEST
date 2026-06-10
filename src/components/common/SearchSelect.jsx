@@ -72,7 +72,7 @@ export default function SearchSelect({ value, onChange, options, placeholder = "
               style={{
                 padding: "8px 12px", cursor: "pointer", fontSize: 13,
                 background: String(opt.value) === String(value) ? "#eff6ff" : "transparent",
-                borderBottom: "1px solid #f8fafc",
+                borderBottom: "1px solid #eef2f7",
               }}
               onMouseEnter={e => { if (String(opt.value) !== String(value)) e.currentTarget.style.background = "#f8fafc"; }}
               onMouseLeave={e => { if (String(opt.value) !== String(value)) e.currentTarget.style.background = "transparent"; }}

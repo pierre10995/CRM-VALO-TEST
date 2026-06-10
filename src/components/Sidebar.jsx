@@ -40,15 +40,14 @@ export default function Sidebar({ activeTab, setActiveTab, currentUser, onLogout
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const results = useMemo(() => {
+  const { results, moreCount } = useMemo(() => {
     const q = globalQuery.trim().toLowerCase();
-    if (q.length < 2) return [];
-    const out = [];
+    if (q.length < 2) return { results: [], moreCount: 0 };
+    const all = [];
     for (const c of contacts) {
-      if (out.length >= 8) break;
       const searchable = `${c.name} ${c.company} ${c.email} ${c.city}`.toLowerCase();
       if (searchable.includes(q)) {
-        out.push({
+        all.push({
           id: c.id,
           type: c.status === "Candidat" ? "candidat" : "contact",
           tab: c.status === "Candidat" ? "candidats" : "clients",
@@ -58,10 +57,9 @@ export default function Sidebar({ activeTab, setActiveTab, currentUser, onLogout
       }
     }
     for (const m of missions) {
-      if (out.length >= 10) break;
       const searchable = `${m.title} ${m.company} ${m.location}`.toLowerCase();
       if (searchable.includes(q)) {
-        out.push({
+        all.push({
           id: m.id,
           type: "mission",
           tab: "missions",
@@ -70,7 +68,7 @@ export default function Sidebar({ activeTab, setActiveTab, currentUser, onLogout
         });
       }
     }
-    return out;
+    return { results: all.slice(0, 10), moreCount: Math.max(0, all.length - 10) };
   }, [globalQuery, contacts, missions]);
 
   const handleSelect = (result) => {
@@ -122,7 +120,7 @@ export default function Sidebar({ activeTab, setActiveTab, currentUser, onLogout
                 onClick={() => handleSelect(r)}
                 style={{
                   display: "flex", alignItems: "center", gap: 10, padding: "9px 12px",
-                  cursor: "pointer", borderBottom: "1px solid #f8fafc",
+                  cursor: "pointer", borderBottom: "1px solid #eef2f7",
                 }}
                 onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
                 onMouseLeave={e => e.currentTarget.style.background = "transparent"}
@@ -140,6 +138,11 @@ export default function Sidebar({ activeTab, setActiveTab, currentUser, onLogout
                 </div>
               </div>
             ))}
+            {moreCount > 0 && (
+              <div style={{ padding: "8px 12px", fontSize: 11, color: "#64748b", textAlign: "center", background: "#f8fafc" }}>
+                + {moreCount} autre{moreCount > 1 ? "s" : ""} résultat{moreCount > 1 ? "s" : ""} — affinez votre recherche
+              </div>
+            )}
           </div>
         )}
         {showResults && globalQuery.trim().length >= 2 && results.length === 0 && (
@@ -154,7 +157,7 @@ export default function Sidebar({ activeTab, setActiveTab, currentUser, onLogout
         )}
       </div>
 
-      <div className="sidebar-text" style={{ fontSize: 10, fontWeight: 700, color: "#94a3b8", padding: "0 8px 6px", letterSpacing: "0.08em", textTransform: "uppercase" }}>Navigation</div>
+      <div className="sidebar-text" style={{ fontSize: 10, fontWeight: 700, color: "#64748b", padding: "0 8px 6px", letterSpacing: "0.08em", textTransform: "uppercase" }}>Navigation</div>
       {visibleItems.map(item => (
         <div key={item.id} className={`nav-item ${activeTab === item.id ? "active" : ""}`} title={item.label} onClick={() => { setActiveTab(item.id); setDetailId(null); setSearch(""); setFilterStatus("Tous"); }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d={item.icon}/></svg>

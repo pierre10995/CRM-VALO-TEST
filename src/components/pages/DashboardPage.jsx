@@ -3,7 +3,7 @@ import api from "../../services/api";
 import { fmtCAD } from "../../utils/constants";
 import { wonMissionsForFY, sumCommission, findCurrentFY } from "../../utils/revenue";
 
-export default function DashboardPage({ stats, activities, contacts, missions, candidatures, fiscalYears }) {
+export default function DashboardPage({ stats, activities, contacts, missions, candidatures, fiscalYears, loaded = true }) {
   const [reminders, setReminders] = useState([]);
   const [dismissedKeys, setDismissedKeys] = useState(() => {
     try { return JSON.parse(localStorage.getItem("crm_dismissed_reminders") || "[]"); } catch { return []; }
@@ -56,9 +56,15 @@ export default function DashboardPage({ stats, activities, contacts, missions, c
         <p style={{ fontSize: 13.5, color: "#64748b", marginTop: 3 }}>{new Date().toLocaleDateString("fr-CA", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</p>
       </div>
       <div className="resp-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 24 }}>
-        {kpis.map((kpi, i) => (
+        {!loaded && kpis.map((kpi, i) => (
+          <div key={i} className="card">
+            <div className="skeleton" style={{ height: 12, width: "60%", marginBottom: 12 }} />
+            <div className="skeleton" style={{ height: 28, width: "40%" }} />
+          </div>
+        ))}
+        {loaded && kpis.map((kpi, i) => (
           <div key={i} className="card" style={{ background: kpi.bg }}>
-            <p style={{ fontSize: 11.5, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.06em" }}>{kpi.label}</p>
+            <p style={{ fontSize: 11.5, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em" }}>{kpi.label}</p>
             <p style={{ fontSize: 28, fontWeight: 800, color: kpi.color, marginTop: 8 }}>{kpi.value}</p>
           </div>
         ))}
@@ -116,7 +122,7 @@ export default function DashboardPage({ stats, activities, contacts, missions, c
         {recentActivities.length === 0 && <p style={{ color: "#94a3b8", fontSize: 13 }}>Aucune activité</p>}
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {recentActivities.map(a => (
-            <div key={a.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 0", borderBottom: "1px solid #f1f5f9" }}>
+            <div key={a.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 0", borderBottom: "1px solid #e2e8f0" }}>
               <div style={{ width: 32, height: 32, borderRadius: 8, background: a.completed ? "#d1fae5" : "#dbeafe", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>
                 {a.type === "Appel" ? "T" : a.type === "Email" ? "@" : a.type === "Réunion" ? "R" : "N"}
               </div>

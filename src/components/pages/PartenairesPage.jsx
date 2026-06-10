@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import api from "../../services/api";
+import { useConfirm } from "../common/ConfirmDialog";
 
 export default function PartenairesPage({ missions, currentUser }) {
+  const confirmDlg = useConfirm();
   const [partners, setPartners] = useState([]);
   const [modal, setModal] = useState(null); // null | "create" | "edit" | "missions"
   const [form, setForm] = useState({});
@@ -58,7 +60,7 @@ export default function PartenairesPage({ missions, currentUser }) {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm("Supprimer ce partenaire ?")) return;
+    if (!(await confirmDlg("Supprimer ce partenaire ?", { confirmLabel: "Supprimer" }))) return;
     await api.del(`/api/partners/${id}`);
     await loadPartners();
   };
@@ -349,7 +351,7 @@ export default function PartenairesPage({ missions, currentUser }) {
                     <div style={{ marginLeft: "auto", display: "flex", gap: 6 }}>
                       {s.stage === "En attente" && (
                         <button
-                          onClick={() => { if (window.confirm("Accepter cette proposition ?")) updateStage(s.id, "Proposition partenaire"); }}
+                          onClick={async () => { if (await confirmDlg("Accepter cette proposition ?", { danger: false, confirmLabel: "Accepter" })) updateStage(s.id, "Proposition partenaire"); }}
                           style={{
                             display: "inline-flex", alignItems: "center", gap: 5,
                             padding: "7px 14px", background: "#d1fae5", border: "none", borderRadius: 10,
@@ -362,7 +364,7 @@ export default function PartenairesPage({ missions, currentUser }) {
                       )}
                       {s.stage !== "Archivé" && (
                         <button
-                          onClick={() => { if (window.confirm("Archiver cette soumission ?")) updateStage(s.id, "Archivé"); }}
+                          onClick={async () => { if (await confirmDlg("Archiver cette soumission ?", { danger: false, confirmLabel: "Archiver" })) updateStage(s.id, "Archivé"); }}
                           style={{
                             display: "inline-flex", alignItems: "center", gap: 5,
                             padding: "7px 14px", background: "#f1f5f9", border: "none", borderRadius: 10,
@@ -406,7 +408,7 @@ export default function PartenairesPage({ missions, currentUser }) {
           </thead>
           <tbody>
             {filtered.map(p => (
-              <tr key={p.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
+              <tr key={p.id} style={{ borderBottom: "1px solid #e2e8f0" }}>
                 <td style={td}><span style={{ fontWeight: 600 }}>{p.name}</span></td>
                 <td style={td}>{p.email}</td>
                 <td style={td}>{p.company || "—"}</td>
@@ -476,7 +478,7 @@ export default function PartenairesPage({ missions, currentUser }) {
                       <span style={{ color: "#64748b" }}> — {m.company}</span>
                     </div>
                     <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 6, background: m.status === "Ouverte" ? "#d1fae5" : "#f1f5f9", color: m.status === "Ouverte" ? "#059669" : "#64748b" }}>{m.status}</span>
-                    <button onClick={() => { if (window.confirm("Retirer cette mission du partenaire ?")) removeMission(m.id); }} style={{ background: "none", border: "none", color: "#dc2626", cursor: "pointer", fontSize: 12, fontWeight: 600 }}>Retirer</button>
+                    <button onClick={async () => { if (await confirmDlg("Retirer cette mission du partenaire ?", { confirmLabel: "Retirer" })) removeMission(m.id); }} style={{ background: "none", border: "none", color: "#dc2626", cursor: "pointer", fontSize: 12, fontWeight: 600 }}>Retirer</button>
                   </div>
                 ))}
               </div>

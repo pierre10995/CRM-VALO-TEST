@@ -2,8 +2,10 @@ import { useState } from "react";
 import { fmtCAD } from "../../utils/constants";
 import { exportCsv } from "../../utils/exportCsv";
 import FicheMission from "./FicheMission";
+import { useConfirm } from "../common/ConfirmDialog";
 
 export default function MissionsPage({ missions, contacts, users, candidatures, onAdd, onEdit, onDelete }) {
+  const confirm = useConfirm();
   const [detailMission, setDetailMission] = useState(null);
   const [filterStatus, setFilterStatus] = useState("Tous");
   const [search, setSearch] = useState("");
@@ -96,7 +98,7 @@ export default function MissionsPage({ missions, contacts, users, candidatures, 
               </div>
               <div style={{ display: "flex", gap: 6, marginTop: 12 }} onClick={e => e.stopPropagation()}>
                 <button className="btn btn-ghost" style={{ padding: "5px 12px", fontSize: 12 }} onClick={() => onEdit(m)}>Modifier</button>
-                <button className="btn btn-danger" style={{ padding: "5px 12px", fontSize: 12 }} onClick={() => window.confirm("Attention : cette suppression est définitive. Voulez-vous continuer ?") && onDelete(m.id)}>Suppr.</button>
+                <button className="btn btn-danger" style={{ padding: "5px 12px", fontSize: 12 }} onClick={async () => (await confirm("Cette suppression est définitive. Voulez-vous continuer ?", { title: "Supprimer définitivement", confirmLabel: "Supprimer" })) && onDelete(m.id)}>Suppr.</button>
               </div>
             </div>
           );

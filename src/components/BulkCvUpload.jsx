@@ -1,7 +1,9 @@
 import { useState, useRef } from "react";
 import api from "../services/api";
+import { useToast } from "./common/Toast";
 
 export default function BulkCvUpload({ onComplete }) {
+  const toast = useToast();
   const [dragging, setDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(null);
@@ -18,7 +20,7 @@ export default function BulkCvUpload({ onComplete }) {
   const handleFiles = async (fileList) => {
     const pdfFiles = Array.from(fileList).filter(f => f.type === "application/pdf" || f.name.toLowerCase().endsWith(".pdf"));
     if (pdfFiles.length === 0) {
-      alert("Veuillez sélectionner des fichiers PDF uniquement.");
+      toast.error("Veuillez sélectionner des fichiers PDF uniquement.");
       return;
     }
 

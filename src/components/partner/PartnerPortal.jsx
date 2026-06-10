@@ -79,7 +79,7 @@ export default function PartnerPortal({ partner, onLogout }) {
           <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>{partner.email}</div>
         </div>
 
-        <div style={{ fontSize: 10, fontWeight: 700, color: "#94a3b8", padding: "0 4px 8px", letterSpacing: "0.08em", textTransform: "uppercase" }}>Navigation</div>
+        <div style={{ fontSize: 10, fontWeight: 700, color: "#64748b", padding: "0 4px 8px", letterSpacing: "0.08em", textTransform: "uppercase" }}>Navigation</div>
 
         <NavItem active={activeView === "dashboard" && !selectedMission} onClick={() => { setActiveView("dashboard"); setSelectedMission(null); }}>
           Tableau de bord
@@ -90,7 +90,7 @@ export default function PartnerPortal({ partner, onLogout }) {
 
         {/* Notifications */}
         <div style={{ position: "relative", marginTop: 16 }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: "#94a3b8", padding: "0 4px 8px", letterSpacing: "0.08em", textTransform: "uppercase" }}>Notifications</div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: "#64748b", padding: "0 4px 8px", letterSpacing: "0.08em", textTransform: "uppercase" }}>Notifications</div>
           <NavItem active={showNotifs} onClick={() => { setShowNotifs(!showNotifs); if (!showNotifs && unreadCount > 0) markAllRead(); }}>
             Alertes {unreadCount > 0 && <span style={{ background: "#dc2626", color: "white", fontSize: 10, fontWeight: 700, borderRadius: 10, padding: "1px 7px", marginLeft: 6 }}>{unreadCount}</span>}
           </NavItem>

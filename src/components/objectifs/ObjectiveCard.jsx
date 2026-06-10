@@ -1,10 +1,12 @@
 import { fmtCAD } from "../../utils/constants";
 import ProgressBar from "../common/ProgressBar";
+import { useConfirm } from "../common/ConfirmDialog";
 
 const pct = (actual, target) => target > 0 ? Math.min(Math.round((actual / target) * 100), 999) : 0;
 const pctColor = (p) => p >= 100 ? "#059669" : p >= 50 ? "#2563eb" : "#d97706";
 
 export default function ObjectiveCard({ obj, actuals, userCA, periodLabel, onEdit, onDelete, isEditing, editForm, setEditForm, onSaveEdit, onCancelEdit, clients }) {
+  const confirm = useConfirm();
   const pctClients = pct(actuals.newClients, obj.targetNewClients);
   const pctCA = pct(actuals.caRealized, obj.targetCA);
   const pctTotal = pct(actuals.totalRealized, obj.targetTotal);
@@ -28,7 +30,7 @@ export default function ObjectiveCard({ obj, actuals, userCA, periodLabel, onEdi
         {!isEditing && (
           <div style={{ display: "flex", gap: 6 }}>
             <button className="btn btn-ghost" style={{ padding: "4px 8px", fontSize: 11 }} onClick={onEdit}>Modifier</button>
-            <button className="btn btn-danger" style={{ padding: "4px 8px", fontSize: 11 }} onClick={() => { if (window.confirm("Supprimer cet objectif ?")) onDelete(); }}>Suppr.</button>
+            <button className="btn btn-danger" style={{ padding: "4px 8px", fontSize: 11 }} onClick={async () => { if (await confirm("Supprimer cet objectif ?", { confirmLabel: "Supprimer" })) onDelete(); }}>Suppr.</button>
           </div>
         )}
       </div>

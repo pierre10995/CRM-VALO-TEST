@@ -6,17 +6,18 @@ export const GLOBAL_STYLES = `
 .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 10px; cursor: pointer; font-size: 13.5px; font-weight: 500; color: #64748b; transition: all 0.2s; }
 .nav-item:hover { background: #eff6ff; color: #2563eb; }
 .nav-item.active { background: linear-gradient(135deg, #2563eb, #3b82f6); color: white; box-shadow: 0 4px 14px rgba(37,99,235,0.35); }
-.card { background: white; border-radius: 16px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 8px 24px rgba(0,0,0,0.04); animation: fadeIn 0.4s ease; }
+.card { background: white; border: 1px solid #e2e8f0; border-radius: 16px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 8px 24px rgba(0,0,0,0.04); animation: fadeIn 0.4s ease; }
 .btn { display: inline-flex; align-items: center; gap: 7px; padding: 9px 18px; border-radius: 10px; border: none; cursor: pointer; font-size: 13.5px; font-weight: 600; font-family: inherit; transition: all 0.2s; }
 .btn-primary { background: linear-gradient(135deg, #2563eb, #3b82f6); color: white; box-shadow: 0 4px 12px rgba(37,99,235,0.3); }
 .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(37,99,235,0.4); }
-.btn-ghost { background: transparent; color: #64748b; border: 1px solid #e2e8f0; }
+.btn-ghost { background: transparent; color: #475569; border: 1px solid #cbd5e1; }
 .btn-ghost:hover { background: #f8fafc; color: #1e293b; }
 .btn-danger { background: #fee2e2; color: #dc2626; border: none; }
 .btn-danger:hover { background: #fecaca; }
 .btn-success { background: #d1fae5; color: #059669; border: none; }
 .btn-success:hover { background: #a7f3d0; }
-.input { width: 100%; padding: 10px 14px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 14px; font-family: inherit; outline: none; transition: border 0.2s; color: #1e293b; background: #fafbfd; }
+.input { width: 100%; padding: 10px 14px; border: 1.5px solid #cbd5e1; border-radius: 10px; font-size: 14px; font-family: inherit; outline: none; transition: border 0.2s; color: #1e293b; background: #fafbfd; }
+.input::placeholder { color: #94a3b8; }
 .input:focus { border-color: #2563eb; background: white; box-shadow: 0 0 0 3px rgba(37,99,235,0.08); }
 .tag { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 20px; font-size: 11.5px; font-weight: 600; }
 .row-hover:hover { background: #f8fafc; cursor: pointer; }
@@ -24,6 +25,10 @@ export const GLOBAL_STYLES = `
 @keyframes toastIn { from { opacity: 0; transform: translateX(60px); } to { opacity: 1; transform: translateX(0); } }
 @keyframes toastOut { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(60px); } }
 .btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+.spinner { width: 13px; height: 13px; border: 2px solid rgba(255,255,255,0.4); border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block; flex-shrink: 0; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.skeleton { background: linear-gradient(90deg, #eef2f7 25%, #f8fafc 50%, #eef2f7 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: 8px; }
+@keyframes shimmer { to { background-position: -200% 0; } }
 .table-wrap { width: 100%; overflow-x: auto; }
 @media (max-width: 768px) {
   .app-main { padding: 16px !important; }

@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import api from "../../services/api";
 import SearchSelect from "../common/SearchSelect";
+import { useConfirm } from "../common/ConfirmDialog";
 
 export default function EvaluationPage({ candidates, missions, loadAll }) {
+  const confirm = useConfirm();
   const [candidateId, setCandidateId] = useState("");
   const [missionId, setMissionId] = useState("");
   const [loading, setLoading] = useState(false);
@@ -99,7 +101,7 @@ export default function EvaluationPage({ candidates, missions, loadAll }) {
                   <div style={{ fontSize: 11, color: "#94a3b8" }}>{new Date(ev.createdAt).toLocaleDateString("fr-CA")}</div>
                 </div>
               </div>
-              <button className="btn btn-danger" style={{ padding: "6px 10px", fontSize: 11 }} onClick={() => window.confirm("Attention : cette suppression est définitive. Voulez-vous continuer ?") && deleteEvaluation(ev.id)}>Suppr.</button>
+              <button className="btn btn-danger" style={{ padding: "6px 10px", fontSize: 11 }} onClick={async () => (await confirm("Cette suppression est définitive. Voulez-vous continuer ?", { title: "Supprimer définitivement", confirmLabel: "Supprimer" })) && deleteEvaluation(ev.id)}>Suppr.</button>
             </div>
 
             {ev.summary && <div style={{ fontSize: 13, color: "#374151", marginBottom: 14, lineHeight: 1.6, fontStyle: "italic", background: "#f8fafc", borderRadius: 8, padding: 12 }}>{ev.summary}</div>}

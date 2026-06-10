@@ -3,9 +3,11 @@ import api from "../../services/api";
 import { fmtCAD } from "../../utils/constants";
 import AuditHistory from "../common/AuditHistory";
 import { useToast } from "../common/Toast";
+import { useConfirm } from "../common/ConfirmDialog";
 
 export default function FicheMission({ mission: m, onClose, onEdit, onDelete, candidatures }) {
   const toast = useToast();
+  const confirm = useConfirm();
   const [files, setFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
@@ -109,28 +111,28 @@ export default function FicheMission({ mission: m, onClose, onEdit, onDelete, ca
 
       <div className="resp-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
         <div style={{ background: "#f8fafc", borderRadius: 10, padding: 12 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", marginBottom: 4 }}>TYPE DE CONTRAT</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", marginBottom: 4 }}>TYPE DE CONTRAT</div>
           <div style={{ fontSize: 13, color: "#0f172a" }}>{m.contractType}</div>
         </div>
         <div style={{ background: "#f8fafc", borderRadius: 10, padding: 12 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", marginBottom: 4 }}>SALAIRE</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", marginBottom: 4 }}>SALAIRE</div>
           <div style={{ fontSize: 13, color: "#0f172a", fontWeight: 600 }}>{m.salaryMin > 0 ? `${fmtCAD(m.salaryMin)} - ${fmtCAD(m.salaryMax)}` : "—"}</div>
         </div>
         <div style={{ background: "#f8fafc", borderRadius: 10, padding: 12 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", marginBottom: 4 }}>COMMISSION VALO</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", marginBottom: 4 }}>COMMISSION VALO</div>
           <div style={{ fontSize: 13, color: "#0f172a", fontWeight: 600 }}>{m.commission > 0 ? fmtCAD(m.commission) : "—"}</div>
         </div>
         <div style={{ background: "#f8fafc", borderRadius: 10, padding: 12 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", marginBottom: 4 }}>COMMISSION RECRUTEURS</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", marginBottom: 4 }}>COMMISSION RECRUTEURS</div>
           <div style={{ fontSize: 13, color: "#0f172a", fontWeight: 600 }}>{m.recruiterCommission > 0 ? fmtCAD(m.recruiterCommission) : "—"}</div>
         </div>
         <div style={{ background: "#f8fafc", borderRadius: 10, padding: 12 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", marginBottom: 4 }}>STATUT</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", marginBottom: 4 }}>STATUT</div>
           <div style={{ fontSize: 13, color: "#0f172a" }}>{m.status}</div>
         </div>
         {m.workMode && (
           <div style={{ background: "#f8fafc", borderRadius: 10, padding: 12 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", marginBottom: 4 }}>MODE DE TRAVAIL</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", marginBottom: 4 }}>MODE DE TRAVAIL</div>
             <div style={{ fontSize: 13, color: "#0f172a" }}>{m.workMode}</div>
           </div>
         )}
@@ -138,13 +140,13 @@ export default function FicheMission({ mission: m, onClose, onEdit, onDelete, ca
 
       {m.description && (
         <div style={{ background: "#f8fafc", borderRadius: 10, padding: 12, marginBottom: 12 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", marginBottom: 4 }}>DESCRIPTION</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", marginBottom: 4 }}>DESCRIPTION</div>
           <div style={{ fontSize: 13, color: "#374151", lineHeight: 1.5 }}>{m.description}</div>
         </div>
       )}
       {m.requirements && (
         <div style={{ background: "#f8fafc", borderRadius: 10, padding: 12, marginBottom: 20 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", marginBottom: 4 }}>PRE-REQUIS</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", marginBottom: 4 }}>PRE-REQUIS</div>
           <div style={{ fontSize: 13, color: "#374151", lineHeight: 1.5 }}>{m.requirements}</div>
         </div>
       )}
@@ -163,7 +165,7 @@ export default function FicheMission({ mission: m, onClose, onEdit, onDelete, ca
             <span style={{ fontSize: 11, color: "#94a3b8" }}>{new Date(f.created_at).toLocaleDateString("fr-CA")}</span>
             <button className="btn btn-primary" style={{ padding: "4px 10px", fontSize: 11 }} onClick={() => previewFile(f.id, f.file_name)}>Voir</button>
             <button className="btn btn-ghost" style={{ padding: "4px 10px", fontSize: 11 }} onClick={() => downloadFile(f.id, f.file_name)}>Télécharger</button>
-            <button className="btn btn-danger" style={{ padding: "4px 10px", fontSize: 11 }} onClick={() => window.confirm("Attention : cette suppression est définitive. Voulez-vous continuer ?") && deleteFile(f.id)}>Suppr.</button>
+            <button className="btn btn-danger" style={{ padding: "4px 10px", fontSize: 11 }} onClick={async () => (await confirm("Cette suppression est définitive. Voulez-vous continuer ?", { title: "Supprimer définitivement", confirmLabel: "Supprimer" })) && deleteFile(f.id)}>Suppr.</button>
           </div>
         ))}
         <p style={{ fontSize: 11, color: "#94a3b8", marginTop: 6, fontStyle: "italic" }}>Ce document sera utilisé par l'IA lors de l'évaluation des candidats.</p>
@@ -208,7 +210,7 @@ export default function FicheMission({ mission: m, onClose, onEdit, onDelete, ca
 
       <div style={{ display: "flex", gap: 10 }}>
         <button className="btn btn-ghost" style={{ flex: 1, justifyContent: "center" }} onClick={onEdit}>Modifier</button>
-        <button className="btn btn-danger" style={{ flex: 1, justifyContent: "center" }} onClick={() => window.confirm("Attention : cette suppression est définitive. Voulez-vous continuer ?") && onDelete()}>Supprimer</button>
+        <button className="btn btn-danger" style={{ flex: 1, justifyContent: "center" }} onClick={async () => (await confirm("Cette suppression est définitive. Voulez-vous continuer ?", { title: "Supprimer définitivement", confirmLabel: "Supprimer" })) && onDelete()}>Supprimer</button>
       </div>
 
       {/* PDF Preview Modal */}

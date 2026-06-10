@@ -27,7 +27,7 @@ export default function AuditHistory({ entityType, entityId }) {
 
   return (
     <div style={{ marginTop: 20 }}>
-      <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 10 }}>
+      <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 10 }}>
         Historique ({logs.length})
       </div>
       <div style={{ position: "relative", paddingLeft: 18 }}>

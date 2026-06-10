@@ -18,7 +18,7 @@ export default function ProfilePage({ currentUser, contacts, missions, candidatu
 
   const Section = ({ title, count, color, children }) => (
     <div className="card" style={{ padding: 0, overflow: "hidden", marginBottom: 20 }}>
-      <div style={{ padding: "16px 20px", borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <div style={{ padding: "16px 20px", borderBottom: "1px solid #e2e8f0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <h3 style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", margin: 0 }}>{title}</h3>
         <span style={{ background: color, color: "white", fontSize: 12, fontWeight: 700, padding: "3px 10px", borderRadius: 20 }}>{count}</span>
       </div>
@@ -52,15 +52,15 @@ export default function ProfilePage({ currentUser, contacts, missions, candidatu
       {/* Candidats */}
       <Section title="Mes Candidats" count={myCandidats.length} color="#8b5cf6">
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead><tr style={{ borderBottom: "1px solid #f1f5f9" }}>
+          <thead><tr style={{ borderBottom: "1px solid #e2e8f0" }}>
             {["Nom", "Ville", "Compétences", "Validation", "Disponibilité"].map(h => (
-              <th key={h} style={{ padding: "12px 20px", textAlign: "left", fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase" }}>{h}</th>
+              <th key={h} style={{ padding: "12px 20px", textAlign: "left", fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase" }}>{h}</th>
             ))}
           </tr></thead>
           <tbody>
             {myCandidats.length === 0 && <EmptyRow cols={5} text="Aucun candidat assigné" />}
             {myCandidats.map(c => (
-              <tr key={c.id} className="row-hover" style={{ borderBottom: "1px solid #f8fafc" }}>
+              <tr key={c.id} className="row-hover" style={{ borderBottom: "1px solid #eef2f7" }}>
                 <td style={{ padding: "12px 20px" }}>
                   <div style={{ fontSize: 13.5, fontWeight: 600, color: "#0f172a" }}>{c.name}</div>
                   {c.email && <div style={{ fontSize: 11.5, color: "#94a3b8" }}>{c.email}</div>}
@@ -78,15 +78,15 @@ export default function ProfilePage({ currentUser, contacts, missions, candidatu
       {/* Clients */}
       <Section title="Mes Clients & Prospects" count={myClients.length} color="#2563eb">
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead><tr style={{ borderBottom: "1px solid #f1f5f9" }}>
+          <thead><tr style={{ borderBottom: "1px solid #e2e8f0" }}>
             {["Entreprise", "Contact", "Secteur", "Statut"].map(h => (
-              <th key={h} style={{ padding: "12px 20px", textAlign: "left", fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase" }}>{h}</th>
+              <th key={h} style={{ padding: "12px 20px", textAlign: "left", fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase" }}>{h}</th>
             ))}
           </tr></thead>
           <tbody>
             {myClients.length === 0 && <EmptyRow cols={4} text="Aucun client assigné" />}
             {myClients.map(c => (
-              <tr key={c.id} className="row-hover" style={{ borderBottom: "1px solid #f8fafc" }}>
+              <tr key={c.id} className="row-hover" style={{ borderBottom: "1px solid #eef2f7" }}>
                 <td style={{ padding: "12px 20px" }}>
                   <div style={{ fontSize: 13.5, fontWeight: 600, color: "#0f172a" }}>{c.company}</div>
                 </td>
@@ -102,9 +102,9 @@ export default function ProfilePage({ currentUser, contacts, missions, candidatu
       {/* Missions */}
       <Section title="Mes Postes Ouverts" count={myMissions.length} color="#0891b2">
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead><tr style={{ borderBottom: "1px solid #f1f5f9" }}>
+          <thead><tr style={{ borderBottom: "1px solid #e2e8f0" }}>
             {["Poste", "Entreprise", "Statut", "Commission", "Candidatures"].map(h => (
-              <th key={h} style={{ padding: "12px 20px", textAlign: "left", fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase" }}>{h}</th>
+              <th key={h} style={{ padding: "12px 20px", textAlign: "left", fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase" }}>{h}</th>
             ))}
           </tr></thead>
           <tbody>
@@ -112,7 +112,7 @@ export default function ProfilePage({ currentUser, contacts, missions, candidatu
             {myMissions.map(m => {
               const cdCount = (candidatures || []).filter(cd => cd.missionId === m.id).length;
               return (
-                <tr key={m.id} className="row-hover" style={{ borderBottom: "1px solid #f8fafc" }}>
+                <tr key={m.id} className="row-hover" style={{ borderBottom: "1px solid #eef2f7" }}>
                   <td style={{ padding: "12px 20px" }}>
                     <div style={{ fontSize: 13.5, fontWeight: 600, color: "#0f172a" }}>{m.title}</div>
                   </td>
