@@ -11,7 +11,7 @@ const NAV_ITEMS = [
   { id: "placements", label: "Suivi Placements", icon: "M9 12l2 2 4-4M20 12a8 8 0 1 1-16 0 8 8 0 0 1 16 0z" },
   { id: "revenue", label: "Chiffre d'affaires", icon: "M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6", adminOnly: true },
   { id: "objectifs", label: "Objectifs", icon: "M13 10V3L4 14h7v7l9-11h-7z", adminOnly: true },
-  { id: "partenaires", label: "Partenaires", icon: "M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M20 8v6M23 11h-6M12.5 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0z", adminOnly: true },
+  { id: "partenaires", label: "Partenaires", icon: "M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M20 8v6M23 11h-6M12.5 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0z", superAdminOnly: true },
   { id: "profil", label: "Mon Profil", icon: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z" },
   { id: "admin", label: "Administration", icon: "M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 0 0-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 0 0-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 0 0-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 0 0-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 0 0 1.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0z", adminOnly: true },
 ];
@@ -21,8 +21,13 @@ const TYPE_COLORS = { contact: "#2563eb", candidat: "#059669", mission: "#d97706
 const TYPE_BG = { contact: "#eff6ff", candidat: "#ecfdf5", mission: "#fffbeb" };
 
 export default function Sidebar({ activeTab, setActiveTab, currentUser, onLogout, setDetailId, setSearch, setFilterStatus, contacts = [], missions = [], onGlobalSearch }) {
-  const isAdmin = currentUser?.userRole === "admin";
-  const visibleItems = NAV_ITEMS.filter(item => !item.adminOnly || isAdmin);
+  const isAdmin = ["admin", "superadmin"].includes(currentUser?.userRole);
+  const isSuperAdmin = currentUser?.userRole === "superadmin";
+  const visibleItems = NAV_ITEMS.filter(item => {
+    if (item.superAdminOnly) return isSuperAdmin;
+    if (item.adminOnly) return isAdmin;
+    return true;
+  });
 
   const [globalQuery, setGlobalQuery] = useState("");
   const [showResults, setShowResults] = useState(false);

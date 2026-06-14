@@ -85,12 +85,19 @@ function signTokenAndSetCookie(res, payload) {
 }
 
 /**
- * Middleware qui restreint l'accès aux administrateurs (role='admin' dans le JWT).
+ * Middleware qui restreint l'accès aux administrateurs (role='admin' ou 'superadmin').
  * Doit être utilisé après authMiddleware.
  */
 function adminOnly(req, res, next) {
-  if (req.user?.userRole !== "admin") {
+  if (!["admin", "superadmin"].includes(req.user?.userRole)) {
     return res.status(403).json({ error: "Accès réservé à l'administrateur" });
+  }
+  next();
+}
+
+function superAdminOnly(req, res, next) {
+  if (req.user?.userRole !== "superadmin") {
+    return res.status(403).json({ error: "Accès réservé au super administrateur" });
   }
   next();
 }
@@ -125,6 +132,7 @@ export {
   emailCheckLimiter,
   authMiddleware,
   adminOnly,
+  superAdminOnly,
   partnerAuthMiddleware,
   signTokenAndSetCookie,
 };

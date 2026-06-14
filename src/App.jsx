@@ -109,12 +109,14 @@ function CRMInner() {
 
   useEffect(() => { if (authed && currentUser?.role !== "partner") loadAll(); }, [authed]);
 
-  // Onglets réservés aux admins (financier + partenaires)
-  const ADMIN_TABS = ["revenue", "objectifs", "partenaires", "admin"];
-  const isAdmin = currentUser?.userRole === "admin";
+  const ADMIN_TABS = ["revenue", "objectifs", "admin"];
+  const SUPERADMIN_TABS = ["partenaires"];
+  const isAdmin = ["admin", "superadmin"].includes(currentUser?.userRole);
+  const isSuperAdmin = currentUser?.userRole === "superadmin";
   useEffect(() => {
     if (!isAdmin && ADMIN_TABS.includes(activeTab)) setActiveTab("dashboard");
-  }, [isAdmin, activeTab]);
+    if (!isSuperAdmin && SUPERADMIN_TABS.includes(activeTab)) setActiveTab("dashboard");
+  }, [isAdmin, isSuperAdmin, activeTab]);
 
   const handleLogin = async () => {
     // Try internal user login first
