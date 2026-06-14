@@ -3,7 +3,7 @@ import { pool } from "../db.js";
 import { validate } from "../validators/validate.js";
 import { fiscalYearSchema } from "../validators/schemas.js";
 import { asyncHandler } from "../helpers/errors.js";
-import { adminOnly } from "../middleware.js";
+import { superAdminOnly } from "../middleware.js";
 
 const router = Router();
 
@@ -14,7 +14,7 @@ router.get("/", asyncHandler(async (req, res) => {
   res.json(rows.map(fmt));
 }));
 
-router.post("/", adminOnly, validate(fiscalYearSchema), asyncHandler(async (req, res) => {
+router.post("/", superAdminOnly, validate(fiscalYearSchema), asyncHandler(async (req, res) => {
   const d = req.body;
   const { rows } = await pool.query(
     "INSERT INTO fiscal_years (label, start_date, end_date, target) VALUES ($1,$2,$3,$4) RETURNING *",
@@ -23,7 +23,7 @@ router.post("/", adminOnly, validate(fiscalYearSchema), asyncHandler(async (req,
   res.json(fmt(rows[0]));
 }));
 
-router.put("/:id", adminOnly, validate(fiscalYearSchema), asyncHandler(async (req, res) => {
+router.put("/:id", superAdminOnly, validate(fiscalYearSchema), asyncHandler(async (req, res) => {
   const d = req.body;
   const { rows } = await pool.query(
     "UPDATE fiscal_years SET label=$1, start_date=$2, end_date=$3, target=$4 WHERE id=$5 RETURNING *",
@@ -33,7 +33,7 @@ router.put("/:id", adminOnly, validate(fiscalYearSchema), asyncHandler(async (re
   res.json(fmt(rows[0]));
 }));
 
-router.delete("/:id", adminOnly, asyncHandler(async (req, res) => {
+router.delete("/:id", superAdminOnly, asyncHandler(async (req, res) => {
   await pool.query("DELETE FROM fiscal_years WHERE id=$1", [req.params.id]);
   res.json({ ok: true });
 }));

@@ -4,9 +4,10 @@ import { useConfirm } from "../common/ConfirmDialog";
 
 export default function AdminPage({ currentUser, loadAll }) {
   const confirm = useConfirm();
-  const [tab, setTab] = useState("users"); // "users" | "partners"
+  const [tab, setTab] = useState("users"); // "users" | "partners" | "audit"
   const [users, setUsers] = useState([]);
   const [partners, setPartners] = useState([]);
+  const [auditLog, setAuditLog] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [formType, setFormType] = useState("user"); // "user" | "partner"
   const [editingId, setEditingId] = useState(null);
@@ -14,15 +15,18 @@ export default function AdminPage({ currentUser, loadAll }) {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  const isAdmin = currentUser?.userRole === "admin";
+  const isAdmin = ["admin", "superadmin"].includes(currentUser?.userRole);
+  const isSuperAdmin = currentUser?.userRole === "superadmin";
 
   const load = async () => {
-    const [u, p] = await Promise.all([
+    const results = await Promise.allSettled([
       api.get("/api/users"),
-      api.get("/api/partners"),
+      isSuperAdmin ? api.get("/api/partners") : Promise.resolve([]),
+      isSuperAdmin ? api.get("/api/audit-log") : Promise.resolve([]),
     ]);
-    setUsers(u);
-    setPartners(p);
+    if (results[0].status === "fulfilled") setUsers(results[0].value);
+    if (results[1].status === "fulfilled") setPartners(results[1].value);
+    if (results[2].status === "fulfilled") setAuditLog(results[2].value);
   };
 
   useEffect(() => { load(); }, []);
@@ -117,6 +121,30 @@ export default function AdminPage({ currentUser, loadAll }) {
     }
   };
 
+  const handleChangeRole = async (user, newRole) => {
+    if (user.login === currentUser?.login) return;
+    const res = await api.put(`/api/users/${user.id}/role`, { role: newRole });
+    if (res.ok) {
+      setSuccess(`Rôle de "${user.fullName}" modifié en ${ROLE_LABELS[newRole]}`);
+      await load();
+      if (loadAll) await loadAll();
+    } else {
+      const d = await res.json().catch(() => ({}));
+      setError(d.error || "Erreur lors du changement de rôle");
+    }
+  };
+
+  const handleDeleteUser = async (user) => {
+    if (user.login === currentUser?.login) return;
+    if (!(await confirm(`Supprimer définitivement l'utilisateur « ${user.fullName} » ? Cette action est irréversible.`, { confirmLabel: "Supprimer" }))) return;
+    const res = await api.del(`/api/users/${user.id}`);
+    if (res.ok) {
+      setSuccess(`Utilisateur "${user.fullName}" supprimé`);
+      await load();
+      if (loadAll) await loadAll();
+    }
+  };
+
   const handleDeletePartner = async (partner) => {
     if (!(await confirm(`Supprimer le recruteur externe « ${partner.name} » ?`, { confirmLabel: "Supprimer" }))) return;
     const res = await api.del(`/api/partners/${partner.id}`);
@@ -147,7 +175,7 @@ export default function AdminPage({ currentUser, loadAll }) {
         </div>
         <div style={{ display: "flex", gap: 8 }}>
           <button className="btn btn-primary" onClick={() => resetForm("user")}>+ Interne</button>
-          <button className="btn btn-primary" style={{ background: "#7c3aed" }} onClick={() => resetForm("partner")}>+ Recruteur externe</button>
+          {isSuperAdmin && <button className="btn btn-primary" style={{ background: "#7c3aed" }} onClick={() => resetForm("partner")}>+ Recruteur externe</button>}
         </div>
       </div>
 
@@ -223,7 +251,8 @@ export default function AdminPage({ currentUser, loadAll }) {
       {/* Tabs */}
       <div style={{ display: "flex", gap: 4, marginBottom: 20, background: "#f1f5f9", borderRadius: 10, padding: 4, width: "fit-content" }}>
         <button style={tabStyle("users")} onClick={() => setTab("users")}>Employés Internes ({users.length})</button>
-        <button style={tabStyle("partners")} onClick={() => setTab("partners")}>Recruteurs externes ({partners.length})</button>
+        {isSuperAdmin && <button style={tabStyle("partners")} onClick={() => setTab("partners")}>Recruteurs externes ({partners.length})</button>}
+        {isSuperAdmin && <button style={tabStyle("audit")} onClick={() => setTab("audit")}>Journal d'audit</button>}
       </div>
 
       {/* Users list */}
@@ -233,10 +262,11 @@ export default function AdminPage({ currentUser, loadAll }) {
             <thead><tr style={{ borderBottom: "1px solid #e2e8f0" }}>
               <th style={thStyle}>Nom</th>
               <th style={thStyle}>Email</th>
+              <th style={thStyle}>Rôle</th>
               <th style={{ ...thStyle, textAlign: "right" }}>Actions</th>
             </tr></thead>
             <tbody>
-              {users.length === 0 && <tr><td colSpan={3} style={{ padding: 40, textAlign: "center", color: "#94a3b8" }}>Aucun utilisateur</td></tr>}
+              {users.length === 0 && <tr><td colSpan={4} style={{ padding: 40, textAlign: "center", color: "#94a3b8" }}>Aucun utilisateur</td></tr>}
               {users.map(u => (
                 <tr key={u.id} className="row-hover" style={{ borderBottom: "1px solid #eef2f7" }}>
                   <td style={tdStyle}>
@@ -246,14 +276,30 @@ export default function AdminPage({ currentUser, loadAll }) {
                     </div>
                   </td>
                   <td style={{ ...tdStyle, color: "#64748b" }}>{u.login}</td>
+                  <td style={tdStyle}>
+                    {isSuperAdmin && u.login !== currentUser?.login ? (
+                      <select
+                        value={u.userRole || "user"}
+                        onChange={e => handleChangeRole(u, e.target.value)}
+                        style={{ padding: "4px 8px", borderRadius: 6, border: "1.5px solid #e2e8f0", fontSize: 12, fontWeight: 600, color: ROLE_COLORS[u.userRole] || "#64748b", background: "white", cursor: "pointer" }}
+                      >
+                        <option value="user">Utilisateur</option>
+                        <option value="admin">Admin</option>
+                        <option value="superadmin">Super Admin</option>
+                      </select>
+                    ) : (
+                      <span className="tag" style={{ background: ROLE_BG[u.userRole] || "#f1f5f9", color: ROLE_COLORS[u.userRole] || "#64748b", fontSize: 11 }}>
+                        {ROLE_LABELS[u.userRole] || "Utilisateur"}
+                      </span>
+                    )}
+                  </td>
                   <td style={{ ...tdStyle, textAlign: "right" }}>
-                    <button
-                      className="btn btn-ghost"
-                      style={{ fontSize: 12, padding: "4px 10px" }}
-                      onClick={() => startEditUser(u)}
-                    >
-                      Modifier
-                    </button>
+                    <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
+                      <button className="btn btn-ghost" style={{ fontSize: 12, padding: "4px 10px" }} onClick={() => startEditUser(u)}>Modifier</button>
+                      {isSuperAdmin && u.login !== currentUser?.login && (
+                        <button className="btn btn-ghost" style={{ fontSize: 12, padding: "4px 10px", color: "#dc2626" }} onClick={() => handleDeleteUser(u)}>Supprimer</button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -263,7 +309,7 @@ export default function AdminPage({ currentUser, loadAll }) {
       )}
 
       {/* Partners list */}
-      {tab === "partners" && (
+      {tab === "partners" && isSuperAdmin && (
         <div className="card" style={{ padding: 0, overflow: "hidden" }}>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead><tr style={{ borderBottom: "1px solid #e2e8f0" }}>
@@ -301,9 +347,41 @@ export default function AdminPage({ currentUser, loadAll }) {
           </table>
         </div>
       )}
+
+      {/* Audit log */}
+      {tab === "audit" && isSuperAdmin && (
+        <div className="card" style={{ padding: 0, overflow: "hidden" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <thead><tr style={{ borderBottom: "1px solid #e2e8f0" }}>
+              <th style={thStyle}>Date</th>
+              <th style={thStyle}>Utilisateur</th>
+              <th style={thStyle}>Action</th>
+              <th style={thStyle}>Entité</th>
+              <th style={thStyle}>Détails</th>
+            </tr></thead>
+            <tbody>
+              {auditLog.length === 0 && <tr><td colSpan={5} style={{ padding: 40, textAlign: "center", color: "#94a3b8" }}>Aucune entrée</td></tr>}
+              {auditLog.map(entry => (
+                <tr key={entry.id} style={{ borderBottom: "1px solid #eef2f7" }}>
+                  <td style={{ ...tdStyle, fontSize: 12, color: "#64748b", whiteSpace: "nowrap" }}>{new Date(entry.createdAt).toLocaleString("fr-CA")}</td>
+                  <td style={{ ...tdStyle, fontWeight: 600, color: "#0f172a" }}>{entry.userName}</td>
+                  <td style={tdStyle}>
+                    <span className="tag" style={{ background: entry.action === "DELETE" ? "#fee2e2" : "#dbeafe", color: entry.action === "DELETE" ? "#dc2626" : "#2563eb", fontSize: 10 }}>{entry.action}</span>
+                  </td>
+                  <td style={{ ...tdStyle, color: "#374151" }}>{entry.entityType} #{entry.entityId}</td>
+                  <td style={{ ...tdStyle, color: "#64748b", fontSize: 12, maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{entry.details || "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
 
+const ROLE_LABELS = { user: "Utilisateur", admin: "Admin", superadmin: "Super Admin" };
+const ROLE_COLORS = { user: "#64748b", admin: "#2563eb", superadmin: "#7c3aed" };
+const ROLE_BG = { user: "#f1f5f9", admin: "#dbeafe", superadmin: "#ede9fe" };
 const thStyle = { padding: "14px 20px", textAlign: "left", fontSize: 11.5, fontWeight: 700, color: "#64748b", textTransform: "uppercase" };
 const tdStyle = { padding: "14px 20px", fontSize: 13.5 };

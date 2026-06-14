@@ -7,7 +7,7 @@ import { validate } from "../validators/validate.js";
 import { validationStatusSchema, cvSummarySchema, userCreateSchema, userUpdateSchema } from "../validators/schemas.js";
 import { asyncHandler, AppError } from "../helpers/errors.js";
 import { logger } from "../helpers/logger.js";
-import { adminOnly } from "../middleware.js";
+import { adminOnly, superAdminOnly } from "../middleware.js";
 
 const router = Router();
 
@@ -128,9 +128,41 @@ router.put("/users/:id", adminOnly, validate(userUpdateSchema), asyncHandler(asy
   res.json({ id: rows[0].id, login: rows[0].login, fullName: rows[0].full_name, userRole: rows[0].role || "user" });
 }));
 
+router.put("/users/:id/role", superAdminOnly, asyncHandler(async (req, res) => {
+  const { role } = req.body;
+  if (!["user", "admin", "superadmin"].includes(role)) {
+    return res.status(400).json({ error: "Rôle invalide" });
+  }
+  const { rows } = await pool.query(
+    "UPDATE users SET role = $1 WHERE id = $2 RETURNING id, login, full_name, role",
+    [role, req.params.id]
+  );
+  if (rows.length === 0) throw new AppError(404, "Utilisateur non trouvé");
+  res.json({ id: rows[0].id, login: rows[0].login, fullName: rows[0].full_name, userRole: rows[0].role });
+}));
+
+router.delete("/users/:id", superAdminOnly, asyncHandler(async (req, res) => {
+  const { supabaseAdmin } = await import("../supabase.js");
+  const { rows } = await pool.query("SELECT id, auth_id, login FROM users WHERE id = $1", [req.params.id]);
+  if (rows.length === 0) throw new AppError(404, "Utilisateur non trouvé");
+  const user = rows[0];
+  if (user.login === req.user?.login) {
+    return res.status(400).json({ error: "Impossible de supprimer votre propre compte" });
+  }
+  if (user.auth_id) {
+    await supabaseAdmin.auth.admin.deleteUser(user.auth_id).catch(() => {});
+  }
+  await pool.query("DELETE FROM users WHERE id = $1", [user.id]);
+  await pool.query(
+    "INSERT INTO audit_log (user_name, action, entity_type, entity_id, details) VALUES ($1,$2,$3,$4,$5)",
+    [req.user?.login || "Système", "DELETE", "user", user.id, `Suppression de ${user.login}`]
+  );
+  res.json({ ok: true });
+}));
+
 // ─── Audit log ──────────────────────────────────────────────────────────────
 
-router.get("/audit-log", asyncHandler(async (req, res) => {
+router.get("/audit-log", superAdminOnly, asyncHandler(async (req, res) => {
   const { entityType, entityId } = req.query;
   let q = "SELECT * FROM audit_log";
   const params = [];

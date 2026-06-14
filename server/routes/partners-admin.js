@@ -6,13 +6,13 @@ import { validate } from "../validators/validate.js";
 import { partnerCreateSchema, partnerUpdateSchema, partnerMissionSchema } from "../validators/schemas.js";
 import { asyncHandler, AppError } from "../helpers/errors.js";
 import { logger } from "../helpers/logger.js";
-import { adminOnly } from "../middleware.js";
+import { adminOnly, superAdminOnly } from "../middleware.js";
 
 const router = Router();
 
 // ─── CRUD Partners ──────────────────────────────────────────────────────────
 
-router.get("/", adminOnly, asyncHandler(async (req, res) => {
+router.get("/", superAdminOnly, asyncHandler(async (req, res) => {
   const { rows } = await pool.query(`
     SELECT p.*, (SELECT COUNT(*) FROM partner_missions pm WHERE pm.partner_id = p.id) as mission_count
     FROM partners p ORDER BY p.created_at DESC
@@ -20,7 +20,7 @@ router.get("/", adminOnly, asyncHandler(async (req, res) => {
   res.json(rows.map(fmtPartner));
 }));
 
-router.post("/", adminOnly, validate(partnerCreateSchema), asyncHandler(async (req, res) => {
+router.post("/", superAdminOnly, validate(partnerCreateSchema), asyncHandler(async (req, res) => {
   const { name, email, password, company, phone } = req.body;
 
   const { rows: existing } = await pool.query("SELECT 1 FROM partners WHERE LOWER(email) = LOWER($1)", [email]);
@@ -69,7 +69,7 @@ router.post("/", adminOnly, validate(partnerCreateSchema), asyncHandler(async (r
   }
 }));
 
-router.put("/:id", adminOnly, validate(partnerUpdateSchema), asyncHandler(async (req, res) => {
+router.put("/:id", superAdminOnly, validate(partnerUpdateSchema), asyncHandler(async (req, res) => {
   const { name, email, company, phone, password } = req.body;
 
   // Récupérer le partenaire actuel
@@ -106,7 +106,7 @@ router.put("/:id", adminOnly, validate(partnerUpdateSchema), asyncHandler(async 
   res.json(fmtPartner(rows[0]));
 }));
 
-router.delete("/:id", adminOnly, asyncHandler(async (req, res) => {
+router.delete("/:id", superAdminOnly, asyncHandler(async (req, res) => {
   // Supprimer aussi dans Supabase Auth
   const { rows } = await pool.query("SELECT auth_id FROM partners WHERE id = $1", [req.params.id]);
   if (rows.length > 0 && rows[0].auth_id) {
@@ -195,7 +195,7 @@ router.get("/:id/missions", asyncHandler(async (req, res) => {
   res.json(rows);
 }));
 
-router.post("/:id/missions", adminOnly, validate(partnerMissionSchema), asyncHandler(async (req, res) => {
+router.post("/:id/missions", superAdminOnly, validate(partnerMissionSchema), asyncHandler(async (req, res) => {
   const { missionId } = req.body;
   await pool.query(
     "INSERT INTO partner_missions (partner_id, mission_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
@@ -204,7 +204,7 @@ router.post("/:id/missions", adminOnly, validate(partnerMissionSchema), asyncHan
   res.status(201).json({ ok: true });
 }));
 
-router.delete("/:id/missions/:missionId", adminOnly, asyncHandler(async (req, res) => {
+router.delete("/:id/missions/:missionId", superAdminOnly, asyncHandler(async (req, res) => {
   await pool.query(
     "DELETE FROM partner_missions WHERE partner_id = $1 AND mission_id = $2",
     [req.params.id, req.params.missionId]
