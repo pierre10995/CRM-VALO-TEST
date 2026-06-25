@@ -4,6 +4,15 @@
  */
 import { z } from "zod";
 
+// Champ date/heure optionnel : une chaîne vide (champ effacé côté UI) est
+// convertie en null pour éviter l'erreur PostgreSQL "invalid input syntax for
+// type timestamp" lors de l'insertion dans une colonne TIMESTAMP.
+const optionalDate = () =>
+  z.preprocess(
+    (v) => (typeof v === "string" && v.trim() === "" ? null : v),
+    z.string().nullable().default(null)
+  );
+
 // ─── Auth ────────────────────────────────────────────────────────────────────
 
 export const loginSchema = z.object({
@@ -62,7 +71,7 @@ export const missionSchema = z.object({
   assignedTo: z.coerce.number().int().positive().nullable().default(null),
   commission: z.coerce.number().min(0).default(0),
   recruiterCommission: z.coerce.number().min(0).default(0),
-  deadline: z.string().nullable().default(null),
+  deadline: optionalDate(),
   fiscalYearId: z.coerce.number().int().positive().nullable().default(null),
   workMode: z.string().max(50).default(""),
   partnerNotes: z.string().max(5000).default(""),
@@ -76,14 +85,14 @@ export const candidatureCreateSchema = z.object({
   stage: z.string().max(30).default("Soumis"),
   rating: z.coerce.number().int().min(0).max(5).default(0),
   notes: z.string().max(5000).default(""),
-  interviewDate: z.string().nullable().default(null),
+  interviewDate: optionalDate(),
 });
 
 export const candidatureUpdateSchema = z.object({
   stage: z.string().max(30).default("Soumis"),
   rating: z.coerce.number().int().min(0).max(5).default(0),
   notes: z.string().max(5000).default(""),
-  interviewDate: z.string().nullable().default(null),
+  interviewDate: optionalDate(),
 });
 
 // ─── Activities ──────────────────────────────────────────────────────────────
@@ -95,7 +104,7 @@ export const activityCreateSchema = z.object({
   type: z.string().min(1, "Type requis").max(30),
   subject: z.string().min(1, "Sujet requis").max(200),
   description: z.string().max(5000).default(""),
-  dueDate: z.string().nullable().default(null),
+  dueDate: optionalDate(),
 });
 
 export const activityUpdateSchema = z.object({
@@ -104,7 +113,10 @@ export const activityUpdateSchema = z.object({
   type: z.string().min(1).max(30).optional(),
   subject: z.string().min(1).max(200).optional(),
   description: z.string().max(5000).optional(),
-  dueDate: z.string().nullable().optional(),
+  dueDate: z.preprocess(
+    (v) => (typeof v === "string" && v.trim() === "" ? null : v),
+    z.string().nullable().optional()
+  ),
   completed: z.boolean().optional(),
 });
 
@@ -145,8 +157,8 @@ export const placementCreateSchema = z.object({
   candidateId: z.coerce.number().int().positive("Candidat requis"),
   missionId: z.coerce.number().int().positive("Mission requise"),
   company: z.string().max(100).default(""),
-  startDate: z.string().nullable().default(null),
-  probationDate: z.string().nullable().default(null),
+  startDate: optionalDate(),
+  probationDate: optionalDate(),
   startInvoiceSent: z.boolean().default(false),
   startInvoiceName: z.string().max(200).default(""),
   startInvoicePaid: z.boolean().default(false),
@@ -158,8 +170,8 @@ export const placementCreateSchema = z.object({
 });
 
 export const placementUpdateSchema = z.object({
-  startDate: z.string().nullable().default(null),
-  probationDate: z.string().nullable().default(null),
+  startDate: optionalDate(),
+  probationDate: optionalDate(),
   startInvoiceSent: z.boolean().default(false),
   startInvoiceName: z.string().max(200).default(""),
   startInvoicePaid: z.boolean().default(false),
