@@ -3,7 +3,7 @@ import api from "../../services/api";
 import SearchSelect from "../common/SearchSelect";
 import { useConfirm } from "../common/ConfirmDialog";
 
-export default function PlacementsPage({ candidatures, candidates, missions }) {
+export default function PlacementsPage({ candidatures, candidates, missions, goToContact, goToMission }) {
   const confirm = useConfirm();
   const [placements, setPlacements] = useState([]);
   const [editing, setEditing] = useState(null);
@@ -224,8 +224,16 @@ export default function PlacementsPage({ candidatures, candidates, missions }) {
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
                   <div style={{ width: 38, height: 38, background: "linear-gradient(135deg, #d1fae5, #6ee7b7)", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 800, color: "#059669" }}>{p.candidateName?.[0] || "?"}</div>
                   <div>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: "#0f172a" }}>{p.candidateName}</div>
-                    <div style={{ fontSize: 12, color: "#64748b" }}>{p.missionTitle} — {p.company || p.missionCompany}</div>
+                    <div
+                      onClick={goToContact && p.candidateId ? () => goToContact(p.candidateId) : undefined}
+                      style={{ fontSize: 15, fontWeight: 700, color: goToContact && p.candidateId ? "#2563eb" : "#0f172a", cursor: goToContact && p.candidateId ? "pointer" : "default" }}
+                      title={goToContact && p.candidateId ? "Voir la fiche candidat" : undefined}
+                    >{p.candidateName}</div>
+                    <div
+                      onClick={goToMission && p.missionId ? () => goToMission(p.missionId) : undefined}
+                      style={{ fontSize: 12, color: "#64748b", cursor: goToMission && p.missionId ? "pointer" : "default", textDecoration: goToMission && p.missionId ? "underline" : "none" }}
+                      title={goToMission && p.missionId ? "Voir le poste" : undefined}
+                    >{p.missionTitle} — {p.company || p.missionCompany}</div>
                     {p.owner && <div style={{ fontSize: 11, color: "#2563eb", marginTop: 2 }}>Propriétaire : {p.owner}</div>}
                   </div>
                 </div>

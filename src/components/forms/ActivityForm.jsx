@@ -3,6 +3,16 @@ import { ACTIVITY_TYPES } from "../../utils/constants";
 import Field from "../common/Field";
 import SearchSelect from "../common/SearchSelect";
 
+// Convertit une date stockée (ISO ou autre) au format attendu par
+// <input type="datetime-local"> : "YYYY-MM-DDTHH:mm". Renvoie "" si invalide.
+function toLocalInput(value) {
+  if (!value) return "";
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return typeof value === "string" ? value.slice(0, 16) : "";
+  const pad = n => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 export default function ActivityForm({ form, setForm, onSave, onCancel, contacts, missions, saving }) {
   const f = (k, v) => setForm(p => ({ ...p, [k]: v }));
   const [errors, setErrors] = useState({});
@@ -35,7 +45,7 @@ export default function ActivityForm({ form, setForm, onSave, onCancel, contacts
         </Field>
       </div>
       <Field label="Description"><textarea className="input" style={{ resize: "vertical", minHeight: 72 }} value={form.description || ""} onChange={e => f("description", e.target.value)} placeholder="Détails..." /></Field>
-      <Field label="Échéance"><input className="input" type="datetime-local" value={form.dueDate || ""} onChange={e => f("dueDate", e.target.value)} /></Field>
+      <Field label="Échéance"><input className="input" type="datetime-local" value={toLocalInput(form.dueDate)} onChange={e => f("dueDate", e.target.value)} /></Field>
       <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
         <button className="btn btn-ghost" onClick={onCancel}>Annuler</button>
         <button className="btn btn-primary" onClick={handleSave} disabled={saving}>{saving && <span className="spinner" />}{saving ? "Enregistrement..." : form.id ? "Enregistrer" : "Créer"}</button>

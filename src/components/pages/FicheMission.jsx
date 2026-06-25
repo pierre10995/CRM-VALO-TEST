@@ -5,7 +5,7 @@ import AuditHistory from "../common/AuditHistory";
 import { useToast } from "../common/Toast";
 import { useConfirm } from "../common/ConfirmDialog";
 
-export default function FicheMission({ mission: m, onClose, onEdit, onDelete, candidatures }) {
+export default function FicheMission({ mission: m, onClose, onEdit, onDelete, onAddCandidature, goToContact, candidatures }) {
   const toast = useToast();
   const confirm = useConfirm();
   const [files, setFiles] = useState([]);
@@ -172,10 +172,23 @@ export default function FicheMission({ mission: m, onClose, onEdit, onDelete, ca
       </div>
 
       <div style={{ marginBottom: 20 }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a", marginBottom: 10 }}>Candidatures ({mCandidatures.length})</div>
-        {mCandidatures.length === 0 && <p style={{ fontSize: 12, color: "#94a3b8" }}>Aucune candidature</p>}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>Candidatures ({mCandidatures.length})</div>
+          {onAddCandidature && (
+            <button className="btn btn-primary" style={{ padding: "6px 14px", fontSize: 12 }} onClick={() => onAddCandidature(m.id)}>
+              + Proposer un candidat
+            </button>
+          )}
+        </div>
+        {mCandidatures.length === 0 && <p style={{ fontSize: 12, color: "#94a3b8" }}>Aucune candidature — proposez un candidat pour ce poste</p>}
         {mCandidatures.map(cd => (
-          <div key={cd.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "#f8fafc", borderRadius: 8, marginBottom: 6 }}>
+          <div
+            key={cd.id}
+            onClick={goToContact ? () => goToContact(cd.candidateId) : undefined}
+            className={goToContact ? "row-hover" : undefined}
+            style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "#f8fafc", borderRadius: 8, marginBottom: 6, cursor: goToContact ? "pointer" : "default" }}
+            title={goToContact ? "Voir la fiche candidat" : undefined}
+          >
             <span style={{ fontSize: 13, color: "#0f172a", flex: 1 }}>{cd.candidateName}</span>
             <span className="tag" style={{ background: cd.stage === "Placé" ? "#d1fae5" : cd.stage === "Refusé" ? "#fee2e2" : "#dbeafe", color: cd.stage === "Placé" ? "#059669" : cd.stage === "Refusé" ? "#dc2626" : "#2563eb" }}>{cd.stage}</span>
           </div>
@@ -193,6 +206,7 @@ export default function FicheMission({ mission: m, onClose, onEdit, onDelete, ca
         {suggestions.length === 0 && !loadingSuggestions && <p style={{ fontSize: 12, color: "#94a3b8" }}>Cliquez pour lancer le matching IA</p>}
         {suggestions.map((s, i) => {
           const scoreColor = s.score >= 70 ? "#059669" : s.score >= 40 ? "#d97706" : "#dc2626";
+          const alreadyProposed = mCandidatures.some(cd => cd.candidateId === s.id);
           return (
             <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "#f8fafc", borderRadius: 8, marginBottom: 6 }}>
               <div style={{ width: 32, height: 32, borderRadius: "50%", background: s.score >= 70 ? "#ecfdf5" : s.score >= 40 ? "#fffbeb" : "#fef2f2", border: `2px solid ${scoreColor}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 800, color: scoreColor }}>{s.score}</div>
@@ -200,6 +214,11 @@ export default function FicheMission({ mission: m, onClose, onEdit, onDelete, ca
                 <div style={{ fontSize: 13, fontWeight: 600, color: "#0f172a" }}>{s.name}</div>
                 <div style={{ fontSize: 11, color: "#64748b" }}>{s.reason}</div>
               </div>
+              {onAddCandidature && (
+                alreadyProposed
+                  ? <span style={{ fontSize: 11, color: "#94a3b8", whiteSpace: "nowrap" }}>Déjà proposé</span>
+                  : <button className="btn btn-ghost" style={{ padding: "4px 10px", fontSize: 11, whiteSpace: "nowrap" }} onClick={() => onAddCandidature(m.id, s.id)}>+ Proposer</button>
+              )}
             </div>
           );
         })}
