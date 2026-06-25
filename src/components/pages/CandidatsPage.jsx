@@ -21,7 +21,7 @@ const COLOR_PRESETS = [
   { bg: "#f1f5f9", color: "#64748b", name: "Gris" },
 ];
 
-export default function CandidatsPage({ contacts, search, setSearch, onAdd, onEdit, onDelete, onDetail, detailId, setDetailId, candidatures, missions, loadAll, validationStatuses = [], users = [] }) {
+export default function CandidatsPage({ contacts, search, setSearch, onAdd, onEdit, onDelete, onDetail, detailId, setDetailId, onAddCandidature, candidatures, missions, loadAll, validationStatuses = [], users = [] }) {
   const confirm = useConfirm();
   const toast = useToast();
   const [filterSkill, setFilterSkill] = usePersistedState("candidats.filterSkill", "");
@@ -237,7 +237,7 @@ export default function CandidatsPage({ contacts, search, setSearch, onAdd, onEd
 
       {detail && (
         <div className="modal-bg" onClick={e => e.target === e.currentTarget && setDetailId(null)}>
-          <FicheCandidat contact={detail} onClose={() => setDetailId(null)} onEdit={() => { onEdit(detail); setDetailId(null); }} onDelete={() => onDelete(detail.id)} candidatures={candidatures} missions={missions} loadAll={loadAll} validationStatuses={validationStatuses} />
+          <FicheCandidat contact={detail} onClose={() => setDetailId(null)} onEdit={() => { onEdit(detail); setDetailId(null); }} onDelete={() => onDelete(detail.id)} onAddCandidature={onAddCandidature} candidatures={candidatures} missions={missions} loadAll={loadAll} validationStatuses={validationStatuses} />
         </div>
       )}
     </div>

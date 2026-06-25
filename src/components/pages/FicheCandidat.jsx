@@ -5,7 +5,7 @@ import AuditHistory from "../common/AuditHistory";
 import { useToast } from "../common/Toast";
 import { useConfirm } from "../common/ConfirmDialog";
 
-export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, candidatures, missions, loadAll, validationStatuses = [] }) {
+export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, onAddCandidature, candidatures, missions, loadAll, validationStatuses = [] }) {
   const toast = useToast();
   const confirm = useConfirm();
   const [files, setFiles] = useState([]);
@@ -290,8 +290,15 @@ export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, c
 
       {/* Candidatures */}
       <div style={{ marginBottom: 20 }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a", marginBottom: 10 }}>Candidatures ({myCandidatures.length})</div>
-        {myCandidatures.length === 0 && <p style={{ fontSize: 12, color: "#94a3b8" }}>Aucune candidature</p>}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>Candidatures ({myCandidatures.length})</div>
+          {onAddCandidature && (
+            <button className="btn btn-primary" style={{ padding: "6px 14px", fontSize: 12 }} onClick={() => onAddCandidature(c.id)}>
+              + Proposer pour un poste
+            </button>
+          )}
+        </div>
+        {myCandidatures.length === 0 && <p style={{ fontSize: 12, color: "#94a3b8" }}>Aucune candidature — proposez ce candidat pour un poste</p>}
         {myCandidatures.map(cd => (
           <div key={cd.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "#f8fafc", borderRadius: 8, marginBottom: 6 }}>
             <span style={{ fontSize: 13, color: "#0f172a", flex: 1 }}>{cd.missionTitle} — {cd.missionCompany}</span>
