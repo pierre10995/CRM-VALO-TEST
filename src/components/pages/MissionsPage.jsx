@@ -4,9 +4,10 @@ import { exportCsv } from "../../utils/exportCsv";
 import FicheMission from "./FicheMission";
 import { useConfirm } from "../common/ConfirmDialog";
 
-export default function MissionsPage({ missions, contacts, users, candidatures, onAdd, onEdit, onDelete, onAddCandidature }) {
+export default function MissionsPage({ missions, contacts, users, candidatures, onAdd, onEdit, onDelete, onAddCandidature, goToContact, detailId, setDetailId }) {
   const confirm = useConfirm();
-  const [detailMission, setDetailMission] = useState(null);
+  const detailMission = detailId ? missions.find(m => m.id === detailId) : null;
+  const setDetailMission = (m) => setDetailId(m ? m.id : null);
   const [filterStatus, setFilterStatus] = useState("Tous");
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("date");
@@ -108,7 +109,7 @@ export default function MissionsPage({ missions, contacts, users, candidatures, 
 
       {detailMission && (
         <div className="modal-bg" onClick={e => e.target === e.currentTarget && setDetailMission(null)}>
-          <FicheMission mission={detailMission} onClose={() => setDetailMission(null)} onEdit={() => { onEdit(detailMission); setDetailMission(null); }} onDelete={() => { onDelete(detailMission.id); setDetailMission(null); }} onAddCandidature={onAddCandidature ? (missionId) => { setDetailMission(null); onAddCandidature(missionId); } : undefined} candidatures={candidatures} />
+          <FicheMission mission={detailMission} onClose={() => setDetailMission(null)} onEdit={() => { onEdit(detailMission); setDetailMission(null); }} onDelete={() => { onDelete(detailMission.id); setDetailMission(null); }} onAddCandidature={onAddCandidature ? (missionId, candidateId) => { setDetailMission(null); onAddCandidature(missionId, candidateId); } : undefined} goToContact={goToContact ? (id) => { setDetailMission(null); goToContact(id); } : undefined} candidatures={candidatures} />
         </div>
       )}
     </div>

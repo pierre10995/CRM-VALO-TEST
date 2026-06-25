@@ -1,6 +1,6 @@
 import { fmtCAD } from "../../utils/constants";
 
-export default function ProfilePage({ currentUser, contacts, missions, candidatures, users, setActiveTab }) {
+export default function ProfilePage({ currentUser, contacts, missions, candidatures, users, setActiveTab, goToContact, goToMission }) {
   const userName = currentUser?.fullName || "";
   const userId = currentUser?.id;
 
@@ -60,7 +60,7 @@ export default function ProfilePage({ currentUser, contacts, missions, candidatu
           <tbody>
             {myCandidats.length === 0 && <EmptyRow cols={5} text="Aucun candidat assigné" />}
             {myCandidats.map(c => (
-              <tr key={c.id} className="row-hover" style={{ borderBottom: "1px solid #eef2f7" }}>
+              <tr key={c.id} className="row-hover" onClick={goToContact ? () => goToContact(c.id) : undefined} style={{ borderBottom: "1px solid #eef2f7", cursor: goToContact ? "pointer" : "default" }}>
                 <td style={{ padding: "12px 20px" }}>
                   <div style={{ fontSize: 13.5, fontWeight: 600, color: "#0f172a" }}>{c.name}</div>
                   {c.email && <div style={{ fontSize: 11.5, color: "#94a3b8" }}>{c.email}</div>}
@@ -86,7 +86,7 @@ export default function ProfilePage({ currentUser, contacts, missions, candidatu
           <tbody>
             {myClients.length === 0 && <EmptyRow cols={4} text="Aucun client assigné" />}
             {myClients.map(c => (
-              <tr key={c.id} className="row-hover" style={{ borderBottom: "1px solid #eef2f7" }}>
+              <tr key={c.id} className="row-hover" onClick={goToContact ? () => goToContact(c.id) : undefined} style={{ borderBottom: "1px solid #eef2f7", cursor: goToContact ? "pointer" : "default" }}>
                 <td style={{ padding: "12px 20px" }}>
                   <div style={{ fontSize: 13.5, fontWeight: 600, color: "#0f172a" }}>{c.company}</div>
                 </td>
@@ -112,7 +112,7 @@ export default function ProfilePage({ currentUser, contacts, missions, candidatu
             {myMissions.map(m => {
               const cdCount = (candidatures || []).filter(cd => cd.missionId === m.id).length;
               return (
-                <tr key={m.id} className="row-hover" style={{ borderBottom: "1px solid #eef2f7" }}>
+                <tr key={m.id} className="row-hover" onClick={goToMission ? () => goToMission(m.id) : undefined} style={{ borderBottom: "1px solid #eef2f7", cursor: goToMission ? "pointer" : "default" }}>
                   <td style={{ padding: "12px 20px" }}>
                     <div style={{ fontSize: 13.5, fontWeight: 600, color: "#0f172a" }}>{m.title}</div>
                   </td>

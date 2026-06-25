@@ -260,6 +260,25 @@ function CRMInner() {
     toast.success("Activité supprimée");
   });
 
+  // ─── Navigation inter-entités ──────────────────────────────────────────────
+  // Ouvre directement la fiche détail d'une entité depuis n'importe quelle page.
+  const openCandidature = (prefill = {}) => openModal("candidature", { stage: "Présélectionné", rating: 0, ...prefill });
+
+  const goToContact = (id) => {
+    const c = contacts.find(x => x.id === id);
+    if (!c) return;
+    setSearch(""); setFilterStatus("Tous");
+    setActiveTab(c.status === "Candidat" ? "candidats" : "clients");
+    setDetailId(id);
+  };
+
+  const goToMission = (id) => {
+    if (!missions.some(m => m.id === id)) return;
+    setSearch(""); setFilterStatus("Tous");
+    setActiveTab("missions");
+    setDetailId(id);
+  };
+
   if (!authed) return <LoginScreen form={loginForm} setForm={setLoginForm} showPwd={showPwd} setShowPwd={setShowPwd} error={loginError} onLogin={handleLogin} />;
 
   // Partner portal
@@ -280,18 +299,18 @@ function CRMInner() {
 
       {/* Main Content */}
       <main className="app-main" style={{ flex: 1, overflow: "auto", padding: 28 }}>
-        {activeTab === "dashboard" && <DashboardPage stats={stats} activities={activities} contacts={contacts} missions={missions} candidatures={candidatures} fiscalYears={fiscalYears} loaded={loaded} />}
+        {activeTab === "dashboard" && <DashboardPage stats={stats} activities={activities} contacts={contacts} missions={missions} candidatures={candidatures} fiscalYears={fiscalYears} loaded={loaded} onNavigate={setActiveTab} goToContact={goToContact} goToMission={goToMission} isAdmin={isAdmin} />}
         {activeTab === "clients" && <ClientsPage contacts={clients} missions={missions} candidatures={candidatures} users={users} search={search} setSearch={setSearch} filterStatus={filterStatus} setFilterStatus={setFilterStatus} onAdd={() => openModal("client", { status: "Prospect", sector: "Tech", revenue: 0 })} onEdit={c => openModal("client", { ...c })} onDelete={deleteContact} onDetail={id => setDetailId(id)} detailId={detailId} setDetailId={setDetailId} />}
-        {activeTab === "candidats" && <CandidatsPage contacts={candidates} search={search} setSearch={setSearch} onAdd={() => openModal("candidat", { status: "Candidat", sector: "Tech", salaryExpectation: 0 })} onEdit={c => openModal("candidat", { ...c })} onDelete={deleteContact} onDetail={id => setDetailId(id)} detailId={detailId} setDetailId={setDetailId} onAddCandidature={(candidateId) => { setDetailId(null); openModal("candidature", { candidateId, stage: "Présélectionné", rating: 0 }); }} candidatures={candidatures} missions={missions} loadAll={loadAll} validationStatuses={validationStatuses} users={users} />}
-        {activeTab === "missions" && <MissionsPage missions={missions} contacts={contacts} users={users} candidatures={candidatures} onAdd={() => openModal("mission", { status: "Ouverte", priority: "Normale", contractType: "CDI" })} onEdit={m => openModal("mission", { ...m })} onDelete={deleteMission} onAddCandidature={(missionId) => openModal("candidature", { missionId, stage: "Présélectionné", rating: 0 })} />}
+        {activeTab === "candidats" && <CandidatsPage contacts={candidates} search={search} setSearch={setSearch} onAdd={() => openModal("candidat", { status: "Candidat", sector: "Tech", salaryExpectation: 0 })} onEdit={c => openModal("candidat", { ...c })} onDelete={deleteContact} onDetail={id => setDetailId(id)} detailId={detailId} setDetailId={setDetailId} onAddCandidature={(candidateId, missionId) => { setDetailId(null); openCandidature(missionId ? { candidateId, missionId } : { candidateId }); }} goToMission={goToMission} candidatures={candidatures} missions={missions} loadAll={loadAll} validationStatuses={validationStatuses} users={users} />}
+        {activeTab === "missions" && <MissionsPage missions={missions} contacts={contacts} users={users} candidatures={candidatures} detailId={detailId} setDetailId={setDetailId} onAdd={() => openModal("mission", { status: "Ouverte", priority: "Normale", contractType: "CDI" })} onEdit={m => openModal("mission", { ...m })} onDelete={deleteMission} onAddCandidature={(missionId, candidateId) => openCandidature(candidateId ? { missionId, candidateId } : { missionId })} goToContact={goToContact} />}
         {activeTab === "pipeline" && <PipelinePage candidatures={candidatures} candidates={candidates} missions={missions} users={users} onEdit={cd => openModal("candidature", { ...cd })} onAdd={() => openModal("candidature", { stage: "Présélectionné", rating: 0 })} onDelete={deleteCandidature} loadAll={loadAll} />}
         {activeTab === "activites" && <ActivitesPage activities={activities} contacts={contacts} missions={missions} users={users} currentUser={currentUser} onAdd={() => openModal("activity", { type: "Appel" })} onEdit={a => openModal("activity", { ...a })} onToggle={toggleActivity} onDelete={deleteActivity} />}
         {activeTab === "evaluation" && <EvaluationPage candidates={candidates} missions={missions} loadAll={loadAll} />}
-        {activeTab === "placements" && <PlacementsPage candidatures={candidatures} candidates={candidates} missions={missions} />}
+        {activeTab === "placements" && <PlacementsPage candidatures={candidatures} candidates={candidates} missions={missions} goToContact={goToContact} goToMission={goToMission} />}
         {activeTab === "revenue" && <RevenuePage contacts={contacts} missions={missions} candidatures={candidatures} users={users} fiscalYears={fiscalYears} loadAll={loadAll} />}
         {activeTab === "objectifs" && <ObjectifsPage contacts={contacts} missions={missions} candidatures={candidatures} users={users} fiscalYears={fiscalYears} loadAll={loadAll} />}
         {activeTab === "partenaires" && <PartenairesPage missions={missions} currentUser={currentUser} />}
-        {activeTab === "profil" && <ProfilePage currentUser={currentUser} contacts={contacts} missions={missions} candidatures={candidatures} users={users} setActiveTab={setActiveTab} />}
+        {activeTab === "profil" && <ProfilePage currentUser={currentUser} contacts={contacts} missions={missions} candidatures={candidatures} users={users} setActiveTab={setActiveTab} goToContact={goToContact} goToMission={goToMission} />}
         {activeTab === "admin" && <AdminPage currentUser={currentUser} loadAll={loadAll} />}
       </main>
 
