@@ -1,5 +1,5 @@
 import { useConfirm } from "../common/ConfirmDialog";
-export default function ActivitesPage({ activities, contacts, missions, users, currentUser, onAdd, onToggle, onDelete }) {
+export default function ActivitesPage({ activities, contacts, missions, users, currentUser, onAdd, onEdit, onToggle, onDelete }) {
   const confirm = useConfirm();
   const typeIcons = { "Appel": "T", "Email": "@", "Réunion": "R", "Note": "N" };
   const typeColors = { "Appel": "#3b82f6", "Email": "#10b981", "Réunion": "#f59e0b", "Note": "#8b5cf6" };
@@ -31,6 +31,7 @@ export default function ActivitesPage({ activities, contacts, missions, users, c
               <button className={`btn ${a.completed ? "btn-ghost" : "btn-success"}`} style={{ padding: "5px 10px", fontSize: 11 }} onClick={() => onToggle(a)}>
                 {a.completed ? "Réactiver" : "Terminer"}
               </button>
+              {onEdit && <button className="btn btn-ghost" style={{ padding: "5px 10px", fontSize: 11 }} onClick={() => onEdit(a)}>Modifier</button>}
               <button className="btn btn-danger" style={{ padding: "5px 10px", fontSize: 11 }} onClick={async () => (await confirm("Cette suppression est définitive. Voulez-vous continuer ?", { title: "Supprimer définitivement", confirmLabel: "Supprimer" })) && onDelete(a.id)}>Suppr.</button>
             </div>
           </div>

@@ -283,9 +283,9 @@ function CRMInner() {
         {activeTab === "dashboard" && <DashboardPage stats={stats} activities={activities} contacts={contacts} missions={missions} candidatures={candidatures} fiscalYears={fiscalYears} loaded={loaded} />}
         {activeTab === "clients" && <ClientsPage contacts={clients} missions={missions} candidatures={candidatures} users={users} search={search} setSearch={setSearch} filterStatus={filterStatus} setFilterStatus={setFilterStatus} onAdd={() => openModal("client", { status: "Prospect", sector: "Tech", revenue: 0 })} onEdit={c => openModal("client", { ...c })} onDelete={deleteContact} onDetail={id => setDetailId(id)} detailId={detailId} setDetailId={setDetailId} />}
         {activeTab === "candidats" && <CandidatsPage contacts={candidates} search={search} setSearch={setSearch} onAdd={() => openModal("candidat", { status: "Candidat", sector: "Tech", salaryExpectation: 0 })} onEdit={c => openModal("candidat", { ...c })} onDelete={deleteContact} onDetail={id => setDetailId(id)} detailId={detailId} setDetailId={setDetailId} onAddCandidature={(candidateId) => { setDetailId(null); openModal("candidature", { candidateId, stage: "Présélectionné", rating: 0 }); }} candidatures={candidatures} missions={missions} loadAll={loadAll} validationStatuses={validationStatuses} users={users} />}
-        {activeTab === "missions" && <MissionsPage missions={missions} contacts={contacts} users={users} candidatures={candidatures} onAdd={() => openModal("mission", { status: "Ouverte", priority: "Normale", contractType: "CDI" })} onEdit={m => openModal("mission", { ...m })} onDelete={deleteMission} />}
+        {activeTab === "missions" && <MissionsPage missions={missions} contacts={contacts} users={users} candidatures={candidatures} onAdd={() => openModal("mission", { status: "Ouverte", priority: "Normale", contractType: "CDI" })} onEdit={m => openModal("mission", { ...m })} onDelete={deleteMission} onAddCandidature={(missionId) => openModal("candidature", { missionId, stage: "Présélectionné", rating: 0 })} />}
         {activeTab === "pipeline" && <PipelinePage candidatures={candidatures} candidates={candidates} missions={missions} users={users} onEdit={cd => openModal("candidature", { ...cd })} onAdd={() => openModal("candidature", { stage: "Présélectionné", rating: 0 })} onDelete={deleteCandidature} loadAll={loadAll} />}
-        {activeTab === "activites" && <ActivitesPage activities={activities} contacts={contacts} missions={missions} users={users} currentUser={currentUser} onAdd={() => openModal("activity", { type: "Appel" })} onToggle={toggleActivity} onDelete={deleteActivity} />}
+        {activeTab === "activites" && <ActivitesPage activities={activities} contacts={contacts} missions={missions} users={users} currentUser={currentUser} onAdd={() => openModal("activity", { type: "Appel" })} onEdit={a => openModal("activity", { ...a })} onToggle={toggleActivity} onDelete={deleteActivity} />}
         {activeTab === "evaluation" && <EvaluationPage candidates={candidates} missions={missions} loadAll={loadAll} />}
         {activeTab === "placements" && <PlacementsPage candidatures={candidatures} candidates={candidates} missions={missions} />}
         {activeTab === "revenue" && <RevenuePage contacts={contacts} missions={missions} candidatures={candidatures} users={users} fiscalYears={fiscalYears} loadAll={loadAll} />}
@@ -317,7 +317,7 @@ function CRMInner() {
         </ModalWrapper>
       )}
       {modal === "activity" && (
-        <ModalWrapper onClose={closeModal} title="Nouvelle activité">
+        <ModalWrapper onClose={closeModal} title={form.id ? "Modifier l'activité" : "Nouvelle activité"}>
           <ActivityForm form={form} setForm={setForm} onSave={saveActivity} onCancel={closeModal} contacts={contacts} missions={missions} saving={saving} />
         </ModalWrapper>
       )}

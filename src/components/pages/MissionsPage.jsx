@@ -4,7 +4,7 @@ import { exportCsv } from "../../utils/exportCsv";
 import FicheMission from "./FicheMission";
 import { useConfirm } from "../common/ConfirmDialog";
 
-export default function MissionsPage({ missions, contacts, users, candidatures, onAdd, onEdit, onDelete }) {
+export default function MissionsPage({ missions, contacts, users, candidatures, onAdd, onEdit, onDelete, onAddCandidature }) {
   const confirm = useConfirm();
   const [detailMission, setDetailMission] = useState(null);
   const [filterStatus, setFilterStatus] = useState("Tous");
@@ -108,7 +108,7 @@ export default function MissionsPage({ missions, contacts, users, candidatures, 
 
       {detailMission && (
         <div className="modal-bg" onClick={e => e.target === e.currentTarget && setDetailMission(null)}>
-          <FicheMission mission={detailMission} onClose={() => setDetailMission(null)} onEdit={() => { onEdit(detailMission); setDetailMission(null); }} onDelete={() => { onDelete(detailMission.id); setDetailMission(null); }} candidatures={candidatures} />
+          <FicheMission mission={detailMission} onClose={() => setDetailMission(null)} onEdit={() => { onEdit(detailMission); setDetailMission(null); }} onDelete={() => { onDelete(detailMission.id); setDetailMission(null); }} onAddCandidature={onAddCandidature ? (missionId) => { setDetailMission(null); onAddCandidature(missionId); } : undefined} candidatures={candidatures} />
         </div>
       )}
     </div>

@@ -3,6 +3,15 @@ import { STAGES } from "../../utils/constants";
 import Field from "../common/Field";
 import SearchSelect from "../common/SearchSelect";
 
+// Format pour <input type="datetime-local"> : "YYYY-MM-DDTHH:mm".
+function toLocalInput(value) {
+  if (!value) return "";
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return typeof value === "string" ? value.slice(0, 16) : "";
+  const pad = n => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 export default function CandidatureForm({ form, setForm, onSave, onCancel, candidates, missions, saving }) {
   const f = (k, v) => setForm(p => ({ ...p, [k]: v }));
   const [errors, setErrors] = useState({});
@@ -35,7 +44,7 @@ export default function CandidatureForm({ form, setForm, onSave, onCancel, candi
           {[0, 1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n === 0 ? "—" : n}</option>)}
         </select>
       </Field>
-      <Field label="Date entretien"><input className="input" type="datetime-local" value={form.interviewDate || ""} onChange={e => f("interviewDate", e.target.value)} /></Field>
+      <Field label="Date entretien"><input className="input" type="datetime-local" value={toLocalInput(form.interviewDate)} onChange={e => f("interviewDate", e.target.value)} /></Field>
       <Field label="Notes"><textarea className="input" style={{ resize: "vertical", minHeight: 72 }} value={form.notes || ""} onChange={e => f("notes", e.target.value)} placeholder="Commentaires..." /></Field>
       <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
         <button className="btn btn-ghost" onClick={onCancel}>Annuler</button>
