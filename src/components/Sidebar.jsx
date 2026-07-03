@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from "react";
+import { userTitle } from "../utils/userTitles";
 
 const NAV_ITEMS = [
   { id: "dashboard", label: "Dashboard", icon: "M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" },
@@ -175,6 +176,7 @@ export default function Sidebar({ activeTab, setActiveTab, currentUser, onLogout
             <div style={{ width: 30, height: 30, background: "linear-gradient(135deg, #dbeafe, #bfdbfe)", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "#1d4ed8" }}>{currentUser?.fullName?.[0] || "?"}</div>
             <div>
               <div style={{ fontSize: 12.5, fontWeight: 600, color: "#0f172a" }}>{currentUser?.fullName || "Utilisateur"}</div>
+              {userTitle(currentUser) && <div style={{ fontSize: 10.5, fontWeight: 600, color: "#2563eb" }}>{userTitle(currentUser)}</div>}
               <div style={{ fontSize: 10.5, color: "#94a3b8" }}>{currentUser?.login || ""}</div>
             </div>
           </div>
