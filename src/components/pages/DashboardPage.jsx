@@ -4,7 +4,7 @@ import { fmtCAD } from "../../utils/constants";
 import { wonMissionsForFY, sumCommission, findCurrentFY } from "../../utils/revenue";
 import usePersistedState from "../../hooks/usePersistedState";
 
-export default function DashboardPage({ stats, activities, contacts, missions, candidatures, fiscalYears, loaded = true, onNavigate, goToContact, goToMission, onPlanFollowUp, currentUser, isAdmin }) {
+export default function DashboardPage({ activities, contacts, missions, candidatures, fiscalYears, loaded = true, onNavigate, goToContact, goToMission, onPlanFollowUp, currentUser, isAdmin }) {
   const [reminders, setReminders] = useState([]);
   const [dismissedKeys, setDismissedKeys] = useState(() => {
     try { return JSON.parse(localStorage.getItem("crm_dismissed_reminders") || "[]"); } catch { return []; }

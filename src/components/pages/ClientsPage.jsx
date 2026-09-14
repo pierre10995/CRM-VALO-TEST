@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { fmtCAD } from "../../utils/constants";
 import Pagination from "../common/Pagination";
 import { useConfirm } from "../common/ConfirmDialog";
@@ -10,15 +10,16 @@ export default function ClientsPage({ contacts, missions, candidatures, users, s
   const confirm = useConfirm();
   const [filterOwner, setFilterOwner] = usePersistedState("clients.filterOwner", "");
   const [page, setPage] = useState(1);
-  // Compute total commissions from placed candidates per company
-  const companyRevenue = {};
-  (candidatures || []).filter(cd => cd.stage === "Placé").forEach(cd => {
-    const mission = (missions || []).find(m => m.id === cd.missionId);
-    if (mission && mission.company) {
-      const key = mission.company.toLowerCase();
-      companyRevenue[key] = (companyRevenue[key] || 0) + (mission.commission || 0);
-    }
-  });
+  // CA par entreprise : même règle que le Dashboard / page CA
+  // (missions « Gagné »), mémorisé, index par id (plus de find() en boucle).
+  const companyRevenue = useMemo(() => {
+    const acc = {};
+    (missions || []).filter(m => m.status === "Gagné" && m.company).forEach(m => {
+      const key = m.company.toLowerCase();
+      acc[key] = (acc[key] || 0) + (m.commission || 0);
+    });
+    return acc;
+  }, [missions]);
   const getRevenue = (c) => companyRevenue[c.company?.toLowerCase()] || 0;
 
   const filtered = contacts.filter(c => {

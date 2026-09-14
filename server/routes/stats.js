@@ -14,12 +14,16 @@ const router = Router();
 // ─── Dashboard stats ─────────────────────────────────────────────────────────
 
 router.get("/stats", adminOnly, asyncHandler(async (req, res) => {
-  const contacts = await pool.query("SELECT status, COUNT(*) as count FROM contacts GROUP BY status");
-  const missions = await pool.query("SELECT status, COUNT(*) as count FROM missions GROUP BY status");
-  const revenue = await pool.query("SELECT COALESCE(SUM(revenue),0) as total FROM contacts WHERE status='Client'");
-  const placements = await pool.query("SELECT COUNT(*) as count FROM candidatures WHERE stage='Placé'");
-  const pending = await pool.query("SELECT COUNT(*) as count FROM activities WHERE completed=false");
-  const commissions = await pool.query("SELECT COALESCE(SUM(m.commission),0) as total FROM candidatures cd JOIN missions m ON cd.mission_id=m.id WHERE cd.stage='Placé'");
+  // Requêtes en parallèle ; le CA suit la même règle que le front
+  // (src/utils/revenue.js) : somme des commissions des missions « Gagné ».
+  const [contacts, missions, revenue, placements, pending, commissions] = await Promise.all([
+    pool.query("SELECT status, COUNT(*) as count FROM contacts GROUP BY status"),
+    pool.query("SELECT status, COUNT(*) as count FROM missions GROUP BY status"),
+    pool.query("SELECT COALESCE(SUM(revenue),0) as total FROM contacts WHERE status='Client'"),
+    pool.query("SELECT COUNT(*) as count FROM candidatures WHERE stage='Placé'"),
+    pool.query("SELECT COUNT(*) as count FROM activities WHERE completed=false"),
+    pool.query("SELECT COALESCE(SUM(commission),0) as total FROM missions WHERE status='Gagné'"),
+  ]);
   res.json({
     contacts: contacts.rows,
     missions: missions.rows,

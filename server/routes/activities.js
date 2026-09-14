@@ -15,7 +15,9 @@ router.get("/", asyncHandler(async (req, res) => {
            LEFT JOIN users u ON a.user_id = u.id`;
   const params = [];
   if (contactId) { q += " WHERE a.contact_id = $1"; params.push(contactId); }
-  q += " ORDER BY a.created_at DESC LIMIT 100";
+  // Les activités à faire passent en premier et ne sont jamais tronquées par la
+  // limite (sinon une tâche en retard ancienne disparaîtrait des compteurs).
+  q += " ORDER BY a.completed ASC, a.created_at DESC LIMIT 2000";
   const { rows } = await pool.query(q, params);
   res.json(rows.map(fmtActivity));
 }));

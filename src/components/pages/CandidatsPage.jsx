@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { fmtCAD } from "../../utils/constants";
 import { exportCsv } from "../../utils/exportCsv";
 import api from "../../services/api";
@@ -60,9 +60,13 @@ export default function CandidatsPage({ contacts, search, setSearch, onAdd, onEd
     if (loadAll) await loadAll();
   };
 
-  const allSkills = [...new Set(contacts.flatMap(c => (c.skills || "").split(",").map(s => s.trim()).filter(Boolean)))].sort();
+  const allSkills = useMemo(
+    () => [...new Set(contacts.flatMap(c => (c.skills || "").split(",").map(s => s.trim()).filter(Boolean)))].sort(),
+    [contacts]
+  );
 
-  const filtered = contacts.filter(c => {
+  // Filtre + tri mémorisés : recalculés uniquement quand une entrée change
+  const filtered = useMemo(() => contacts.filter(c => {
     const q = search.toLowerCase();
     const matchSearch = !search || c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q) || (c.skills || "").toLowerCase().includes(q) || (c.city || "").toLowerCase().includes(q);
     const matchSkill = !filterSkill || (c.skills || "").toLowerCase().includes(filterSkill.toLowerCase());
@@ -77,7 +81,7 @@ export default function CandidatsPage({ contacts, search, setSearch, onAdd, onEd
     else if (sortBy === "salary") cmp = (a.salaryExpectation || 0) - (b.salaryExpectation || 0);
     else if (sortBy === "date") cmp = new Date(a.createdAt) - new Date(b.createdAt);
     return sortDir === "desc" ? -cmp : cmp;
-  });
+  }), [contacts, search, filterSkill, filterValidation, filterOwner, dateFrom, dateTo, sortBy, sortDir]);
   const detail = contacts.find(c => c.id === detailId);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));

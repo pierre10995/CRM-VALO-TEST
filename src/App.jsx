@@ -60,7 +60,6 @@ function CRMInner() {
   const [candidatures, setCandidatures] = useState([]);
   const [activities, setActivities] = useState([]);
   const [users, setUsers] = useState([]);
-  const [stats, setStats] = useState(null);
   const [fiscalYears, setFiscalYears] = useState([]);
   const [sectors, setSectors] = useState([]);
   const [workModes, setWorkModes] = useState([]);
@@ -80,27 +79,38 @@ function CRMInner() {
   const candidates = contacts.filter(c => c.status === "Candidat");
   const clients = contacts.filter(c => c.status === "Client" || c.status === "Prospect");
 
-  const loadAll = async () => {
-    // allSettled : un endpoint en échec (ex. endpoint réservé admin pour un
-    // utilisateur non-admin) ne doit pas empêcher le chargement du reste.
-    const endpoints = [
-      ["/api/contacts", setContacts],
-      ["/api/missions", setMissions],
-      ["/api/candidatures", setCandidatures],
-      ["/api/activities", setActivities],
-      ["/api/users", setUsers],
-      ["/api/stats", setStats],
-      ["/api/fiscal-years", setFiscalYears],
-      ["/api/sectors", setSectors],
-      ["/api/work-modes", setWorkModes],
-      ["/api/validation-statuses", setValidationStatuses],
-    ];
-    const results = await Promise.allSettled(endpoints.map(([url]) => api.get(url)));
+  // ─── Chargement des données ────────────────────────────────────────────────
+  // Chaque clé correspond à un endpoint ; les mutations ne rechargent que les
+  // clés impactées (au lieu des 10 endpoints à chaque clic).
+  const ENDPOINTS = {
+    contacts: ["/api/contacts", setContacts],
+    missions: ["/api/missions", setMissions],
+    candidatures: ["/api/candidatures", setCandidatures],
+    activities: ["/api/activities", setActivities],
+    users: ["/api/users", setUsers],
+    fiscalYears: ["/api/fiscal-years", setFiscalYears],
+    sectors: ["/api/sectors", setSectors],
+    workModes: ["/api/work-modes", setWorkModes],
+    validationStatuses: ["/api/validation-statuses", setValidationStatuses],
+  };
+  // Numéro de séquence par clé : si deux rechargements se croisent, seul le
+  // plus récent est appliqué (évite qu'une réponse ancienne écrase la nouvelle).
+  const loadSeq = useRef({});
+
+  const reload = async (...keys) => {
+    const targets = keys.length ? keys : Object.keys(ENDPOINTS);
+    const seqs = {};
+    targets.forEach(k => { seqs[k] = (loadSeq.current[k] || 0) + 1; loadSeq.current[k] = seqs[k]; });
+    // allSettled : un endpoint en échec (ex. réservé admin pour un non-admin)
+    // ne doit pas empêcher le chargement du reste.
+    const results = await Promise.allSettled(targets.map(k => api.get(ENDPOINTS[k][0])));
     results.forEach((r, i) => {
-      if (r.status === "fulfilled") endpoints[i][1](r.value);
+      const k = targets[i];
+      if (r.status === "fulfilled" && loadSeq.current[k] === seqs[k]) ENDPOINTS[k][1](r.value);
     });
     setLoaded(true);
   };
+  const loadAll = () => reload();
 
   useEffect(() => {
     const session = localStorage.getItem("crm_user");
@@ -198,13 +208,13 @@ function CRMInner() {
     if (cvFile && contactId) {
       await expectOk(api.post("/api/files", { contactId, fileType: "cv", fileName: cvFile.fileName, mimeType: cvFile.mimeType, fileData: cvFile.fileData }));
     }
-    await loadAll(); setModal(null);
+    await reload("contacts", "candidatures", "activities", "sectors"); setModal(null);
     toast.success(form.id ? "Contact mis à jour" : "Contact créé");
   });
 
   const deleteContact = withSaving(async (id) => {
     await expectOk(api.del(`/api/contacts/${id}`));
-    await loadAll(); setDetailId(null);
+    await reload("contacts", "candidatures", "activities"); setDetailId(null);
     toast.success("Contact supprimé");
   });
 
@@ -212,13 +222,13 @@ function CRMInner() {
     if (!form.title || !form.company) return;
     if (form.id) await expectOk(api.put(`/api/missions/${form.id}`, form));
     else await expectOk(api.post("/api/missions", form));
-    await loadAll(); setModal(null);
+    await reload("missions", "candidatures", "workModes"); setModal(null);
     toast.success(form.id ? "Poste mis à jour" : "Poste créé");
   });
 
   const deleteMission = withSaving(async (id) => {
     await expectOk(api.del(`/api/missions/${id}`));
-    await loadAll();
+    await reload("missions", "candidatures", "activities");
     toast.success("Poste supprimé");
   });
 
@@ -226,13 +236,13 @@ function CRMInner() {
     if (!form.candidateId || !form.missionId) return;
     if (form.id) await expectOk(api.put(`/api/candidatures/${form.id}`, form));
     else await expectOk(api.post("/api/candidatures", form));
-    await loadAll(); setModal(null);
+    await reload("candidatures", "missions"); setModal(null);
     toast.success(form.id ? "Candidature mise à jour" : "Candidature créée");
   });
 
   const deleteCandidature = withSaving(async (id) => {
     await expectOk(api.del(`/api/candidatures/${id}`));
-    await loadAll();
+    await reload("candidatures", "missions");
     toast.success("Candidature supprimée");
   });
 
@@ -243,20 +253,25 @@ function CRMInner() {
     } else {
       await expectOk(api.post("/api/activities", { ...form, userId: currentUser?.id }));
     }
-    await loadAll(); setModal(null);
+    await reload("activities"); setModal(null);
     toast.success(form.id ? "Activité mise à jour" : "Activité créée");
   });
 
   const toggleActivity = async (act) => {
+    // Mise à jour optimiste : la ligne bascule immédiatement, rollback si échec
+    setActivities(prev => prev.map(a => a.id === act.id ? { ...a, completed: !act.completed } : a));
     try {
       await expectOk(api.put(`/api/activities/${act.id}`, { completed: !act.completed }));
-      await loadAll();
-    } catch (e) { toast.error(e.message || "Une erreur est survenue"); }
+      await reload("activities");
+    } catch (e) {
+      setActivities(prev => prev.map(a => a.id === act.id ? { ...a, completed: act.completed } : a));
+      toast.error(e.message || "Une erreur est survenue");
+    }
   };
 
   const deleteActivity = withSaving(async (id) => {
     await expectOk(api.del(`/api/activities/${id}`));
-    await loadAll();
+    await reload("activities");
     toast.success("Activité supprimée");
   });
 
@@ -299,11 +314,11 @@ function CRMInner() {
 
       {/* Main Content */}
       <main className="app-main" style={{ flex: 1, overflow: "auto", padding: 28 }}>
-        {activeTab === "dashboard" && <DashboardPage stats={stats} activities={activities} contacts={contacts} missions={missions} candidatures={candidatures} fiscalYears={fiscalYears} loaded={loaded} onNavigate={setActiveTab} goToContact={goToContact} goToMission={goToMission} onPlanFollowUp={(r) => openModal("activity", { type: "Appel", contactId: r.contactId || null, missionId: r.missionId || null, subject: r.name ? `Relancer ${r.name}` : "Relance", completed: false })} currentUser={currentUser} isAdmin={isAdmin} />}
+        {activeTab === "dashboard" && <DashboardPage activities={activities} contacts={contacts} missions={missions} candidatures={candidatures} fiscalYears={fiscalYears} loaded={loaded} onNavigate={setActiveTab} goToContact={goToContact} goToMission={goToMission} onPlanFollowUp={(r) => openModal("activity", { type: "Appel", contactId: r.contactId || null, missionId: r.missionId || null, subject: r.name ? `Relancer ${r.name}` : "Relance", completed: false })} currentUser={currentUser} isAdmin={isAdmin} />}
         {activeTab === "clients" && <ClientsPage contacts={clients} missions={missions} candidatures={candidatures} users={users} search={search} setSearch={setSearch} filterStatus={filterStatus} setFilterStatus={setFilterStatus} onAdd={() => openModal("client", { status: "Prospect", sector: "Tech", revenue: 0 })} onEdit={c => openModal("client", { ...c })} onDelete={deleteContact} onDetail={id => setDetailId(id)} detailId={detailId} setDetailId={setDetailId} />}
         {activeTab === "candidats" && <CandidatsPage contacts={candidates} search={search} setSearch={setSearch} onAdd={() => openModal("candidat", { status: "Candidat", sector: "Tech", salaryExpectation: 0 })} onEdit={c => openModal("candidat", { ...c })} onDelete={deleteContact} onDetail={id => setDetailId(id)} detailId={detailId} setDetailId={setDetailId} onAddCandidature={(candidateId, missionId) => { setDetailId(null); openCandidature(missionId ? { candidateId, missionId } : { candidateId }); }} goToMission={goToMission} candidatures={candidatures} missions={missions} loadAll={loadAll} validationStatuses={validationStatuses} users={users} />}
         {activeTab === "missions" && <MissionsPage missions={missions} contacts={contacts} users={users} candidatures={candidatures} detailId={detailId} setDetailId={setDetailId} onAdd={() => openModal("mission", { status: "Ouverte", priority: "Normale", contractType: "CDI" })} onEdit={m => openModal("mission", { ...m })} onDelete={deleteMission} onAddCandidature={(missionId, candidateId) => openCandidature(candidateId ? { missionId, candidateId } : { missionId })} goToContact={goToContact} />}
-        {activeTab === "pipeline" && <PipelinePage candidatures={candidatures} candidates={candidates} missions={missions} users={users} onEdit={cd => openModal("candidature", { ...cd })} onAdd={() => openModal("candidature", { stage: "Présélectionné", rating: 0 })} onDelete={deleteCandidature} loadAll={loadAll} />}
+        {activeTab === "pipeline" && <PipelinePage candidatures={candidatures} candidates={candidates} missions={missions} users={users} onEdit={cd => openModal("candidature", { ...cd })} onAdd={() => openModal("candidature", { stage: "Présélectionné", rating: 0 })} onDelete={deleteCandidature} loadAll={() => reload("candidatures", "missions")} />}
         {activeTab === "activites" && <ActivitesPage activities={activities} contacts={contacts} missions={missions} users={users} currentUser={currentUser} onAdd={() => openModal("activity", { type: "Appel" })} onEdit={a => openModal("activity", { ...a })} onToggle={toggleActivity} onDelete={deleteActivity} goToContact={goToContact} />}
         {activeTab === "evaluation" && <EvaluationPage candidates={candidates} missions={missions} loadAll={loadAll} />}
         {activeTab === "placements" && <PlacementsPage candidatures={candidatures} candidates={candidates} missions={missions} goToContact={goToContact} goToMission={goToMission} canEdit={isAdmin} />}

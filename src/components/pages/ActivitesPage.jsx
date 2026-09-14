@@ -5,12 +5,16 @@ import usePersistedState from "../../hooks/usePersistedState";
 const typeIcons = { "Appel": "T", "Email": "@", "Réunion": "R", "Note": "N" };
 const typeColors = { "Appel": "#3b82f6", "Email": "#10b981", "Réunion": "#f59e0b", "Note": "#8b5cf6" };
 
-// Bornes de la journée courante (recalculées à chaque rendu — suffisant ici).
-const now = new Date();
-const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-const tomorrowStart = new Date(todayStart); tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+// Bornes de la journée courante — calculées dans le composant (et non au
+// chargement du module) pour rester justes après minuit sans recharger.
+function dayBounds() {
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const tomorrowStart = new Date(todayStart); tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+  return { todayStart, tomorrowStart };
+}
 
-function bucketOf(a) {
+function bucketOf(a, { todayStart, tomorrowStart }) {
   if (a.completed) return "done";
   if (!a.dueDate) return "nodate";
   const d = new Date(a.dueDate);
@@ -20,7 +24,7 @@ function bucketOf(a) {
   return "upcoming";
 }
 
-function fmtDue(dueDate) {
+function fmtDue(dueDate, { todayStart }) {
   const d = new Date(dueDate);
   if (isNaN(d.getTime())) return "";
   const diffDays = Math.round((new Date(d.getFullYear(), d.getMonth(), d.getDate()) - todayStart) / 86400000);
@@ -48,6 +52,9 @@ export default function ActivitesPage({ activities, contacts, missions, users, c
   const [showDone, setShowDone] = usePersistedState("activites.showDone", false);
 
   const uid = currentUser?.id;
+  const bounds = dayBounds();
+  const bucket = (a) => bucketOf(a, bounds);
+  const due = (d) => fmtDue(d, bounds);
   const filtered = activities.filter(a => {
     if (scope === "me" && String(a.userId) !== String(uid)) return false;
     if (typeFilter && a.type !== typeFilter) return false;
@@ -56,7 +63,7 @@ export default function ActivitesPage({ activities, contacts, missions, users, c
 
   // Répartition en groupes
   const buckets = { overdue: [], today: [], upcoming: [], nodate: [], done: [] };
-  filtered.forEach(a => buckets[bucketOf(a)].push(a));
+  filtered.forEach(a => buckets[bucket(a)].push(a));
   // Tri par échéance croissante dans les groupes datés
   const byDue = (a, b) => new Date(a.dueDate) - new Date(b.dueDate);
   buckets.overdue.sort(byDue); buckets.today.sort(byDue); buckets.upcoming.sort(byDue);
@@ -82,8 +89,8 @@ export default function ActivitesPage({ activities, contacts, missions, users, c
           {a.description && <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 2 }}>{a.description}</div>}
         </div>
         {a.dueDate && !a.completed && (
-          <span style={{ fontSize: 11.5, fontWeight: 700, whiteSpace: "nowrap", padding: "3px 10px", borderRadius: 999, background: bucketOf(a) === "overdue" ? "#fef2f2" : bucketOf(a) === "today" ? "#eff6ff" : "#f1f5f9", color: bucketOf(a) === "overdue" ? "#dc2626" : bucketOf(a) === "today" ? "#2563eb" : "#64748b" }}>
-            {fmtDue(a.dueDate)}
+          <span style={{ fontSize: 11.5, fontWeight: 700, whiteSpace: "nowrap", padding: "3px 10px", borderRadius: 999, background: bucket(a) === "overdue" ? "#fef2f2" : bucket(a) === "today" ? "#eff6ff" : "#f1f5f9", color: bucket(a) === "overdue" ? "#dc2626" : bucket(a) === "today" ? "#2563eb" : "#64748b" }}>
+            {due(a.dueDate)}
           </span>
         )}
         <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
