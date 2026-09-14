@@ -96,22 +96,67 @@ app.use("/api", uploadLimiter, aiLimiter, bulkCvRoutes);
 
 // ─── Serve frontend ──────────────────────────────────────────────────────────
 
-app.use(express.static(path.join(__dirname, "dist")));
+// Health check (Railway / monitoring) : vérifie la connexion à la base.
+app.get("/health", async (req, res) => {
+  try {
+    await pool.query("SELECT 1");
+    res.json({ ok: true, uptime: Math.round(process.uptime()) });
+  } catch {
+    res.status(503).json({ ok: false });
+  }
+});
+
+// Une route /api inconnue renvoie un 404 JSON (et non l'index.html).
+app.all("/api/*", (req, res) => res.status(404).json({ error: "Route introuvable" }));
+
+// Assets hashés par Vite : cache long ; index.html : jamais mis en cache,
+// pour que chaque déploiement soit visible immédiatement.
+const distDir = path.join(__dirname, "dist");
+app.use(express.static(distDir, {
+  index: false,
+  maxAge: "1y",
+  immutable: true,
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith("index.html")) res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+  },
+}));
 app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "dist", "index.html"));
+  res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+  res.sendFile(path.join(distDir, "index.html"));
 });
 
 // ─── Global error handler (must be last) ─────────────────────────────────────
 
 app.use(errorMiddleware);
 
-// ─── Start ───────────────────────────────────────────────────────────────────
+// ─── Start & arrêt propre ────────────────────────────────────────────────────
+
+process.on("unhandledRejection", (reason) => {
+  logger.error("unhandledRejection", { error: reason instanceof Error ? reason.message : String(reason) });
+});
+process.on("uncaughtException", (err) => {
+  logger.error("uncaughtException", { error: err.message });
+  process.exit(1);
+});
 
 initDB()
   .then(() => {
-    app.listen(config.port, "0.0.0.0", () => {
+    const server = app.listen(config.port, "0.0.0.0", () => {
       logger.info(`VALO CRM running`, { port: config.port, env: config.env });
     });
+
+    // SIGTERM (redéploiement Railway) : on laisse finir les requêtes en cours
+    // (uploads, appels IA) puis on ferme le pool PostgreSQL.
+    const shutdown = (signal) => {
+      logger.info(`Arrêt demandé (${signal})`);
+      server.close(async () => {
+        try { await pool.end(); } catch { /* ignore */ }
+        process.exit(0);
+      });
+      setTimeout(() => process.exit(1), 15000).unref();
+    };
+    process.on("SIGTERM", () => shutdown("SIGTERM"));
+    process.on("SIGINT", () => shutdown("SIGINT"));
   })
   .catch((err) => {
     logger.error("DB init failed", { error: err.message });

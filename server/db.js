@@ -1,11 +1,28 @@
 import pg from "pg";
 import { config } from "./config.js";
 import { supabaseAdmin } from "./supabase.js";
+import { logger } from "./helpers/logger.js";
 
 const pool = new pg.Pool({
   connectionString: config.db.connectionString,
   ssl: config.db.ssl,
+  max: config.db.poolMax,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 10000,
+  statement_timeout: 20000,
 });
+
+pool.on("error", (err) => logger.error("Erreur pool PostgreSQL", { error: err.message }));
+
+// DDL « best effort » : un index unique peut échouer si des doublons existent
+// déjà ; on journalise sans bloquer le démarrage.
+async function safeDDL(client, sql, label) {
+  try {
+    await client.query(sql);
+  } catch (err) {
+    logger.warn(`DDL ignoré (${label})`, { error: err.message });
+  }
+}
 
 async function initDB() {
   const client = await pool.connect();
@@ -322,6 +339,32 @@ async function initDB() {
     await client.query(`CREATE INDEX IF NOT EXISTS idx_candidatures_candidate ON candidatures(candidate_id)`);
     await client.query(`CREATE INDEX IF NOT EXISTS idx_activities_contact ON activities(contact_id)`);
     await client.query(`CREATE INDEX IF NOT EXISTS idx_audit_log_created ON audit_log(created_at DESC)`);
+    // Index sur les clés étrangères et colonnes filtrées (audit perf)
+    for (const [name, def] of [
+      ["idx_audit_log_entity", "audit_log(entity_type, entity_id, created_at DESC)"],
+      ["idx_files_contact", "files(contact_id)"],
+      ["idx_files_mission", "files(mission_id)"],
+      ["idx_candidatures_partner", "candidatures(partner_id)"],
+      ["idx_activities_user", "activities(user_id)"],
+      ["idx_activities_mission", "activities(mission_id)"],
+      ["idx_activities_due", "activities(completed, due_date)"],
+      ["idx_activities_created", "activities(created_at DESC)"],
+      ["idx_placements_candidature", "placements(candidature_id)"],
+      ["idx_placements_candidate", "placements(candidate_id)"],
+      ["idx_placements_mission", "placements(mission_id)"],
+      ["idx_missions_assigned", "missions(assigned_to)"],
+      ["idx_missions_client", "missions(client_contact_id)"],
+      ["idx_partner_notifications_partner", "partner_notifications(partner_id)"],
+      ["idx_candidature_comments_cd", "candidature_comments(candidature_id)"],
+      ["idx_password_resets_user", "password_resets(user_id)"],
+      ["idx_evaluations_candidate", "evaluations(candidate_id)"],
+    ]) {
+      await client.query(`CREATE INDEX IF NOT EXISTS ${name} ON ${def}`);
+    }
+    // Unicités métier (tolérantes : ignorées si des doublons historiques existent)
+    await safeDDL(client, `CREATE UNIQUE INDEX IF NOT EXISTS uq_contacts_email ON contacts (LOWER(email)) WHERE email IS NOT NULL AND email <> ''`, "contacts.email unique");
+    await safeDDL(client, `CREATE UNIQUE INDEX IF NOT EXISTS uq_candidatures_candidate_mission ON candidatures (candidate_id, mission_id)`, "candidatures (candidat, mission) unique");
+    await safeDDL(client, `CREATE UNIQUE INDEX IF NOT EXISTS uq_placements_candidature ON placements (candidature_id) WHERE candidature_id IS NOT NULL`, "placements.candidature unique");
 
     // ─── Row Level Security ────────────────────────────────────────────────────
     // Toutes les requêtes passent par le backend Express (service_role).
@@ -396,7 +439,7 @@ async function initDB() {
             );
           }
         }
-        console.log("Users seeded (Supabase Auth)");
+        logger.info("Users seeded (Supabase Auth)");
       }
       await markSeeded("users");
     }
@@ -412,7 +455,10 @@ async function initDB() {
     await client.query("UPDATE users SET login = 'oceane@valo-inno.com' WHERE login = 'oceane'");
     await client.query("UPDATE users SET login = 'pierre@valo-inno.com' WHERE login = 'pierre'");
 
-    if (!await alreadySeeded("contacts")) {
+    // Données de démonstration : jamais en production (sauf SEED_DEMO_DATA=true)
+    const seedDemo = !config.isProduction || process.env.SEED_DEMO_DATA === "true";
+
+    if (seedDemo && !await alreadySeeded("contacts")) {
       const { rows: existingContacts } = await client.query("SELECT COUNT(*) FROM contacts");
       if (parseInt(existingContacts[0].count) === 0) {
         await client.query(`
@@ -426,12 +472,12 @@ async function initDB() {
           ('Isabelle Roy', '', 'i.roy@outlook.com', '(438) 555-2211', 'Candidat', 'Finance', 0, 'Analyste financier CFA', 'Montréal', 'Analyse financière, Excel, Python, CFA', 78000, '1 mois', '2024-06-15'),
           ('David Chen', 'DataViz Inc', 'd.chen@dataviz.ca', '(514) 555-3344', 'Client', 'Tech', 45000, 'Recherche profils data régulièrement', 'Montréal', '', 0, '', '2024-03-20')
         `);
-        console.log("Contacts seeded");
+        logger.info("Contacts seeded (démo)");
       }
       await markSeeded("contacts");
     }
 
-    if (!await alreadySeeded("missions")) {
+    if (seedDemo && !await alreadySeeded("missions")) {
       const { rows: existingMissions } = await client.query("SELECT COUNT(*) FROM missions");
       if (parseInt(existingMissions[0].count) === 0) {
         await client.query(`
@@ -441,7 +487,7 @@ async function initDB() {
           ('Chef de Projet Santé', 'HealthFirst', 'Québec', 'Contrat', 75000, 95000, 'Gestion de projets de transformation digitale', 'PMP, expérience santé, bilingue', 'En cours', 'Haute', 7500, '2024-09-01'),
           ('Data Analyst', 'DataViz Inc', 'Montréal', 'CDI', 65000, 80000, 'Analyse de données et visualisation', 'Python, SQL, Tableau, 2+ ans', 'Ouverte', 'Normale', 5000, '2024-08-15')
         `);
-        console.log("Missions seeded");
+        logger.info("Missions seeded (démo)");
       }
       await markSeeded("missions");
     }

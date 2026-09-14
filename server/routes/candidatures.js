@@ -3,7 +3,7 @@ import { pool } from "../db.js";
 import { fmtCandidature } from "../formatters.js";
 import { validate } from "../validators/validate.js";
 import { candidatureCreateSchema, candidatureUpdateSchema } from "../validators/schemas.js";
-import { asyncHandler } from "../helpers/errors.js";
+import { asyncHandler, AppError } from "../helpers/errors.js";
 
 const router = Router();
 
@@ -97,6 +97,9 @@ router.put("/:id", validate(candidatureUpdateSchema), asyncHandler(async (req, r
 }));
 
 router.delete("/:id", asyncHandler(async (req, res) => {
+  // Protège l'historique de facturation (placements en cascade)
+  const { rows: linked } = await pool.query("SELECT 1 FROM placements WHERE candidature_id = $1 LIMIT 1", [req.params.id]);
+  if (linked.length > 0) throw new AppError(409, "Impossible de supprimer : un placement (suivi de facturation) est lié à cette candidature. Supprimez d'abord le placement.");
   const { rows: existing } = await pool.query(
     `SELECT c.name as candidate_name, m.title as mission_title
      FROM candidatures cd

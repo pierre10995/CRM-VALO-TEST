@@ -1,7 +1,12 @@
 [build]
 builder = "nixpacks"
-buildCommand = "npm install --include=dev && npm run build"
+# npm ci = builds reproductibles (respecte package-lock) ; les tests bloquent
+# le déploiement s'ils échouent.
+buildCommand = "npm ci --include=dev && npm test && npm run build"
 
 [deploy]
 startCommand = "npm run start"
+healthcheckPath = "/health"
+healthcheckTimeout = 120
 restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 5

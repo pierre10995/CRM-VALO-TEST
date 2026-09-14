@@ -3,7 +3,7 @@ import { pool } from "../db.js";
 import { fmtMission } from "../formatters.js";
 import { validate } from "../validators/validate.js";
 import { missionSchema } from "../validators/schemas.js";
-import { asyncHandler } from "../helpers/errors.js";
+import { asyncHandler, AppError } from "../helpers/errors.js";
 
 const router = Router();
 
@@ -68,6 +68,9 @@ router.put("/:id", validate(missionSchema), asyncHandler(async (req, res) => {
 
 router.delete("/:id", asyncHandler(async (req, res) => {
   const { rows: existing } = await pool.query("SELECT title FROM missions WHERE id = $1", [req.params.id]);
+  // Protège l'historique de facturation (placements en cascade)
+  const { rows: linked } = await pool.query("SELECT 1 FROM placements WHERE mission_id = $1 LIMIT 1", [req.params.id]);
+  if (linked.length > 0) throw new AppError(409, "Impossible de supprimer : un placement (suivi de facturation) est lié à ce poste. Supprimez d'abord le placement.");
   await pool.query("DELETE FROM missions WHERE id = $1", [req.params.id]);
   await pool.query(
     "INSERT INTO audit_log (user_name, action, entity_type, entity_id, details) VALUES ($1,$2,$3,$4,$5)",
