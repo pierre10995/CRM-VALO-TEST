@@ -3,16 +3,7 @@ import api from "../../services/api";
 import Field from "../common/Field";
 import { useConfirm } from "../common/ConfirmDialog";
 import { useToast } from "../common/Toast";
-
-const COLOR_PRESETS = [
-  { bg: "#d1fae5", color: "#059669", name: "Vert" },
-  { bg: "#fef3c7", color: "#d97706", name: "Orange" },
-  { bg: "#e0e7ff", color: "#4f46e5", name: "Indigo" },
-  { bg: "#fee2e2", color: "#dc2626", name: "Rouge" },
-  { bg: "#fce7f3", color: "#be185d", name: "Rose" },
-  { bg: "#dbeafe", color: "#2563eb", name: "Bleu" },
-  { bg: "#f1f5f9", color: "#64748b", name: "Gris" },
-];
+import { COLOR_PRESETS } from "../../utils/constants";
 
 export default function CandidatForm({ form, setForm, onSave, onCancel, sectors = [], validationStatuses = [], onStatusesChanged, users = [], saving }) {
   const confirm = useConfirm();

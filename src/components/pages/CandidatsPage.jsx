@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { fmtCAD } from "../../utils/constants";
+import { fmtCAD, COLOR_PRESETS } from "../../utils/constants";
 import { exportCsv } from "../../utils/exportCsv";
 import api from "../../services/api";
 import FicheCandidat from "./FicheCandidat";
@@ -10,16 +10,6 @@ import { useConfirm } from "../common/ConfirmDialog";
 import { useToast } from "../common/Toast";
 
 const PAGE_SIZE = 25;
-
-const COLOR_PRESETS = [
-  { bg: "#d1fae5", color: "#059669", name: "Vert" },
-  { bg: "#fef3c7", color: "#d97706", name: "Orange" },
-  { bg: "#e0e7ff", color: "#4f46e5", name: "Indigo" },
-  { bg: "#fee2e2", color: "#dc2626", name: "Rouge" },
-  { bg: "#fce7f3", color: "#be185d", name: "Rose" },
-  { bg: "#dbeafe", color: "#2563eb", name: "Bleu" },
-  { bg: "#f1f5f9", color: "#64748b", name: "Gris" },
-];
 
 export default function CandidatsPage({ contacts, search, setSearch, onAdd, onEdit, onDelete, onDetail, detailId, setDetailId, onAddCandidature, goToMission, candidatures, missions, loadAll, validationStatuses = [], users = [] }) {
   const confirm = useConfirm();

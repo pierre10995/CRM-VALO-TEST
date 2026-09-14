@@ -8,6 +8,8 @@ import { validationStatusSchema, cvSummarySchema, userCreateSchema, userUpdateSc
 import { asyncHandler, AppError } from "../helpers/errors.js";
 import { logger } from "../helpers/logger.js";
 import { adminOnly, superAdminOnly, aiLimiter } from "../middleware.js";
+import { supabaseAdmin } from "../supabase.js";
+import { logAudit, AUDIT_ACTIONS } from "../helpers/audit.js";
 
 const router = Router();
 
@@ -63,7 +65,6 @@ router.get("/users", asyncHandler(async (req, res) => {
 
 router.post("/users", adminOnly, validate(userCreateSchema), asyncHandler(async (req, res) => {
   const { fullName, login, password } = req.body;
-  const { supabaseAdmin } = await import("../supabase.js");
 
   // Créer l'utilisateur dans Supabase Auth
   const { data: authUser, error: authErr } = await supabaseAdmin.auth.admin.createUser({
@@ -96,7 +97,6 @@ router.post("/users", adminOnly, validate(userCreateSchema), asyncHandler(async 
 
 router.put("/users/:id", adminOnly, validate(userUpdateSchema), asyncHandler(async (req, res) => {
   const { fullName, login, password } = req.body;
-  const { supabaseAdmin } = await import("../supabase.js");
 
   const { rows: current } = await pool.query("SELECT id, auth_id, login, role FROM users WHERE id = $1", [req.params.id]);
   if (current.length === 0) throw new AppError(404, "Utilisateur non trouvé");
@@ -153,7 +153,6 @@ router.put("/users/:id/role", superAdminOnly, asyncHandler(async (req, res) => {
 }));
 
 router.delete("/users/:id", superAdminOnly, asyncHandler(async (req, res) => {
-  const { supabaseAdmin } = await import("../supabase.js");
   const { rows } = await pool.query("SELECT id, auth_id, login FROM users WHERE id = $1", [req.params.id]);
   if (rows.length === 0) throw new AppError(404, "Utilisateur non trouvé");
   const user = rows[0];
@@ -164,10 +163,7 @@ router.delete("/users/:id", superAdminOnly, asyncHandler(async (req, res) => {
     await supabaseAdmin.auth.admin.deleteUser(user.auth_id).catch(() => {});
   }
   await pool.query("DELETE FROM users WHERE id = $1", [user.id]);
-  await pool.query(
-    "INSERT INTO audit_log (user_name, action, entity_type, entity_id, details) VALUES ($1,$2,$3,$4,$5)",
-    [req.user?.login || "Système", "DELETE", "user", user.id, `Suppression de ${user.login}`]
-  );
+  await logAudit(req, AUDIT_ACTIONS.DELETE, "user", user.id, `Suppression de ${user.login}`);
   res.json({ ok: true });
 }));
 

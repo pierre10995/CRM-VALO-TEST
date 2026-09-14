@@ -16,12 +16,12 @@ const router = Router();
 // La sortie du modèle est validée avant toute écriture en base : le texte du
 // CV (parfois fourni par un partenaire externe) ne doit pas piloter le schéma.
 const str = (max) => z.preprocess((v) => (v == null ? "" : Array.isArray(v) ? v.join(", ") : String(v)), z.string().max(max));
-const llmInfoSchema = z.object({
+export const llmInfoSchema = z.object({
   name: str(100), email: str(100), phone: str(50), city: str(100),
   target_position: str(200), skills: str(2000), linkedin: str(200),
 }).partial();
 
-function extractNameFromFileName(fileName) {
+export function extractNameFromFileName(fileName) {
   const base = fileName.replace(/\.pdf$/i, "").trim();
   const match = base.match(/VALO\s*[-–]\s*(.+?)\s*(?:[-–]\s*CV)?$/i);
   if (match) return match[1].trim();

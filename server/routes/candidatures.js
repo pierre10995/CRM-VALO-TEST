@@ -4,6 +4,7 @@ import { fmtCandidature } from "../formatters.js";
 import { validate } from "../validators/validate.js";
 import { candidatureCreateSchema, candidatureUpdateSchema } from "../validators/schemas.js";
 import { asyncHandler, AppError } from "../helpers/errors.js";
+import { logAudit, AUDIT_ACTIONS } from "../helpers/audit.js";
 
 const router = Router();
 
@@ -110,10 +111,7 @@ router.delete("/:id", asyncHandler(async (req, res) => {
   );
   await pool.query("DELETE FROM candidatures WHERE id = $1", [req.params.id]);
   const detail = existing[0] ? `${existing[0].candidate_name || "?"} — ${existing[0].mission_title || "?"}` : "";
-  await pool.query(
-    "INSERT INTO audit_log (user_name, action, entity_type, entity_id, details) VALUES ($1,$2,$3,$4,$5)",
-    [req.user?.login || "Système", "Supprimer", "Candidature", parseInt(req.params.id), detail]
-  );
+  await logAudit(req, AUDIT_ACTIONS.DELETE, "candidature", req.params.id, detail);
   res.json({ ok: true });
 }));
 

@@ -4,6 +4,7 @@ import { fmtContact } from "../formatters.js";
 import { validate } from "../validators/validate.js";
 import { contactSchema } from "../validators/schemas.js";
 import { asyncHandler, AppError } from "../helpers/errors.js";
+import { logAudit, AUDIT_ACTIONS } from "../helpers/audit.js";
 
 const router = Router();
 
@@ -34,10 +35,7 @@ router.post("/", validate(contactSchema), asyncHandler(async (req, res) => {
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) RETURNING *`,
     [d.name, d.company, d.email, d.phone, d.status, d.sector, d.revenue, d.notes, d.city, d.linkedin, d.skills, d.salaryExpectation, d.availability, d.validationStatus, d.targetPosition, d.owner]
   );
-  await pool.query(
-    "INSERT INTO audit_log (user_name, action, entity_type, entity_id, details) VALUES ($1,$2,$3,$4,$5)",
-    [req.user?.login || "Système", "Créer", "Contact", rows[0].id, d.name]
-  );
+  await logAudit(req, AUDIT_ACTIONS.CREATE, "contact", rows[0].id, d.name);
   res.json(fmtContact(rows[0]));
 }));
 
@@ -48,10 +46,7 @@ router.put("/:id", validate(contactSchema), asyncHandler(async (req, res) => {
     [d.name, d.company, d.email, d.phone, d.status, d.sector, d.revenue, d.notes, d.city, d.linkedin, d.skills, d.salaryExpectation, d.availability, d.validationStatus, d.targetPosition, d.owner, req.params.id]
   );
   if (rows.length === 0) return res.status(404).json({ error: "Contact non trouvé" });
-  await pool.query(
-    "INSERT INTO audit_log (user_name, action, entity_type, entity_id, details) VALUES ($1,$2,$3,$4,$5)",
-    [req.user?.login || "Système", "Modifier", "Contact", parseInt(req.params.id), d.name]
-  );
+  await logAudit(req, AUDIT_ACTIONS.UPDATE, "contact", req.params.id, d.name);
   res.json(fmtContact(rows[0]));
 }));
 
@@ -61,10 +56,7 @@ router.delete("/:id", asyncHandler(async (req, res) => {
   const { rows: linked } = await pool.query("SELECT 1 FROM placements WHERE candidate_id = $1 LIMIT 1", [req.params.id]);
   if (linked.length > 0) throw new AppError(409, "Impossible de supprimer : un placement (suivi de facturation) est lié à ce contact. Supprimez d'abord le placement.");
   await pool.query("DELETE FROM contacts WHERE id = $1", [req.params.id]);
-  await pool.query(
-    "INSERT INTO audit_log (user_name, action, entity_type, entity_id, details) VALUES ($1,$2,$3,$4,$5)",
-    [req.user?.login || "Système", "Supprimer", "Contact", parseInt(req.params.id), existing[0]?.name || ""]
-  );
+  await logAudit(req, AUDIT_ACTIONS.DELETE, "contact", req.params.id, existing[0]?.name || "");
   res.json({ ok: true });
 }));
 

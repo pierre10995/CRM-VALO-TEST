@@ -28,6 +28,7 @@ Le schéma est créé/migré automatiquement au démarrage (`server/db.js`, idem
 | `npm start` | Serveur (sert `dist/` + API) |
 | `npm run build` | Build de production (`dist/`) |
 | `npm test` | Tests (Vitest) — exécutés aussi au déploiement |
+| `npm run lint` | ESLint (front, serveur, tests) |
 | `npm run backup` | Sauvegarde `pg_dump` (voir ci-dessous) |
 
 ## Variables d'environnement

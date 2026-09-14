@@ -4,6 +4,7 @@ import { fmtMission } from "../formatters.js";
 import { validate } from "../validators/validate.js";
 import { missionSchema } from "../validators/schemas.js";
 import { asyncHandler, AppError } from "../helpers/errors.js";
+import { logAudit, AUDIT_ACTIONS } from "../helpers/audit.js";
 
 const router = Router();
 
@@ -27,10 +28,7 @@ router.post("/", validate(missionSchema), asyncHandler(async (req, res) => {
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18) RETURNING *`,
     [d.title, d.clientContactId, d.company, d.location, d.contractType, d.salaryMin, d.salaryMax, d.description, d.requirements, d.status, d.priority, d.assignedTo, d.commission, d.deadline, d.fiscalYearId, d.workMode, d.partnerNotes, d.recruiterCommission || 0]
   );
-  await pool.query(
-    "INSERT INTO audit_log (user_name, action, entity_type, entity_id, details) VALUES ($1,$2,$3,$4,$5)",
-    [req.user?.login || "Système", "Création", "mission", rows[0].id, d.title]
-  );
+  await logAudit(req, AUDIT_ACTIONS.CREATE, "mission", rows[0].id, d.title);
   res.json(fmtMission(rows[0]));
 }));
 
@@ -59,10 +57,7 @@ router.put("/:id", validate(missionSchema), asyncHandler(async (req, res) => {
     }
   }
 
-  await pool.query(
-    "INSERT INTO audit_log (user_name, action, entity_type, entity_id, details) VALUES ($1,$2,$3,$4,$5)",
-    [req.user?.login || "Système", "Modification", "mission", parseInt(req.params.id), d.title]
-  );
+  await logAudit(req, AUDIT_ACTIONS.UPDATE, "mission", req.params.id, d.title);
   res.json(fmtMission(rows[0]));
 }));
 
@@ -72,10 +67,7 @@ router.delete("/:id", asyncHandler(async (req, res) => {
   const { rows: linked } = await pool.query("SELECT 1 FROM placements WHERE mission_id = $1 LIMIT 1", [req.params.id]);
   if (linked.length > 0) throw new AppError(409, "Impossible de supprimer : un placement (suivi de facturation) est lié à ce poste. Supprimez d'abord le placement.");
   await pool.query("DELETE FROM missions WHERE id = $1", [req.params.id]);
-  await pool.query(
-    "INSERT INTO audit_log (user_name, action, entity_type, entity_id, details) VALUES ($1,$2,$3,$4,$5)",
-    [req.user?.login || "Système", "Supprimer", "mission", parseInt(req.params.id), existing[0]?.title || ""]
-  );
+  await logAudit(req, AUDIT_ACTIONS.DELETE, "mission", req.params.id, existing[0]?.title || "");
   res.json({ ok: true });
 }));
 

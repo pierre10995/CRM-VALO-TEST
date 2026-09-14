@@ -4,6 +4,7 @@ import { fmtActivity } from "../formatters.js";
 import { validate } from "../validators/validate.js";
 import { activityCreateSchema, activityUpdateSchema } from "../validators/schemas.js";
 import { asyncHandler } from "../helpers/errors.js";
+import { logAudit, AUDIT_ACTIONS } from "../helpers/audit.js";
 
 const router = Router();
 
@@ -56,10 +57,7 @@ router.put("/:id", validate(activityUpdateSchema), asyncHandler(async (req, res)
 router.delete("/:id", asyncHandler(async (req, res) => {
   const { rows: existing } = await pool.query("SELECT subject FROM activities WHERE id = $1", [req.params.id]);
   await pool.query("DELETE FROM activities WHERE id = $1", [req.params.id]);
-  await pool.query(
-    "INSERT INTO audit_log (user_name, action, entity_type, entity_id, details) VALUES ($1,$2,$3,$4,$5)",
-    [req.user?.login || "Système", "Supprimer", "Activité", parseInt(req.params.id), existing[0]?.subject || ""]
-  );
+  await logAudit(req, AUDIT_ACTIONS.DELETE, "activité", req.params.id, existing[0]?.subject || "");
   res.json({ ok: true });
 }));
 

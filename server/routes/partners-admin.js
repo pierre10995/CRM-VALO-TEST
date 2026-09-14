@@ -6,7 +6,7 @@ import { validate } from "../validators/validate.js";
 import { partnerCreateSchema, partnerUpdateSchema, partnerMissionSchema } from "../validators/schemas.js";
 import { asyncHandler, AppError } from "../helpers/errors.js";
 import { logger } from "../helpers/logger.js";
-import { adminOnly, superAdminOnly } from "../middleware.js";
+import { superAdminOnly } from "../middleware.js";
 
 const router = Router();
 

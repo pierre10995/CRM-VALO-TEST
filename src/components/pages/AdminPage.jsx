@@ -370,7 +370,7 @@ export default function AdminPage({ currentUser, loadAll }) {
                   <td style={{ ...tdStyle, fontSize: 12, color: "#64748b", whiteSpace: "nowrap" }}>{new Date(entry.createdAt).toLocaleString("fr-CA")}</td>
                   <td style={{ ...tdStyle, fontWeight: 600, color: "#0f172a" }}>{entry.userName}</td>
                   <td style={tdStyle}>
-                    <span className="tag" style={{ background: entry.action === "DELETE" ? "#fee2e2" : "#dbeafe", color: entry.action === "DELETE" ? "#dc2626" : "#2563eb", fontSize: 10 }}>{entry.action}</span>
+                    <span className="tag" style={{ background: /suppr|delete/i.test(entry.action) ? "#fee2e2" : /cr[ée]/i.test(entry.action) ? "#d1fae5" : "#dbeafe", color: /suppr|delete/i.test(entry.action) ? "#dc2626" : /cr[ée]/i.test(entry.action) ? "#059669" : "#2563eb", fontSize: 10 }}>{entry.action}</span>
                   </td>
                   <td style={{ ...tdStyle, color: "#374151" }}>{entry.entityType} #{entry.entityId}</td>
                   <td style={{ ...tdStyle, color: "#64748b", fontSize: 12, maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{entry.details || "—"}</td>

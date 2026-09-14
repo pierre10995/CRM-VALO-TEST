@@ -5,6 +5,7 @@ import { validate } from "../validators/validate.js";
 import { placementCreateSchema, placementUpdateSchema } from "../validators/schemas.js";
 import { asyncHandler, AppError } from "../helpers/errors.js";
 import { adminOnly } from "../middleware.js";
+import { logAudit, AUDIT_ACTIONS } from "../helpers/audit.js";
 
 const router = Router();
 
@@ -45,10 +46,7 @@ router.put("/:id", adminOnly, validate(placementUpdateSchema), asyncHandler(asyn
 router.delete("/:id", adminOnly, asyncHandler(async (req, res) => {
   const { rows } = await pool.query("DELETE FROM placements WHERE id=$1 RETURNING id, candidate_id, mission_id", [req.params.id]);
   if (rows.length === 0) throw new AppError(404, "Placement non trouvé");
-  await pool.query(
-    "INSERT INTO audit_log (user_name, action, entity_type, entity_id, details) VALUES ($1,$2,$3,$4,$5)",
-    [req.user?.login || "Système", "Supprimer", "placement", rows[0].id, `candidat #${rows[0].candidate_id} / mission #${rows[0].mission_id}`]
-  );
+  await logAudit(req, AUDIT_ACTIONS.DELETE, "placement", rows[0].id, `candidat #${rows[0].candidate_id} / mission #${rows[0].mission_id}`);
   res.json({ ok: true });
 }));
 

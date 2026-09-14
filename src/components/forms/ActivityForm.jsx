@@ -2,16 +2,7 @@ import { useState } from "react";
 import { ACTIVITY_TYPES } from "../../utils/constants";
 import Field from "../common/Field";
 import SearchSelect from "../common/SearchSelect";
-
-// Convertit une date stockée (ISO ou autre) au format attendu par
-// <input type="datetime-local"> : "YYYY-MM-DDTHH:mm". Renvoie "" si invalide.
-function toLocalInput(value) {
-  if (!value) return "";
-  const d = new Date(value);
-  if (isNaN(d.getTime())) return typeof value === "string" ? value.slice(0, 16) : "";
-  const pad = n => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
+import { toLocalInput } from "../../utils/dates";
 
 export default function ActivityForm({ form, setForm, onSave, onCancel, contacts, missions, saving }) {
   const f = (k, v) => setForm(p => ({ ...p, [k]: v }));
