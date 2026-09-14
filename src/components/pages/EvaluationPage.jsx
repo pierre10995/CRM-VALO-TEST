@@ -81,7 +81,7 @@ export default function EvaluationPage({ candidates, missions, loadAll }) {
       </div>
 
       <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", marginBottom: 12 }}>Historique ({evaluations.length})</div>
-      {evaluations.length === 0 && <div className="card" style={{ textAlign: "center", color: "#94a3b8" }}>Aucune évaluation</div>}
+      {evaluations.length === 0 && <div className="card" style={{ textAlign: "center", color: "#64748b" }}>Aucune évaluation</div>}
       {evaluations.map(ev => {
         let positives = [], negatives = [], clarifs = [];
         try { positives = JSON.parse(ev.positives); } catch {}
@@ -98,7 +98,7 @@ export default function EvaluationPage({ candidates, missions, loadAll }) {
                 <div>
                   <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>{ev.candidateName}</div>
                   <div style={{ fontSize: 13, color: "#64748b" }}>{ev.missionTitle} — {ev.missionCompany}</div>
-                  <div style={{ fontSize: 11, color: "#94a3b8" }}>{new Date(ev.createdAt).toLocaleDateString("fr-CA")}</div>
+                  <div style={{ fontSize: 11, color: "#64748b" }}>{new Date(ev.createdAt).toLocaleDateString("fr-CA")}</div>
                 </div>
               </div>
               <button className="btn btn-danger" style={{ padding: "6px 10px", fontSize: 11 }} onClick={async () => (await confirm("Cette suppression est définitive. Voulez-vous continuer ?", { title: "Supprimer définitivement", confirmLabel: "Supprimer" })) && deleteEvaluation(ev.id)}>Suppr.</button>
@@ -112,21 +112,21 @@ export default function EvaluationPage({ candidates, missions, loadAll }) {
                 {positives.map((p, i) => (
                   <div key={i} style={{ fontSize: 12, color: "#374151", marginBottom: 4, paddingLeft: 10, borderLeft: "2px solid #a7f3d0" }}>{p}</div>
                 ))}
-                {positives.length === 0 && <div style={{ fontSize: 11, color: "#94a3b8" }}>—</div>}
+                {positives.length === 0 && <div style={{ fontSize: 11, color: "#64748b" }}>—</div>}
               </div>
               <div>
                 <div style={{ fontSize: 11, fontWeight: 700, color: "#dc2626", marginBottom: 6 }}>POINTS NÉGATIFS</div>
                 {negatives.map((n, i) => (
                   <div key={i} style={{ fontSize: 12, color: "#374151", marginBottom: 4, paddingLeft: 10, borderLeft: "2px solid #fecaca" }}>{n}</div>
                 ))}
-                {negatives.length === 0 && <div style={{ fontSize: 11, color: "#94a3b8" }}>—</div>}
+                {negatives.length === 0 && <div style={{ fontSize: 11, color: "#64748b" }}>—</div>}
               </div>
               <div>
                 <div style={{ fontSize: 11, fontWeight: 700, color: "#d97706", marginBottom: 6 }}>À ÉCLAIRCIR</div>
                 {clarifs.map((cl, i) => (
                   <div key={i} style={{ fontSize: 12, color: "#374151", marginBottom: 4, paddingLeft: 10, borderLeft: "2px solid #fde68a" }}>{cl}</div>
                 ))}
-                {clarifs.length === 0 && <div style={{ fontSize: 11, color: "#94a3b8" }}>—</div>}
+                {clarifs.length === 0 && <div style={{ fontSize: 11, color: "#64748b" }}>—</div>}
               </div>
             </div>
           </div>

@@ -10,7 +10,7 @@ const STAGE_COLORS = {
   "Finaliste": { bg: "#ede9fe", color: "#7c3aed" },
   "Placé": { bg: "#d1fae5", color: "#059669" },
   "Refusé": { bg: "#fee2e2", color: "#dc2626" },
-  "Archivé": { bg: "#f1f5f9", color: "#94a3b8" },
+  "Archivé": { bg: "#f1f5f9", color: "#64748b" },
 };
 
 export default function PartnerDashboard() {
@@ -24,8 +24,8 @@ export default function PartnerDashboard() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div style={{ textAlign: "center", padding: 60, color: "#94a3b8" }}>Chargement...</div>;
-  if (!stats) return <div style={{ textAlign: "center", padding: 60, color: "#94a3b8" }}>Impossible de charger les statistiques.</div>;
+  if (loading) return <div style={{ textAlign: "center", padding: 60, color: "#64748b" }}>Chargement...</div>;
+  if (!stats) return <div style={{ textAlign: "center", padding: 60, color: "#64748b" }}>Impossible de charger les statistiques.</div>;
 
   const kpis = [
     { label: "Candidats soumis", value: stats.totalSubmissions, color: "#3b82f6", bg: "#eff6ff" },
@@ -47,7 +47,7 @@ export default function PartnerDashboard() {
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 24 }}>
         {kpis.map(k => (
           <div key={k.label} style={{ background: "white", borderRadius: 14, padding: "16px 18px", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
-            <div style={{ fontSize: 11, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.04em" }}>{k.label}</div>
+            <div style={{ fontSize: 11, fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em" }}>{k.label}</div>
             <div style={{ fontSize: 24, fontWeight: 800, color: k.color, marginTop: 4 }}>{k.value}</div>
           </div>
         ))}
@@ -88,10 +88,10 @@ export default function PartnerDashboard() {
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 12.5, fontWeight: 600, color: "#0f172a", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.candidateName}</div>
-                    <div style={{ fontSize: 11, color: "#94a3b8", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.missionTitle}</div>
+                    <div style={{ fontSize: 11, color: "#64748b", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.missionTitle}</div>
                   </div>
                   <span style={{ padding: "2px 8px", borderRadius: 6, fontSize: 10, fontWeight: 600, background: sc.bg, color: sc.color, flexShrink: 0 }}>{a.stage}</span>
-                  <span style={{ fontSize: 10, color: "#94a3b8", flexShrink: 0 }}>{new Date(a.createdAt).toLocaleDateString("fr-CA")}</span>
+                  <span style={{ fontSize: 10, color: "#64748b", flexShrink: 0 }}>{new Date(a.createdAt).toLocaleDateString("fr-CA")}</span>
                 </div>
               );
             })}

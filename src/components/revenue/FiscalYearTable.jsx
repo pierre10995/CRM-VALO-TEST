@@ -32,7 +32,7 @@ export default function FiscalYearTable({ fyWithCA, editingYear, editYearForm, s
                   <td style={{ padding: "10px 14px" }}>
                     <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                       <input className="input" type="date" style={{ fontSize: 11, padding: "6px 6px" }} value={editYearForm.startDate || ""} onChange={e => setEditYearForm(p => ({ ...p, startDate: e.target.value }))} />
-                      <span style={{ color: "#94a3b8" }}>&rarr;</span>
+                      <span style={{ color: "#64748b" }}>&rarr;</span>
                       <input className="input" type="date" style={{ fontSize: 11, padding: "6px 6px" }} value={editYearForm.endDate || ""} onChange={e => setEditYearForm(p => ({ ...p, endDate: e.target.value }))} />
                     </div>
                   </td>

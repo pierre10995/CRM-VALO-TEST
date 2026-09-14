@@ -211,7 +211,7 @@ export default function CandidatForm({ form, setForm, onSave, onCancel, sectors 
                 )}
               </div>
             ))}
-            {validationStatuses.length === 0 && <span style={{ fontSize: 12, color: "#94a3b8" }}>Aucun statut défini</span>}
+            {validationStatuses.length === 0 && <span style={{ fontSize: 12, color: "#64748b" }}>Aucun statut défini</span>}
           </div>
 
           {/* Ajout */}

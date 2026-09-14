@@ -138,8 +138,8 @@ export default function PlacementsPage({ candidatures, candidates, missions, goT
 
       {placedCandidatures.length === 0 && placements.length === 0 && (
         <div className="card" style={{ padding: 40, textAlign: "center" }}>
-          <p style={{ fontSize: 14, color: "#94a3b8" }}>Aucun candidat placé pour le moment.</p>
-          <p style={{ fontSize: 12, color: "#cbd5e1", marginTop: 6 }}>Les candidatures avec le statut « Placé » dans le pipeline apparaîtront ici.</p>
+          <p style={{ fontSize: 14, color: "#64748b" }}>Aucun candidat placé pour le moment.</p>
+          <p style={{ fontSize: 12, color: "#64748b", marginTop: 6 }}>Les candidatures avec le statut « Placé » dans le pipeline apparaîtront ici.</p>
         </div>
       )}
 
@@ -162,7 +162,7 @@ export default function PlacementsPage({ candidatures, candidates, missions, goT
                 <div style={{ background: "#f8fafc", borderRadius: 10, padding: 14 }}>
                   <div style={{ fontSize: 12, fontWeight: 700, color: "#2563eb", marginBottom: 10 }}>DÉMARRAGE</div>
                   <div style={{ marginBottom: 8 }}>
-                    <label style={{ fontSize: 11, color: "#94a3b8", display: "block", marginBottom: 3 }}>Date de démarrage</label>
+                    <label style={{ fontSize: 11, color: "#64748b", display: "block", marginBottom: 3 }}>Date de démarrage</label>
                     <input className="input" type="date" value={form.startDate || ""} onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))} />
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
@@ -171,7 +171,7 @@ export default function PlacementsPage({ candidatures, candidates, missions, goT
                   </div>
                   {form.startInvoiceSent && (
                     <div style={{ marginBottom: 8 }}>
-                      <label style={{ fontSize: 11, color: "#94a3b8", display: "block", marginBottom: 3 }}>Nom de la facture</label>
+                      <label style={{ fontSize: 11, color: "#64748b", display: "block", marginBottom: 3 }}>Nom de la facture</label>
                       <input className="input" value={form.startInvoiceName || ""} onChange={e => setForm(f => ({ ...f, startInvoiceName: e.target.value }))} placeholder="FAC-2026-001" />
                     </div>
                   )}
@@ -186,7 +186,7 @@ export default function PlacementsPage({ candidatures, candidates, missions, goT
                 <div style={{ background: "#f8fafc", borderRadius: 10, padding: 14 }}>
                   <div style={{ fontSize: 12, fontWeight: 700, color: "#d97706", marginBottom: 10 }}>VALIDATION PÉRIODE D'ESSAI</div>
                   <div style={{ marginBottom: 8 }}>
-                    <label style={{ fontSize: 11, color: "#94a3b8", display: "block", marginBottom: 3 }}>Date de validation</label>
+                    <label style={{ fontSize: 11, color: "#64748b", display: "block", marginBottom: 3 }}>Date de validation</label>
                     <input className="input" type="date" value={form.probationDate || ""} onChange={e => setForm(f => ({ ...f, probationDate: e.target.value }))} />
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
@@ -195,7 +195,7 @@ export default function PlacementsPage({ candidatures, candidates, missions, goT
                   </div>
                   {form.probationInvoiceSent && (
                     <div style={{ marginBottom: 8 }}>
-                      <label style={{ fontSize: 11, color: "#94a3b8", display: "block", marginBottom: 3 }}>Nom de la facture</label>
+                      <label style={{ fontSize: 11, color: "#64748b", display: "block", marginBottom: 3 }}>Nom de la facture</label>
                       <input className="input" value={form.probationInvoiceName || ""} onChange={e => setForm(f => ({ ...f, probationInvoiceName: e.target.value }))} placeholder="FAC-2026-002" />
                     </div>
                   )}
@@ -212,7 +212,7 @@ export default function PlacementsPage({ candidatures, candidates, missions, goT
                 </div>
               </div>
               <div style={{ marginBottom: 14 }}>
-                <label style={{ fontSize: 11, color: "#94a3b8", display: "block", marginBottom: 3 }}>Notes</label>
+                <label style={{ fontSize: 11, color: "#64748b", display: "block", marginBottom: 3 }}>Notes</label>
                 <textarea className="input" style={{ resize: "vertical", minHeight: 50 }} value={form.notes || ""} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} placeholder="Notes..." />
               </div>
               <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
@@ -252,11 +252,11 @@ export default function PlacementsPage({ candidatures, candidates, missions, goT
                 <div style={{ background: "#f8fafc", borderRadius: 10, padding: 14 }}>
                   <div style={{ fontSize: 12, fontWeight: 700, color: "#2563eb", marginBottom: 8 }}>DÉMARRAGE</div>
                   <div style={{ fontSize: 13, color: "#0f172a", marginBottom: 6 }}>
-                    <span style={{ color: "#94a3b8", fontSize: 11 }}>Date : </span>
+                    <span style={{ color: "#64748b", fontSize: 11 }}>Date : </span>
                     {p.startDate ? new Date(p.startDate).toLocaleDateString("fr-CA") : "—"}
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-                    <span style={{ color: "#94a3b8", fontSize: 11 }}>Facture : </span>
+                    <span style={{ color: "#64748b", fontSize: 11 }}>Facture : </span>
                     <span className="tag" style={{ background: p.startInvoiceSent ? "#d1fae5" : "#fee2e2", color: p.startInvoiceSent ? "#059669" : "#dc2626", fontSize: 11 }}>
                       {p.startInvoiceSent ? "Envoyée" : "Non envoyée"}
                     </span>
@@ -274,11 +274,11 @@ export default function PlacementsPage({ candidatures, candidates, missions, goT
                 <div style={{ background: "#f8fafc", borderRadius: 10, padding: 14 }}>
                   <div style={{ fontSize: 12, fontWeight: 700, color: "#d97706", marginBottom: 8 }}>VALIDATION PÉRIODE D'ESSAI</div>
                   <div style={{ fontSize: 13, color: "#0f172a", marginBottom: 6 }}>
-                    <span style={{ color: "#94a3b8", fontSize: 11 }}>Date : </span>
+                    <span style={{ color: "#64748b", fontSize: 11 }}>Date : </span>
                     {p.probationDate ? new Date(p.probationDate).toLocaleDateString("fr-CA") : "—"}
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-                    <span style={{ color: "#94a3b8", fontSize: 11 }}>Facture : </span>
+                    <span style={{ color: "#64748b", fontSize: 11 }}>Facture : </span>
                     <span className="tag" style={{ background: p.probationInvoiceSent ? "#d1fae5" : "#fee2e2", color: p.probationInvoiceSent ? "#059669" : "#dc2626", fontSize: 11 }}>
                       {p.probationInvoiceSent ? "Envoyée" : "Non envoyée"}
                     </span>

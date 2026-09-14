@@ -212,7 +212,7 @@ export default function ObjectifsPage({ contacts, missions, candidatures, users,
 
             {periodObjs.length === 0 && (
               <div className="card" style={{ padding: 20, textAlign: "center" }}>
-                <p style={{ fontSize: 13, color: "#94a3b8" }}>Aucun objectif défini pour cette période</p>
+                <p style={{ fontSize: 13, color: "#64748b" }}>Aucun objectif défini pour cette période</p>
               </div>
             )}
 
@@ -239,15 +239,15 @@ export default function ObjectifsPage({ contacts, missions, candidatures, users,
         );
       }) : (
         <div className="card" style={{ padding: 40, textAlign: "center" }}>
-          <p style={{ fontSize: 14, color: "#94a3b8" }}>Sélectionnez une année fiscale pour voir les objectifs</p>
-          <p style={{ fontSize: 12, color: "#cbd5e1", marginTop: 6 }}>Les années fiscales sont créées dans la page Chiffre d'affaires</p>
+          <p style={{ fontSize: 14, color: "#64748b" }}>Sélectionnez une année fiscale pour voir les objectifs</p>
+          <p style={{ fontSize: 12, color: "#64748b", marginTop: 6 }}>Les années fiscales sont créées dans la page Chiffre d'affaires</p>
         </div>
       )}
 
       {activeFY && filteredObjectives.length === 0 && !showAddForm && (
         <div className="card" style={{ padding: 40, textAlign: "center" }}>
-          <p style={{ fontSize: 14, color: "#94a3b8" }}>Aucun objectif défini pour {activeFY.label} en mode {PERIODS.find(p => p.id === selectedPeriod)?.label.toLowerCase()}</p>
-          <p style={{ fontSize: 12, color: "#cbd5e1", marginTop: 6 }}>Cliquez sur « + Définir un objectif » pour commencer</p>
+          <p style={{ fontSize: 14, color: "#64748b" }}>Aucun objectif défini pour {activeFY.label} en mode {PERIODS.find(p => p.id === selectedPeriod)?.label.toLowerCase()}</p>
+          <p style={{ fontSize: 12, color: "#64748b", marginTop: 6 }}>Cliquez sur « + Définir un objectif » pour commencer</p>
         </div>
       )}
     </div>

@@ -86,7 +86,7 @@ export default function ActivitesPage({ activities, contacts, missions, users, c
             {a.contactName && <> · <span onClick={clickable ? (e) => { e.stopPropagation(); goToContact(a.contactId); } : undefined} style={{ color: clickable ? "#2563eb" : "#64748b", cursor: clickable ? "pointer" : "default" }}>{a.contactName}</span></>}
             {a.userName ? ` · ${a.userName}` : ""}
           </div>
-          {a.description && <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 2 }}>{a.description}</div>}
+          {a.description && <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>{a.description}</div>}
         </div>
         {a.dueDate && !a.completed && (
           <span style={{ fontSize: 11.5, fontWeight: 700, whiteSpace: "nowrap", padding: "3px 10px", borderRadius: 999, background: bucket(a) === "overdue" ? "#fef2f2" : bucket(a) === "today" ? "#eff6ff" : "#f1f5f9", color: bucket(a) === "overdue" ? "#dc2626" : bucket(a) === "today" ? "#2563eb" : "#64748b" }}>
@@ -122,7 +122,7 @@ export default function ActivitesPage({ activities, contacts, missions, users, c
       <div className="page-header-actions" style={{ display: "flex", gap: 10, marginBottom: 20, flexWrap: "wrap", alignItems: "center" }}>
         <div style={{ display: "flex", gap: 4, background: "#f1f5f9", borderRadius: 10, padding: 4 }}>
           {[{ k: "all", l: "Toutes" }, { k: "me", l: "Les miennes" }].map(o => (
-            <button key={o.k} onClick={() => setScope(o.k)} style={{ padding: "7px 16px", fontSize: 13, fontWeight: 600, borderRadius: 8, border: "none", cursor: "pointer", background: scope === o.k ? "#fff" : "transparent", color: scope === o.k ? "#1d4ed8" : "#64748b", boxShadow: scope === o.k ? "0 1px 3px rgba(15,23,42,0.08)" : "none" }}>{o.l}</button>
+            <button key={o.k} type="button" aria-pressed={scope === o.k} onClick={() => setScope(o.k)} style={{ padding: "7px 16px", fontSize: 13, fontWeight: 600, borderRadius: 8, border: "none", cursor: "pointer", background: scope === o.k ? "#fff" : "transparent", color: scope === o.k ? "#1d4ed8" : "#64748b", boxShadow: scope === o.k ? "0 1px 3px rgba(15,23,42,0.08)" : "none" }}>{o.l}</button>
           ))}
         </div>
         <select className="input" style={{ width: "auto", minWidth: 150 }} value={typeFilter} onChange={e => setTypeFilter(e.target.value)}>

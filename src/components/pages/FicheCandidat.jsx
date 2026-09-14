@@ -121,8 +121,15 @@ export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, o
   const crFiles = files.filter(f => f.file_type === "compte-rendu");
   const myCandidatures = candidatures.filter(cd => cd.candidateId === c.id);
 
+  // Échap ferme la fiche (comme les autres modales)
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
   return (
-    <div className="card" style={{ width: 600, maxHeight: "90vh", overflowY: "auto", padding: 28 }}>
+    <div className="card" role="dialog" aria-modal="true" aria-label={`Fiche candidat : ${c.name}`} style={{ width: 600, maxHeight: "90vh", overflowY: "auto", padding: 28 }}>
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 20 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <div style={{ width: 50, height: 50, background: "linear-gradient(135deg, #fef3c7, #fde68a)", borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, fontWeight: 800, color: "#d97706" }}>{c.name[0]}</div>
@@ -131,7 +138,7 @@ export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, o
             <p style={{ fontSize: 13, color: "#64748b" }}>Fiche Candidat</p>
           </div>
         </div>
-        <button className="btn btn-ghost" style={{ padding: "6px 8px" }} onClick={onClose}>X</button>
+        <button type="button" className="btn btn-ghost" style={{ padding: "6px 8px" }} onClick={onClose} aria-label="Fermer la fiche candidat" title="Fermer">X</button>
       </div>
 
       {/* Info section */}
@@ -179,7 +186,7 @@ export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, o
           const vs = validationStatuses.find(s => s.label === c.validationStatus);
           const vc = vs ? { bg: vs.bg, color: vs.color } : { bg: "#f1f5f9", color: "#64748b" };
           return <span style={{ fontSize: 13, fontWeight: 600, padding: "5px 14px", borderRadius: 16, background: vc.bg, color: vc.color }}>{c.validationStatus}</span>;
-        })() : <span style={{ fontSize: 13, color: "#cbd5e1" }}>Non défini</span>}
+        })() : <span style={{ fontSize: 13, color: "#64748b" }}>Non défini</span>}
       </div>
 
       {/* Skills */}
@@ -210,11 +217,11 @@ export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, o
             {uploading ? "Envoi..." : "+ Ajouter CV"}
           </button>
         </div>
-        {cvFiles.length === 0 && <p style={{ fontSize: 12, color: "#94a3b8" }}>Aucun CV</p>}
+        {cvFiles.length === 0 && <p style={{ fontSize: 12, color: "#64748b" }}>Aucun CV</p>}
         {cvFiles.map(f => (
           <div key={f.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "#f8fafc", borderRadius: 8, marginBottom: 6 }}>
             <span style={{ fontSize: 13, color: "#0f172a", flex: 1 }}>{f.file_name}</span>
-            <span style={{ fontSize: 11, color: "#94a3b8" }}>{new Date(f.created_at).toLocaleDateString("fr-CA")}</span>
+            <span style={{ fontSize: 11, color: "#64748b" }}>{new Date(f.created_at).toLocaleDateString("fr-CA")}</span>
             <button className="btn btn-primary" style={{ padding: "4px 10px", fontSize: 11 }} onClick={() => previewFile(f.id, f.file_name)}>Voir</button>
             <button className="btn btn-ghost" style={{ padding: "4px 10px", fontSize: 11 }} onClick={() => downloadFile(f.id, f.file_name)}>Télécharger</button>
             <button className="btn btn-danger" style={{ padding: "4px 10px", fontSize: 11 }} onClick={async () => (await confirm("Cette suppression est définitive. Voulez-vous continuer ?", { title: "Supprimer définitivement", confirmLabel: "Supprimer" })) && deleteFile(f.id)}>Suppr.</button>
@@ -231,7 +238,7 @@ export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, o
               {loadingSummary ? "Analyse en cours..." : cvSummary ? "Relancer l'analyse" : "Analyser le CV"}
             </button>
           </div>
-          {!cvSummary && !loadingSummary && <p style={{ fontSize: 12, color: "#94a3b8" }}>Cliquez pour générer un résumé IA du CV</p>}
+          {!cvSummary && !loadingSummary && <p style={{ fontSize: 12, color: "#64748b" }}>Cliquez pour générer un résumé IA du CV</p>}
           {cvSummary && (
             <div style={{ background: "#f0f9ff", borderRadius: 10, padding: 14, border: "1px solid #bae6fd" }}>
               <p style={{ fontSize: 13, color: "#0f172a", lineHeight: 1.6, marginBottom: 10 }}>{cvSummary.summary}</p>
@@ -276,11 +283,11 @@ export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, o
             {uploading ? "Envoi..." : "+ Ajouter CR"}
           </button>
         </div>
-        {crFiles.length === 0 && <p style={{ fontSize: 12, color: "#94a3b8" }}>Aucun compte-rendu</p>}
+        {crFiles.length === 0 && <p style={{ fontSize: 12, color: "#64748b" }}>Aucun compte-rendu</p>}
         {crFiles.map(f => (
           <div key={f.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "#f8fafc", borderRadius: 8, marginBottom: 6 }}>
             <span style={{ fontSize: 13, color: "#0f172a", flex: 1 }}>{f.file_name}</span>
-            <span style={{ fontSize: 11, color: "#94a3b8" }}>{new Date(f.created_at).toLocaleDateString("fr-CA")}</span>
+            <span style={{ fontSize: 11, color: "#64748b" }}>{new Date(f.created_at).toLocaleDateString("fr-CA")}</span>
             <button className="btn btn-primary" style={{ padding: "4px 10px", fontSize: 11 }} onClick={() => previewFile(f.id, f.file_name)}>Voir</button>
             <button className="btn btn-ghost" style={{ padding: "4px 10px", fontSize: 11 }} onClick={() => downloadFile(f.id, f.file_name)}>Télécharger</button>
             <button className="btn btn-danger" style={{ padding: "4px 10px", fontSize: 11 }} onClick={async () => (await confirm("Cette suppression est définitive. Voulez-vous continuer ?", { title: "Supprimer définitivement", confirmLabel: "Supprimer" })) && deleteFile(f.id)}>Suppr.</button>
@@ -298,7 +305,7 @@ export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, o
             </button>
           )}
         </div>
-        {myCandidatures.length === 0 && <p style={{ fontSize: 12, color: "#94a3b8" }}>Aucune candidature — proposez ce candidat pour un poste</p>}
+        {myCandidatures.length === 0 && <p style={{ fontSize: 12, color: "#64748b" }}>Aucune candidature — proposez ce candidat pour un poste</p>}
         {myCandidatures.map(cd => (
           <div
             key={cd.id}
@@ -338,7 +345,7 @@ export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, o
             {loadingSuggestions ? "Analyse en cours..." : "Trouver des missions"}
           </button>
         </div>
-        {suggestions.length === 0 && !loadingSuggestions && <p style={{ fontSize: 12, color: "#94a3b8" }}>Cliquez pour lancer le matching IA</p>}
+        {suggestions.length === 0 && !loadingSuggestions && <p style={{ fontSize: 12, color: "#64748b" }}>Cliquez pour lancer le matching IA</p>}
         {suggestions.map((s, i) => {
           const scoreColor = s.score >= 70 ? "#059669" : s.score >= 40 ? "#d97706" : "#dc2626";
           const alreadyProposed = myCandidatures.some(cd => cd.missionId === s.id);
@@ -351,7 +358,7 @@ export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, o
               </div>
               {onAddCandidature && (
                 alreadyProposed
-                  ? <span style={{ fontSize: 11, color: "#94a3b8", whiteSpace: "nowrap" }}>Déjà proposé</span>
+                  ? <span style={{ fontSize: 11, color: "#64748b", whiteSpace: "nowrap" }}>Déjà proposé</span>
                   : <button className="btn btn-ghost" style={{ padding: "4px 10px", fontSize: 11, whiteSpace: "nowrap" }} onClick={() => onAddCandidature(c.id, s.id)}>+ Proposer</button>
               )}
             </div>

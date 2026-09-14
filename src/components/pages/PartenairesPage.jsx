@@ -255,11 +255,11 @@ export default function PartenairesPage({ missions, currentUser }) {
           {currentList.length === 0 ? (
             <div className="card" style={{ textAlign: "center", padding: 40 }}>
               <div style={{ fontSize: 16, fontWeight: 600, color: "#475569" }}>{tab === "archived" ? "Aucun candidat archivé" : tab === "preselected" ? "Aucun candidat pré-sélectionné" : "Aucune soumission de partenaire"}</div>
-              <div style={{ fontSize: 13, color: "#94a3b8", marginTop: 6 }}>{tab === "archived" ? "Les candidats archivés apparaitront ici." : tab === "preselected" ? "Les candidats pré-sélectionnés apparaitront ici." : "Les candidats proposés par vos partenaires apparaitront ici."}</div>
+              <div style={{ fontSize: 13, color: "#64748b", marginTop: 6 }}>{tab === "archived" ? "Les candidats archivés apparaitront ici." : tab === "preselected" ? "Les candidats pré-sélectionnés apparaitront ici." : "Les candidats proposés par vos partenaires apparaitront ici."}</div>
             </div>
           ) : filteredSubmissions.length === 0 ? (
             <div className="card" style={{ textAlign: "center", padding: 40 }}>
-              <div style={{ fontSize: 14, color: "#94a3b8" }}>Aucun candidat pour ce poste.</div>
+              <div style={{ fontSize: 14, color: "#64748b" }}>Aucun candidat pour ce poste.</div>
             </div>
           ) : (
             <div style={{ display: "grid", gap: 12 }}>
@@ -285,7 +285,7 @@ export default function PartenairesPage({ missions, currentUser }) {
                       }}>
                         {s.stage}
                       </span>
-                      <span style={{ fontSize: 11, color: "#94a3b8" }}>
+                      <span style={{ fontSize: 11, color: "#64748b" }}>
                         {new Date(s.createdAt).toLocaleDateString("fr-CA")} à {new Date(s.createdAt).toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" })}
                       </span>
                     </div>
@@ -428,7 +428,7 @@ export default function PartenairesPage({ missions, currentUser }) {
               </tr>
             ))}
             {filtered.length === 0 && (
-              <tr><td colSpan={6} style={{ textAlign: "center", padding: 24, color: "#94a3b8" }}>Aucun partenaire trouvé</td></tr>
+              <tr><td colSpan={6} style={{ textAlign: "center", padding: 24, color: "#64748b" }}>Aucun partenaire trouvé</td></tr>
             )}
           </tbody>
         </table>
@@ -463,13 +463,13 @@ export default function PartenairesPage({ missions, currentUser }) {
           <div style={{ ...modalBox, maxWidth: 600 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
               <h3 style={{ fontSize: 17, fontWeight: 700, margin: 0 }}>Missions de {selectedPartner.name}</h3>
-              <button onClick={() => setModal(null)} style={{ background: "none", border: "none", fontSize: 18, cursor: "pointer", color: "#94a3b8" }}>x</button>
+              <button onClick={() => setModal(null)} style={{ background: "none", border: "none", fontSize: 18, cursor: "pointer", color: "#64748b" }}>x</button>
             </div>
 
             {/* Affiliated */}
             <div style={{ fontSize: 12, fontWeight: 700, color: "#059669", textTransform: "uppercase", marginBottom: 8 }}>Missions affiliées</div>
             {affiliatedMissions.length === 0 ? (
-              <div style={{ padding: 16, textAlign: "center", color: "#94a3b8", fontSize: 13 }}>Aucune mission affiliée</div>
+              <div style={{ padding: 16, textAlign: "center", color: "#64748b", fontSize: 13 }}>Aucune mission affiliée</div>
             ) : (
               <div style={{ display: "grid", gap: 6, marginBottom: 16 }}>
                 {affiliatedMissions.map(m => (
@@ -488,7 +488,7 @@ export default function PartenairesPage({ missions, currentUser }) {
             {/* Add missions */}
             <div style={{ fontSize: 12, fontWeight: 700, color: "#2563eb", textTransform: "uppercase", marginBottom: 8 }}>Ajouter une mission</div>
             {availableMissions.length === 0 ? (
-              <div style={{ padding: 16, textAlign: "center", color: "#94a3b8", fontSize: 13 }}>Toutes les missions sont déjà affiliées</div>
+              <div style={{ padding: 16, textAlign: "center", color: "#64748b", fontSize: 13 }}>Toutes les missions sont déjà affiliées</div>
             ) : (
               <div style={{ maxHeight: 240, overflow: "auto", display: "grid", gap: 4 }}>
                 {availableMissions.map(m => (
@@ -515,7 +515,7 @@ export default function PartenairesPage({ missions, currentUser }) {
           <div style={{ background: "white", borderRadius: 18, width: "90%", maxWidth: 900, height: "85vh", display: "flex", flexDirection: "column", overflow: "hidden", boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }} onClick={e => e.stopPropagation()}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 20px", borderBottom: "1px solid #e2e8f0" }}>
               <span style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>Aperçu du CV</span>
-              <button onClick={closePreview} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "#94a3b8" }}>x</button>
+              <button onClick={closePreview} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "#64748b" }}>x</button>
             </div>
             <iframe src={previewUrl} style={{ flex: 1, border: "none", width: "100%" }} title="CV Preview" />
           </div>
@@ -528,7 +528,7 @@ export default function PartenairesPage({ missions, currentUser }) {
           <div style={{ ...modalBox, maxWidth: 500 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
               <h3 style={{ fontSize: 17, fontWeight: 700, margin: 0 }}>Évaluer {reviewModal.candidateName}</h3>
-              <button onClick={() => setReviewModal(null)} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "#94a3b8" }}>x</button>
+              <button onClick={() => setReviewModal(null)} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "#64748b" }}>x</button>
             </div>
 
             {/* Star rating */}
@@ -583,7 +583,7 @@ export default function PartenairesPage({ missions, currentUser }) {
                         </span>
                       </div>
                       {r.comment && <div style={{ fontSize: 12.5, color: "#475569", lineHeight: 1.4 }}>{r.comment}</div>}
-                      <div style={{ fontSize: 10.5, color: "#94a3b8", marginTop: 4 }}>{new Date(r.updatedAt || r.createdAt).toLocaleDateString("fr-CA")}</div>
+                      <div style={{ fontSize: 10.5, color: "#64748b", marginTop: 4 }}>{new Date(r.updatedAt || r.createdAt).toLocaleDateString("fr-CA")}</div>
                     </div>
                   ))}
                 </div>
@@ -607,7 +607,7 @@ function StarIcon({ size = 16, filled = false }) {
 function InfoField({ label, value }) {
   return (
     <div>
-      <div style={{ fontSize: 10.5, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase" }}>{label}</div>
+      <div style={{ fontSize: 10.5, fontWeight: 600, color: "#64748b", textTransform: "uppercase" }}>{label}</div>
       <div style={{ fontSize: 13, color: "#0f172a", marginTop: 1 }}>{value}</div>
     </div>
   );
@@ -646,7 +646,7 @@ function borderColor(stage) {
     case "Proposition partenaire": return "#10b981";
     case "Soumis": return "#f59e0b";
     case "Présélectionné": return "#3b82f6";
-    case "Archivé": return "#94a3b8";
+    case "Archivé": return "#64748b";
     default: return "#3b82f6";
   }
 }

@@ -21,7 +21,7 @@ export default function ObjectiveCard({ obj, actuals, userCA, periodLabel, onEdi
           </div>
           <div>
             <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>{obj.userName}</div>
-            <div style={{ fontSize: 11, color: "#94a3b8" }}>
+            <div style={{ fontSize: 11, color: "#64748b" }}>
               {periodLabel}
               {userCA ? ` — CA: ${fmtCAD(userCA.ca)}` : ""}
             </div>
@@ -69,7 +69,7 @@ export default function ObjectiveCard({ obj, actuals, userCA, periodLabel, onEdi
               <span style={{ fontSize: 12, fontWeight: 700, color: pctColor(pctClients) }}>{actuals.newClients} / {obj.targetNewClients} ({pctClients}%)</span>
             </div>
             <ProgressBar value={actuals.newClients} max={obj.targetNewClients} />
-            <div style={{ fontSize: 10, color: "#94a3b8", marginTop: 2 }}>sur {clients} clients actuels</div>
+            <div style={{ fontSize: 10, color: "#64748b", marginTop: 2 }}>sur {clients} clients actuels</div>
           </div>
 
           {/* CA en cours */}
@@ -79,7 +79,7 @@ export default function ObjectiveCard({ obj, actuals, userCA, periodLabel, onEdi
               <span style={{ fontSize: 12, fontWeight: 700, color: pctColor(pctCA) }}>{fmtCAD(actuals.caRealized)} / {fmtCAD(obj.targetCA)} ({pctCA}%)</span>
             </div>
             <ProgressBar value={actuals.caRealized} max={obj.targetCA} />
-            <div style={{ fontSize: 10, color: "#94a3b8", marginTop: 2 }}>{actuals.missionsCount} poste{actuals.missionsCount > 1 ? "s" : ""} gagné{actuals.missionsCount > 1 ? "s" : ""}</div>
+            <div style={{ fontSize: 10, color: "#64748b", marginTop: 2 }}>{actuals.missionsCount} poste{actuals.missionsCount > 1 ? "s" : ""} gagné{actuals.missionsCount > 1 ? "s" : ""}</div>
           </div>
 
           {/* Objectif total */}

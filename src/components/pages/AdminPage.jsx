@@ -267,7 +267,7 @@ export default function AdminPage({ currentUser, loadAll }) {
               <th style={{ ...thStyle, textAlign: "right" }}>Actions</th>
             </tr></thead>
             <tbody>
-              {users.length === 0 && <tr><td colSpan={4} style={{ padding: 40, textAlign: "center", color: "#94a3b8" }}>Aucun utilisateur</td></tr>}
+              {users.length === 0 && <tr><td colSpan={4} style={{ padding: 40, textAlign: "center", color: "#64748b" }}>Aucun utilisateur</td></tr>}
               {users.map(u => (
                 <tr key={u.id} className="row-hover" style={{ borderBottom: "1px solid #eef2f7" }}>
                   <td style={tdStyle}>
@@ -324,7 +324,7 @@ export default function AdminPage({ currentUser, loadAll }) {
               <th style={{ ...thStyle, textAlign: "right" }}>Actions</th>
             </tr></thead>
             <tbody>
-              {partners.length === 0 && <tr><td colSpan={5} style={{ padding: 40, textAlign: "center", color: "#94a3b8" }}>Aucun partenaire</td></tr>}
+              {partners.length === 0 && <tr><td colSpan={5} style={{ padding: 40, textAlign: "center", color: "#64748b" }}>Aucun partenaire</td></tr>}
               {partners.map(p => (
                 <tr key={p.id} className="row-hover" style={{ borderBottom: "1px solid #eef2f7" }}>
                   <td style={tdStyle}>
@@ -364,7 +364,7 @@ export default function AdminPage({ currentUser, loadAll }) {
               <th style={thStyle}>Détails</th>
             </tr></thead>
             <tbody>
-              {auditLog.length === 0 && <tr><td colSpan={5} style={{ padding: 40, textAlign: "center", color: "#94a3b8" }}>Aucune entrée</td></tr>}
+              {auditLog.length === 0 && <tr><td colSpan={5} style={{ padding: 40, textAlign: "center", color: "#64748b" }}>Aucune entrée</td></tr>}
               {auditLog.map(entry => (
                 <tr key={entry.id} style={{ borderBottom: "1px solid #eef2f7" }}>
                   <td style={{ ...tdStyle, fontSize: 12, color: "#64748b", whiteSpace: "nowrap" }}>{new Date(entry.createdAt).toLocaleString("fr-CA")}</td>

@@ -13,7 +13,7 @@ export default function MissionsPage({ missions, contacts, users, candidatures, 
   const [sortBy, setSortBy] = useState("date");
 
   const statusColors = { "Ouverte": { bg: "#dbeafe", color: "#2563eb" }, "En cours": { bg: "#fef3c7", color: "#d97706" }, "Gagné": { bg: "#d1fae5", color: "#059669" }, "Pourvue": { bg: "#d1fae5", color: "#059669" }, "Fermée": { bg: "#f1f5f9", color: "#64748b" } };
-  const priorityColors = { "Basse": "#94a3b8", "Normale": "#3b82f6", "Haute": "#f59e0b", "Urgente": "#dc2626" };
+  const priorityColors = { "Basse": "#64748b", "Normale": "#3b82f6", "Haute": "#f59e0b", "Urgente": "#dc2626" };
   const statuses = ["Tous", "Ouverte", "En cours", "Gagné", "Pourvue", "Fermée"];
 
   const filtered = missions.filter(m => {
@@ -54,7 +54,7 @@ export default function MissionsPage({ missions, contacts, users, candidatures, 
           const sc = s === "Tous" ? { bg: "#f1f5f9", color: "#64748b" } : statusColors[s] || { bg: "#f1f5f9", color: "#64748b" };
           const count = s === "Tous" ? missions.length : missions.filter(m => m.status === s).length;
           return (
-            <button key={s} onClick={() => setFilterStatus(s)} style={{ padding: "6px 14px", fontSize: 12, fontWeight: 600, borderRadius: 8, border: "none", cursor: "pointer", background: active ? sc.bg : "#f8fafc", color: active ? sc.color : "#94a3b8", outline: active ? `2px solid ${sc.color}` : "1px solid #e2e8f0" }}>
+            <button key={s} onClick={() => setFilterStatus(s)} style={{ padding: "6px 14px", fontSize: 12, fontWeight: 600, borderRadius: 8, border: "none", cursor: "pointer", background: active ? sc.bg : "#f8fafc", color: active ? sc.color : "#64748b", outline: active ? `2px solid ${sc.color}` : "1px solid #e2e8f0" }}>
               {s} ({count})
             </button>
           );
@@ -90,7 +90,7 @@ export default function MissionsPage({ missions, contacts, users, candidatures, 
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                   <span style={{ fontSize: 11, fontWeight: 600, color: priorityColors[m.priority] || "#3b82f6" }}>{m.priority}</span>
-                  {m.assignedName && <span style={{ fontSize: 11, color: "#94a3b8" }}>Assigné: {m.assignedName}</span>}
+                  {m.assignedName && <span style={{ fontSize: 11, color: "#64748b" }}>Assigné: {m.assignedName}</span>}
                 </div>
                 <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                   <span style={{ fontSize: 12, color: "#64748b" }}>{mCandidatures.length} candidature{mCandidatures.length > 1 ? "s" : ""}</span>
@@ -105,7 +105,7 @@ export default function MissionsPage({ missions, contacts, users, candidatures, 
           );
         })}
       </div>
-      {filtered.length === 0 && <div className="card" style={{ textAlign: "center", color: "#94a3b8" }}>{search ? `Aucun résultat pour « ${search} »` : filterStatus === "Tous" ? "Aucune mission" : `Aucune mission avec le statut « ${filterStatus} »`}</div>}
+      {filtered.length === 0 && <div className="card" style={{ textAlign: "center", color: "#64748b" }}>{search ? `Aucun résultat pour « ${search} »` : filterStatus === "Tous" ? "Aucune mission" : `Aucune mission avec le statut « ${filterStatus} »`}</div>}
 
       {detailMission && (
         <div className="modal-bg" onClick={e => e.target === e.currentTarget && setDetailMission(null)}>
