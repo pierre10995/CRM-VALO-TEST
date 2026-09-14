@@ -19,8 +19,8 @@ export default function ProfilePage({ currentUser, contacts, missions, candidatu
 
   const Section = ({ title, count, color, children }) => (
     <div className="card" style={{ padding: 0, overflow: "hidden", marginBottom: 20 }}>
-      <div style={{ padding: "16px 20px", borderBottom: "1px solid #e2e8f0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <h3 style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", margin: 0 }}>{title}</h3>
+      <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--line)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <h3 style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", margin: 0 }}>{title}</h3>
         <span style={{ background: color, color: "white", fontSize: 12, fontWeight: 700, padding: "3px 10px", borderRadius: 20 }}>{count}</span>
       </div>
       {children}
@@ -28,7 +28,7 @@ export default function ProfilePage({ currentUser, contacts, missions, candidatu
   );
 
   const EmptyRow = ({ cols, text }) => (
-    <tr><td colSpan={cols} style={{ padding: 30, textAlign: "center", color: "#64748b", fontSize: 13 }}>{text}</td></tr>
+    <tr><td colSpan={cols} style={{ padding: 30, textAlign: "center", color: "var(--muted)", fontSize: 13 }}>{text}</td></tr>
   );
 
   return (
@@ -39,9 +39,9 @@ export default function ProfilePage({ currentUser, contacts, missions, candidatu
           {userName[0] || "?"}
         </div>
         <div style={{ flex: 1 }}>
-          <h1 style={{ fontSize: 22, fontWeight: 800, color: "#0f172a", margin: 0 }}>{userName}</h1>
-          {userTitle(currentUser) && <p style={{ fontSize: 13, fontWeight: 600, color: "#2563eb", marginTop: 4 }}>{userTitle(currentUser)}</p>}
-          <p style={{ fontSize: 13, color: "#64748b", marginTop: 4 }}>{currentUser?.login}</p>
+          <h1 style={{ fontSize: 22, fontWeight: 800, color: "var(--ink)", margin: 0 }}>{userName}</h1>
+          {userTitle(currentUser) && <p style={{ fontSize: 13, fontWeight: 600, color: "var(--c-blue)", marginTop: 4 }}>{userTitle(currentUser)}</p>}
+          <p style={{ fontSize: 13, color: "var(--muted)", marginTop: 4 }}>{currentUser?.login}</p>
         </div>
         <div style={{ display: "flex", gap: 16 }}>
           <Stat label="Candidats" value={myCandidats.length} color="#8b5cf6" />
@@ -54,23 +54,23 @@ export default function ProfilePage({ currentUser, contacts, missions, candidatu
       {/* Candidats */}
       <Section title="Mes Candidats" count={myCandidats.length} color="#8b5cf6">
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead><tr style={{ borderBottom: "1px solid #e2e8f0" }}>
+          <thead><tr style={{ borderBottom: "1px solid var(--line)" }}>
             {["Nom", "Ville", "Compétences", "Validation", "Disponibilité"].map(h => (
-              <th key={h} style={{ padding: "12px 20px", textAlign: "left", fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase" }}>{h}</th>
+              <th key={h} style={{ padding: "12px 20px", textAlign: "left", fontSize: 11, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase" }}>{h}</th>
             ))}
           </tr></thead>
           <tbody>
             {myCandidats.length === 0 && <EmptyRow cols={5} text="Aucun candidat assigné" />}
             {myCandidats.map(c => (
-              <tr key={c.id} className="row-hover" onClick={goToContact ? () => goToContact(c.id) : undefined} style={{ borderBottom: "1px solid #eef2f7", cursor: goToContact ? "pointer" : "default" }}>
+              <tr key={c.id} className="row-hover" onClick={goToContact ? () => goToContact(c.id) : undefined} style={{ borderBottom: "1px solid var(--line-soft)", cursor: goToContact ? "pointer" : "default" }}>
                 <td style={{ padding: "12px 20px" }}>
-                  <div style={{ fontSize: 13.5, fontWeight: 600, color: "#0f172a" }}>{c.name}</div>
-                  {c.email && <div style={{ fontSize: 11.5, color: "#64748b" }}>{c.email}</div>}
+                  <div style={{ fontSize: 13.5, fontWeight: 600, color: "var(--ink)" }}>{c.name}</div>
+                  {c.email && <div style={{ fontSize: 11.5, color: "var(--muted)" }}>{c.email}</div>}
                 </td>
-                <td style={{ padding: "12px 20px", fontSize: 13, color: "#64748b" }}>{c.city || "—"}</td>
-                <td style={{ padding: "12px 20px", fontSize: 13, color: "#64748b" }}>{c.skills || "—"}</td>
+                <td style={{ padding: "12px 20px", fontSize: 13, color: "var(--muted)" }}>{c.city || "—"}</td>
+                <td style={{ padding: "12px 20px", fontSize: 13, color: "var(--muted)" }}>{c.skills || "—"}</td>
                 <td style={{ padding: "12px 20px" }}>{c.validationStatus ? <span className="tag" style={{ fontSize: 11.5 }}>{c.validationStatus}</span> : "—"}</td>
-                <td style={{ padding: "12px 20px", fontSize: 13, color: "#64748b" }}>{c.availability || "—"}</td>
+                <td style={{ padding: "12px 20px", fontSize: 13, color: "var(--muted)" }}>{c.availability || "—"}</td>
               </tr>
             ))}
           </tbody>
@@ -80,21 +80,21 @@ export default function ProfilePage({ currentUser, contacts, missions, candidatu
       {/* Clients */}
       <Section title="Mes Clients & Prospects" count={myClients.length} color="#2563eb">
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead><tr style={{ borderBottom: "1px solid #e2e8f0" }}>
+          <thead><tr style={{ borderBottom: "1px solid var(--line)" }}>
             {["Entreprise", "Contact", "Secteur", "Statut"].map(h => (
-              <th key={h} style={{ padding: "12px 20px", textAlign: "left", fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase" }}>{h}</th>
+              <th key={h} style={{ padding: "12px 20px", textAlign: "left", fontSize: 11, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase" }}>{h}</th>
             ))}
           </tr></thead>
           <tbody>
             {myClients.length === 0 && <EmptyRow cols={4} text="Aucun client assigné" />}
             {myClients.map(c => (
-              <tr key={c.id} className="row-hover" onClick={goToContact ? () => goToContact(c.id) : undefined} style={{ borderBottom: "1px solid #eef2f7", cursor: goToContact ? "pointer" : "default" }}>
+              <tr key={c.id} className="row-hover" onClick={goToContact ? () => goToContact(c.id) : undefined} style={{ borderBottom: "1px solid var(--line-soft)", cursor: goToContact ? "pointer" : "default" }}>
                 <td style={{ padding: "12px 20px" }}>
-                  <div style={{ fontSize: 13.5, fontWeight: 600, color: "#0f172a" }}>{c.company}</div>
+                  <div style={{ fontSize: 13.5, fontWeight: 600, color: "var(--ink)" }}>{c.company}</div>
                 </td>
-                <td style={{ padding: "12px 20px", fontSize: 13, color: "#64748b" }}>{c.name || "—"}{c.email ? ` · ${c.email}` : ""}</td>
-                <td style={{ padding: "12px 20px" }}><span style={{ fontSize: 12, color: "#64748b", background: "#f1f5f9", padding: "3px 9px", borderRadius: 6 }}>{c.sector}</span></td>
-                <td style={{ padding: "12px 20px" }}><span className="tag" style={{ background: c.status === "Client" ? "#d1fae5" : "#dbeafe", color: c.status === "Client" ? "#059669" : "#2563eb" }}>{c.status}</span></td>
+                <td style={{ padding: "12px 20px", fontSize: 13, color: "var(--muted)" }}>{c.name || "—"}{c.email ? ` · ${c.email}` : ""}</td>
+                <td style={{ padding: "12px 20px" }}><span style={{ fontSize: 12, color: "var(--muted)", background: "var(--surface-3)", padding: "3px 9px", borderRadius: 6 }}>{c.sector}</span></td>
+                <td style={{ padding: "12px 20px" }}><span className="tag" style={{ background: c.status === "Client" ? "var(--tint-green)" : "var(--tint-blue)", color: c.status === "Client" ? "var(--c-green)" : "var(--c-blue)" }}>{c.status}</span></td>
               </tr>
             ))}
           </tbody>
@@ -104,9 +104,9 @@ export default function ProfilePage({ currentUser, contacts, missions, candidatu
       {/* Missions */}
       <Section title="Mes Postes Ouverts" count={myMissions.length} color="#0891b2">
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead><tr style={{ borderBottom: "1px solid #e2e8f0" }}>
+          <thead><tr style={{ borderBottom: "1px solid var(--line)" }}>
             {["Poste", "Entreprise", "Statut", "Commission", "Candidatures"].map(h => (
-              <th key={h} style={{ padding: "12px 20px", textAlign: "left", fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase" }}>{h}</th>
+              <th key={h} style={{ padding: "12px 20px", textAlign: "left", fontSize: 11, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase" }}>{h}</th>
             ))}
           </tr></thead>
           <tbody>
@@ -114,16 +114,16 @@ export default function ProfilePage({ currentUser, contacts, missions, candidatu
             {myMissions.map(m => {
               const cdCount = (candidatures || []).filter(cd => cd.missionId === m.id).length;
               return (
-                <tr key={m.id} className="row-hover" onClick={goToMission ? () => goToMission(m.id) : undefined} style={{ borderBottom: "1px solid #eef2f7", cursor: goToMission ? "pointer" : "default" }}>
+                <tr key={m.id} className="row-hover" onClick={goToMission ? () => goToMission(m.id) : undefined} style={{ borderBottom: "1px solid var(--line-soft)", cursor: goToMission ? "pointer" : "default" }}>
                   <td style={{ padding: "12px 20px" }}>
-                    <div style={{ fontSize: 13.5, fontWeight: 600, color: "#0f172a" }}>{m.title}</div>
+                    <div style={{ fontSize: 13.5, fontWeight: 600, color: "var(--ink)" }}>{m.title}</div>
                   </td>
-                  <td style={{ padding: "12px 20px", fontSize: 13, color: "#64748b" }}>{m.company}</td>
+                  <td style={{ padding: "12px 20px", fontSize: 13, color: "var(--muted)" }}>{m.company}</td>
                   <td style={{ padding: "12px 20px" }}>
-                    <span className="tag" style={{ background: m.status === "Ouverte" ? "#dbeafe" : m.status === "Gagné" ? "#d1fae5" : "#f1f5f9", color: m.status === "Ouverte" ? "#2563eb" : m.status === "Gagné" ? "#059669" : "#64748b" }}>{m.status}</span>
+                    <span className="tag" style={{ background: m.status === "Ouverte" ? "var(--tint-blue)" : m.status === "Gagné" ? "var(--tint-green)" : "var(--surface-3)", color: m.status === "Ouverte" ? "var(--c-blue)" : m.status === "Gagné" ? "var(--c-green)" : "var(--muted)" }}>{m.status}</span>
                   </td>
-                  <td style={{ padding: "12px 20px", fontSize: 13, fontWeight: 600, color: "#0f172a" }}>{m.commission ? fmtCAD(m.commission) : "—"}</td>
-                  <td style={{ padding: "12px 20px", fontSize: 13, color: "#64748b" }}>{cdCount}</td>
+                  <td style={{ padding: "12px 20px", fontSize: 13, fontWeight: 600, color: "var(--ink)" }}>{m.commission ? fmtCAD(m.commission) : "—"}</td>
+                  <td style={{ padding: "12px 20px", fontSize: 13, color: "var(--muted)" }}>{cdCount}</td>
                 </tr>
               );
             })}
@@ -138,7 +138,7 @@ function Stat({ label, value, color }) {
   return (
     <div style={{ textAlign: "center", minWidth: 70 }}>
       <div style={{ fontSize: 22, fontWeight: 800, color }}>{value}</div>
-      <div style={{ fontSize: 11, color: "#64748b", fontWeight: 600 }}>{label}</div>
+      <div style={{ fontSize: 11, color: "var(--muted)", fontWeight: 600 }}>{label}</div>
     </div>
   );
 }

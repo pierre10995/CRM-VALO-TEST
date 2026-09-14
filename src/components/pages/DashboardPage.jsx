@@ -58,11 +58,11 @@ export default function DashboardPage({ activities, contacts, missions, candidat
 
   const fyLabel = currentFY ? currentFY.label : "Année en cours";
   const kpis = [
-    { label: "Clients", value: totalClients, color: "#10b981", bg: "#ecfdf5", tab: "clients" },
-    { label: "Candidats", value: totalCandidats, color: "#f59e0b", bg: "#fffbeb", tab: "candidats" },
-    { label: "Missions actives", value: missionsOuvertes, color: "#3b82f6", bg: "#eff6ff", tab: "missions" },
-    { label: "Placements", value: placements, color: "#8b5cf6", bg: "#f5f3ff", tab: "placements" },
-    { label: `CA ${fyLabel}`, value: fmtCAD(totalCommissions), color: "#059669", bg: "#ecfdf5", tab: isAdmin ? "revenue" : null },
+    { label: "Clients", value: totalClients, color: "#10b981", bg: "var(--tint-green-soft)", tab: "clients" },
+    { label: "Candidats", value: totalCandidats, color: "#f59e0b", bg: "var(--tint-amber-soft)", tab: "candidats" },
+    { label: "Missions actives", value: missionsOuvertes, color: "#3b82f6", bg: "var(--tint-blue-soft)", tab: "missions" },
+    { label: "Placements", value: placements, color: "#8b5cf6", bg: "var(--tint-violet-soft)", tab: "placements" },
+    { label: `CA ${fyLabel}`, value: fmtCAD(totalCommissions), color: "var(--c-green)", bg: "var(--tint-green-soft)", tab: isAdmin ? "revenue" : null },
   ];
 
   // Rend un élément non-bouton activable au clavier (Entrée / Espace)
@@ -75,22 +75,22 @@ export default function DashboardPage({ activities, contacts, missions, candidat
 
   // Pastilles du bandeau « topo du jour »
   const topo = [
-    { label: overdueTasks > 1 ? "en retard" : "en retard", value: overdueTasks, color: "#dc2626", bg: "#fef2f2", onClick: () => onNavigate && onNavigate("activites") },
-    { label: "à faire aujourd'hui", value: todayTasks, color: "#2563eb", bg: "#eff6ff", onClick: () => onNavigate && onNavigate("activites") },
-    { label: visibleReminders.length > 1 ? "relances" : "relance", value: visibleReminders.length, color: "#d97706", bg: "#fffbeb", onClick: null },
-    { label: pendingPartnerProposals.length > 1 ? "propositions" : "proposition", value: pendingPartnerProposals.length, color: "#059669", bg: "#f0fdf4", onClick: () => onNavigate && onNavigate("partenaires") },
+    { label: overdueTasks > 1 ? "en retard" : "en retard", value: overdueTasks, color: "var(--c-red)", bg: "var(--tint-red-soft)", onClick: () => onNavigate && onNavigate("activites") },
+    { label: "à faire aujourd'hui", value: todayTasks, color: "var(--c-blue)", bg: "var(--tint-blue-soft)", onClick: () => onNavigate && onNavigate("activites") },
+    { label: visibleReminders.length > 1 ? "relances" : "relance", value: visibleReminders.length, color: "var(--c-amber)", bg: "var(--tint-amber-soft)", onClick: null },
+    { label: pendingPartnerProposals.length > 1 ? "propositions" : "proposition", value: pendingPartnerProposals.length, color: "var(--c-green)", bg: "var(--tint-green-soft)", onClick: () => onNavigate && onNavigate("partenaires") },
   ];
 
   return (
     <div style={{ animation: "fadeIn 0.4s ease" }}>
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 22, flexWrap: "wrap", gap: 12 }}>
         <div>
-          <h1 style={{ fontSize: 26, fontWeight: 800, color: "#0f172a" }}>Dashboard</h1>
-          <p style={{ fontSize: 13.5, color: "#64748b", marginTop: 3 }}>{new Date().toLocaleDateString("fr-CA", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</p>
+          <h1 style={{ fontSize: 26, fontWeight: 800, color: "var(--ink)" }}>Dashboard</h1>
+          <p style={{ fontSize: 13.5, color: "var(--muted)", marginTop: 3 }}>{new Date().toLocaleDateString("fr-CA", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</p>
         </div>
-        <div style={{ display: "flex", gap: 4, background: "#f1f5f9", borderRadius: 10, padding: 4 }}>
+        <div style={{ display: "flex", gap: 4, background: "var(--surface-3)", borderRadius: 10, padding: 4 }}>
           {[{ k: "all", l: "Équipe" }, { k: "me", l: "Moi" }].map(o => (
-            <button key={o.k} type="button" aria-pressed={scope === o.k} onClick={() => setScope(o.k)} style={{ padding: "7px 18px", fontSize: 13, fontWeight: 600, borderRadius: 8, border: "none", cursor: "pointer", background: scope === o.k ? "#fff" : "transparent", color: scope === o.k ? "#1d4ed8" : "#64748b", boxShadow: scope === o.k ? "0 1px 3px rgba(15,23,42,0.08)" : "none" }}>{o.l}</button>
+            <button key={o.k} type="button" aria-pressed={scope === o.k} onClick={() => setScope(o.k)} style={{ padding: "7px 18px", fontSize: 13, fontWeight: 600, borderRadius: 8, border: "none", cursor: "pointer", background: scope === o.k ? "#fff" : "transparent", color: scope === o.k ? "#1d4ed8" : "var(--muted)", boxShadow: scope === o.k ? "0 1px 3px rgba(15,23,42,0.08)" : "none" }}>{o.l}</button>
           ))}
         </div>
       </div>
@@ -108,7 +108,7 @@ export default function DashboardPage({ activities, contacts, missions, candidat
             style={{ flex: "1 1 150px", display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", borderRadius: 12, background: t.bg, cursor: t.onClick ? "pointer" : "default" }}
           >
             <span style={{ fontSize: 26, fontWeight: 800, color: t.color }}>{t.value}</span>
-            <span style={{ fontSize: 12.5, fontWeight: 600, color: "#475569", lineHeight: 1.2 }}>{t.label}</span>
+            <span style={{ fontSize: 12.5, fontWeight: 600, color: "var(--ink-soft)", lineHeight: 1.2 }}>{t.label}</span>
           </div>
         ))}
       </div>
@@ -133,7 +133,7 @@ export default function DashboardPage({ activities, contacts, missions, candidat
               style={{ background: kpi.bg, cursor: clickable ? "pointer" : "default" }}
               title={clickable ? "Voir le détail" : undefined}
             >
-              <p style={{ fontSize: 11.5, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em" }}>{kpi.label}</p>
+              <p style={{ fontSize: 11.5, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>{kpi.label}</p>
               <p style={{ fontSize: 28, fontWeight: 800, color: kpi.color, marginTop: 8 }}>{kpi.value}</p>
             </div>
           );
@@ -142,19 +142,19 @@ export default function DashboardPage({ activities, contacts, missions, candidat
 
       {/* Partner proposal notifications */}
       {pendingPartnerProposals.length > 0 && (
-        <div className="card" style={{ marginBottom: 16, background: "#f0fdf4", border: "1px solid #a7f3d0" }}>
-          <h3 style={{ fontSize: 15, fontWeight: 700, color: "#059669", marginBottom: 14 }}>Propositions partenaires ({pendingPartnerProposals.length})</h3>
+        <div className="card" style={{ marginBottom: 16, background: "var(--tint-green-soft)", border: "1px solid #a7f3d0" }}>
+          <h3 style={{ fontSize: 15, fontWeight: 700, color: "var(--c-green)", marginBottom: 14 }}>Propositions partenaires ({pendingPartnerProposals.length})</h3>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {pendingPartnerProposals.slice(0, 8).map((s) => (
-              <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "white", borderRadius: 8, border: "1px solid #d1fae5" }}>
-                <div style={{ width: 28, height: 28, borderRadius: 8, background: "#d1fae5", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "#059669" }}>
+              <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "var(--surface)", borderRadius: 8, border: "1px solid #d1fae5" }}>
+                <div style={{ width: 28, height: 28, borderRadius: 8, background: "var(--tint-green)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "var(--c-green)" }}>
                   {s.candidateName?.[0] || "?"}
                 </div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 12.5, fontWeight: 600, color: "#0f172a" }}>{s.candidateName}</div>
-                  <div style={{ fontSize: 11, color: "#64748b" }}>{s.missionTitle} — {s.missionCompany} | par {s.partnerName}</div>
+                  <div style={{ fontSize: 12.5, fontWeight: 600, color: "var(--ink)" }}>{s.candidateName}</div>
+                  <div style={{ fontSize: 11, color: "var(--muted)" }}>{s.missionTitle} — {s.missionCompany} | par {s.partnerName}</div>
                 </div>
-                <span style={{ fontSize: 11, color: "#64748b" }}>{new Date(s.createdAt).toLocaleDateString("fr-CA")}</span>
+                <span style={{ fontSize: 11, color: "var(--muted)" }}>{new Date(s.createdAt).toLocaleDateString("fr-CA")}</span>
               </div>
             ))}
           </div>
@@ -162,20 +162,20 @@ export default function DashboardPage({ activities, contacts, missions, candidat
       )}
 
       {visibleReminders.length > 0 && (
-        <div className="card" style={{ marginBottom: 16, background: "#fffbeb", border: "1px solid #fde68a" }}>
-          <h3 style={{ fontSize: 15, fontWeight: 700, color: "#d97706", marginBottom: 14 }}>Relances suggérées ({visibleReminders.length})</h3>
+        <div className="card" style={{ marginBottom: 16, background: "var(--tint-amber-soft)", border: "1px solid #fde68a" }}>
+          <h3 style={{ fontSize: 15, fontWeight: 700, color: "var(--c-amber)", marginBottom: 14 }}>Relances suggérées ({visibleReminders.length})</h3>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {visibleReminders.slice(0, 8).map((r, i) => {
               const clickable = (r.missionId && goToMission) || (r.contactId && goToContact);
               return (
-              <div key={i} onClick={clickable ? () => goToReminder(r) : undefined} role={clickable ? "button" : undefined} tabIndex={clickable ? 0 : undefined} onKeyDown={clickable ? keyActivate(() => goToReminder(r)) : undefined} className={clickable ? "row-hover" : undefined} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "white", borderRadius: 8, border: "1px solid #fef3c7", cursor: clickable ? "pointer" : "default" }}>
-                <div style={{ width: 28, height: 28, borderRadius: 8, flexShrink: 0, background: r.type === "prospect" ? "#dbeafe" : r.type === "candidature" ? "#fef3c7" : "#fee2e2", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: r.type === "prospect" ? "#2563eb" : r.type === "candidature" ? "#d97706" : "#dc2626" }}>
+              <div key={i} onClick={clickable ? () => goToReminder(r) : undefined} role={clickable ? "button" : undefined} tabIndex={clickable ? 0 : undefined} onKeyDown={clickable ? keyActivate(() => goToReminder(r)) : undefined} className={clickable ? "row-hover" : undefined} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "var(--surface)", borderRadius: 8, border: "1px solid #fef3c7", cursor: clickable ? "pointer" : "default" }}>
+                <div style={{ width: 28, height: 28, borderRadius: 8, flexShrink: 0, background: r.type === "prospect" ? "var(--tint-blue)" : r.type === "candidature" ? "var(--tint-amber)" : "var(--tint-red)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: r.type === "prospect" ? "var(--c-blue)" : r.type === "candidature" ? "var(--c-amber)" : "var(--c-red)" }}>
                   {r.type === "prospect" ? "P" : r.type === "candidature" ? "C" : "M"}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 12.5, color: "#0f172a" }}>{r.message}</div>
+                  <div style={{ fontSize: 12.5, color: "var(--ink)" }}>{r.message}</div>
                 </div>
-                <span style={{ fontSize: 11, fontWeight: 700, whiteSpace: "nowrap", color: r.days >= 14 ? "#dc2626" : "#d97706", background: r.days >= 14 ? "#fef2f2" : "#fffbeb", padding: "2px 8px", borderRadius: 8 }}>{r.days}j</span>
+                <span style={{ fontSize: 11, fontWeight: 700, whiteSpace: "nowrap", color: r.days >= 14 ? "var(--c-red)" : "var(--c-amber)", background: r.days >= 14 ? "var(--tint-red-soft)" : "var(--tint-amber-soft)", padding: "2px 8px", borderRadius: 8 }}>{r.days}j</span>
                 {onPlanFollowUp && (r.contactId || r.missionId) && (
                   <button
                     onClick={(e) => { e.stopPropagation(); onPlanFollowUp(r); }}
@@ -191,7 +191,7 @@ export default function DashboardPage({ activities, contacts, missions, candidat
                   title="Marquer comme fait"
                   aria-label="Marquer la relance comme traitée"
                   type="button"
-                  style={{ width: 28, height: 28, borderRadius: 6, border: "1px solid #e2e8f0", background: "#f8fafc", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: "#64748b", flexShrink: 0 }}
+                  style={{ width: 28, height: 28, borderRadius: 6, border: "1px solid var(--line)", background: "var(--surface-2)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: "var(--muted)", flexShrink: 0 }}
                 >
                   ✓
                 </button>
@@ -203,19 +203,19 @@ export default function DashboardPage({ activities, contacts, missions, candidat
       )}
 
       <div className="card">
-        <h3 style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", marginBottom: 18 }}>Activités récentes</h3>
-        {recentActivities.length === 0 && <p style={{ color: "#64748b", fontSize: 13 }}>Aucune activité</p>}
+        <h3 style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", marginBottom: 18 }}>Activités récentes</h3>
+        {recentActivities.length === 0 && <p style={{ color: "var(--muted)", fontSize: 13 }}>Aucune activité</p>}
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {recentActivities.map(a => {
             const clickable = a.contactId && goToContact;
             return (
-            <div key={a.id} onClick={clickable ? () => goToContact(a.contactId) : undefined} role={clickable ? "button" : undefined} tabIndex={clickable ? 0 : undefined} onKeyDown={clickable ? keyActivate(() => goToContact(a.contactId)) : undefined} className={clickable ? "row-hover" : undefined} style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 0", borderBottom: "1px solid #e2e8f0", cursor: clickable ? "pointer" : "default" }}>
-              <div style={{ width: 32, height: 32, borderRadius: 8, background: a.completed ? "#d1fae5" : "#dbeafe", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>
+            <div key={a.id} onClick={clickable ? () => goToContact(a.contactId) : undefined} role={clickable ? "button" : undefined} tabIndex={clickable ? 0 : undefined} onKeyDown={clickable ? keyActivate(() => goToContact(a.contactId)) : undefined} className={clickable ? "row-hover" : undefined} style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 0", borderBottom: "1px solid var(--line)", cursor: clickable ? "pointer" : "default" }}>
+              <div style={{ width: 32, height: 32, borderRadius: 8, background: a.completed ? "var(--tint-green)" : "var(--tint-blue)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>
                 {a.type === "Appel" ? "T" : a.type === "Email" ? "@" : a.type === "Réunion" ? "R" : "N"}
               </div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: "#0f172a", textDecoration: a.completed ? "line-through" : "none" }}>{a.subject}</div>
-                <div style={{ fontSize: 11.5, color: "#64748b" }}>{a.contactName && `${a.contactName} - `}{a.type} - {new Date(a.createdAt).toLocaleDateString("fr-CA")}</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: "var(--ink)", textDecoration: a.completed ? "line-through" : "none" }}>{a.subject}</div>
+                <div style={{ fontSize: 11.5, color: "var(--muted)" }}>{a.contactName && `${a.contactName} - `}{a.type} - {new Date(a.createdAt).toLocaleDateString("fr-CA")}</div>
               </div>
             </div>
             );

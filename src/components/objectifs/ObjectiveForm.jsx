@@ -40,31 +40,31 @@ export default function ObjectiveForm({ form, setForm, users, fiscalYears, selec
   const selectedFYObj = fiscalYears.find(fy => String(fy.id) === String(form.fiscalYearId)) || activeFY;
 
   return (
-    <div className="card" style={{ marginBottom: 20, padding: 20, background: "#f0fdf4", border: "1px solid #bbf7d0" }}>
-      <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", marginBottom: 14 }}>Nouvel objectif</div>
+    <div className="card" style={{ marginBottom: 20, padding: 20, background: "var(--tint-green-soft)", border: "1px solid #bbf7d0" }}>
+      <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)", marginBottom: 14 }}>Nouvel objectif</div>
       <div className="resp-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 12, marginBottom: 12 }}>
         <div>
-          <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", marginBottom: 4, display: "block" }}>Utilisateur *</label>
+          <label style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", marginBottom: 4, display: "block" }}>Utilisateur *</label>
           <select className="input" value={form.userId || ""} onChange={e => setForm(p => ({ ...p, userId: e.target.value }))}>
             <option value="">— Sélectionner —</option>
             {users.map(u => <option key={u.id} value={u.id}>{u.fullName}</option>)}
           </select>
         </div>
         <div>
-          <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", marginBottom: 4, display: "block" }}>Année fiscale *</label>
+          <label style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", marginBottom: 4, display: "block" }}>Année fiscale *</label>
           <select className="input" value={form.fiscalYearId || ""} onChange={e => setForm(p => ({ ...p, fiscalYearId: e.target.value, month: null }))}>
             <option value="">— Sélectionner —</option>
             {fiscalYears.map(fy => <option key={fy.id} value={fy.id}>{fy.label}</option>)}
           </select>
         </div>
         <div>
-          <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", marginBottom: 4, display: "block" }}>Période</label>
+          <label style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", marginBottom: 4, display: "block" }}>Période</label>
           <select className="input" value={form.period || selectedPeriod} onChange={e => setForm(p => ({ ...p, period: e.target.value, month: null }))}>
             {PERIODS.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}
           </select>
         </div>
         <div>
-          <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", marginBottom: 4, display: "block" }}>Sous-période</label>
+          <label style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", marginBottom: 4, display: "block" }}>Sous-période</label>
           <select className="input" value={form.month ?? ""} onChange={e => setForm(p => ({ ...p, month: e.target.value === "" ? null : Number(e.target.value) }))}>
             {fySubOptions(selectedFYObj, form.period || selectedPeriod).map((sp, i) => (
               <option key={sp.value ?? `null-${i}`} value={sp.value ?? ""}>{sp.label}</option>
@@ -74,19 +74,19 @@ export default function ObjectiveForm({ form, setForm, users, fiscalYears, selec
       </div>
       <div className="resp-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 12, marginBottom: 12 }}>
         <div>
-          <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", marginBottom: 4, display: "block" }}>Obj. nouveaux clients</label>
+          <label style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", marginBottom: 4, display: "block" }}>Obj. nouveaux clients</label>
           <input className="input" type="number" value={form.targetNewClients || ""} onChange={e => setForm(p => ({ ...p, targetNewClients: e.target.value }))} placeholder="5" />
         </div>
         <div>
-          <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", marginBottom: 4, display: "block" }}>Obj. CA ($)</label>
+          <label style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", marginBottom: 4, display: "block" }}>Obj. CA ($)</label>
           <input className="input" type="number" value={form.targetCA || ""} onChange={e => setForm(p => ({ ...p, targetCA: e.target.value }))} placeholder="50000" />
         </div>
         <div>
-          <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", marginBottom: 4, display: "block" }}>Obj. Total ($)</label>
+          <label style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", marginBottom: 4, display: "block" }}>Obj. Total ($)</label>
           <input className="input" type="number" value={form.targetTotal || ""} onChange={e => setForm(p => ({ ...p, targetTotal: e.target.value }))} placeholder="75000" />
         </div>
         <div>
-          <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", marginBottom: 4, display: "block" }}>Notes</label>
+          <label style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", marginBottom: 4, display: "block" }}>Notes</label>
           <input className="input" value={form.notes || ""} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} placeholder="Commentaire..." />
         </div>
       </div>

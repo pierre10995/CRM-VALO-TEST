@@ -3,17 +3,35 @@ export const GLOBAL_STYLES = `
 
 /* ─── Design tokens ──────────────────────────────────────────────────────── */
 :root {
+  color-scheme: light;
   --brand: #2563eb;
   --brand-2: #4f7cf7;
   --brand-strong: #1d4ed8;
   --brand-tint: #eff4ff;
   --ink: #0f172a;
+  --ink-2: #374151;
   --ink-soft: #475569;
   --muted: #64748b;
   --faint: #64748b; /* 4,76:1 sur blanc — conforme WCAG AA pour le texte */
-  --line: #e8ecf3;
-  --line-soft: #eef2f8;
+  --line: #e2e8f0;
+  --line-soft: #eef2f7;
   --surface: #ffffff;
+  --surface-2: #f8fafc;
+  --surface-3: #f1f5f9;
+  --bg: #eef2fb;
+  --app-bg: linear-gradient(160deg, #f6f8fe 0%, #eef2fb 55%, #e9eef9 100%);
+  --sidebar-bg: rgba(255,255,255,0.85);
+  /* Teintes (fonds de tags, KPI, colonnes) — adaptées en sombre */
+  --tint-blue: #dbeafe; --tint-blue-soft: #eff6ff;
+  --tint-green: #d1fae5; --tint-green-soft: #ecfdf5;
+  --tint-amber: #fef3c7; --tint-amber-soft: #fffbeb;
+  --tint-red: #fee2e2; --tint-red-soft: #fef2f2;
+  --tint-violet: #ede9fe; --tint-violet-soft: #f5f3ff;
+  --tint-pink: #fce7f3;
+  /* Couleurs sémantiques de texte/icône (éclaircies en sombre) */
+  --c-green: #059669; --c-blue: #2563eb; --c-red: #dc2626; --c-amber: #d97706;
+  --c-violet: #7c3aed; --c-indigo: #4f46e5; --c-pink: #be185d;
+  --text-success: #065f46; --text-danger: #991b1b; --text-info: #1e40af; --text-warning: #92400e;
   --radius-lg: 18px;
   --radius: 12px;
   --radius-sm: 9px;
@@ -24,12 +42,90 @@ export const GLOBAL_STYLES = `
   --ring: 0 0 0 3px rgba(37,99,235,0.18);
 }
 
+/* ─── Thème sombre ───────────────────────────────────────────────────────── */
+/* Activé par data-theme="dark", ou par la préférence système si aucun choix
+   explicite (data-theme absent ou "auto"). */
+:root[data-theme="dark"] { --_dark: 1; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --_dark: 1; }
+}
+:root[data-theme="dark"],
+:root:not([data-theme="light"]):has(body):where([data-theme="auto"], :not([data-theme])) {}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --brand: #5b8cff;
+  --brand-2: #7aa2ff;
+  --brand-strong: #3b6cf5;
+  --brand-tint: #1c2942;
+  --ink: #e6eaf3;
+  --ink-2: #cfd6e3;
+  --ink-soft: #b3bdcf;
+  --muted: #98a4b8;
+  --faint: #98a4b8;
+  --line: #273249;
+  --line-soft: #1f293d;
+  --surface: #141c2f;
+  --surface-2: #1a2438;
+  --surface-3: #212d45;
+  --bg: #0b1220;
+  --app-bg: linear-gradient(160deg, #0e1526 0%, #0b1220 55%, #0a101c 100%);
+  --sidebar-bg: rgba(20,28,47,0.88);
+  --tint-blue: #1e2f55; --tint-blue-soft: #172440;
+  --tint-green: #123d2f; --tint-green-soft: #0f3327;
+  --tint-amber: #3d2e0c; --tint-amber-soft: #2e2410;
+  --tint-red: #4a1c1c; --tint-red-soft: #3a1717;
+  --tint-violet: #2a2350; --tint-violet-soft: #211c40;
+  --tint-pink: #45203a;
+  --c-green: #34d399; --c-blue: #7aa2ff; --c-red: #f87171; --c-amber: #fbbf24;
+  --c-violet: #a78bfa; --c-indigo: #818cf8; --c-pink: #f472b6;
+  --text-success: #a7f3d0; --text-danger: #fecaca; --text-info: #bfdbfe; --text-warning: #fde68a;
+  --shadow-xs: 0 1px 2px rgba(0,0,0,0.3);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.35), 0 6px 18px rgba(0,0,0,0.3);
+  --shadow-md: 0 6px 16px rgba(0,0,0,0.45), 0 18px 40px rgba(0,0,0,0.4);
+  --ring: 0 0 0 3px rgba(91,140,255,0.35);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not([data-theme="dark"]) {
+    color-scheme: dark;
+    --brand: #5b8cff;
+    --brand-2: #7aa2ff;
+    --brand-strong: #3b6cf5;
+    --brand-tint: #1c2942;
+    --ink: #e6eaf3;
+    --ink-2: #cfd6e3;
+    --ink-soft: #b3bdcf;
+    --muted: #98a4b8;
+    --faint: #98a4b8;
+    --line: #273249;
+    --line-soft: #1f293d;
+    --surface: #141c2f;
+    --surface-2: #1a2438;
+    --surface-3: #212d45;
+    --bg: #0b1220;
+    --app-bg: linear-gradient(160deg, #0e1526 0%, #0b1220 55%, #0a101c 100%);
+    --sidebar-bg: rgba(20,28,47,0.88);
+  --tint-blue: #1e2f55; --tint-blue-soft: #172440;
+  --tint-green: #123d2f; --tint-green-soft: #0f3327;
+  --tint-amber: #3d2e0c; --tint-amber-soft: #2e2410;
+  --tint-red: #4a1c1c; --tint-red-soft: #3a1717;
+  --tint-violet: #2a2350; --tint-violet-soft: #211c40;
+  --tint-pink: #45203a;
+  --c-green: #34d399; --c-blue: #7aa2ff; --c-red: #f87171; --c-amber: #fbbf24;
+  --c-violet: #a78bfa; --c-indigo: #818cf8; --c-pink: #f472b6;
+  --text-success: #a7f3d0; --text-danger: #fecaca; --text-info: #bfdbfe; --text-warning: #fde68a;
+    --shadow-xs: 0 1px 2px rgba(0,0,0,0.3);
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.35), 0 6px 18px rgba(0,0,0,0.3);
+    --shadow-md: 0 6px 16px rgba(0,0,0,0.45), 0 18px 40px rgba(0,0,0,0.4);
+    --ring: 0 0 0 3px rgba(91,140,255,0.35);
+  }
+}
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; }
 body {
   font-family: 'Sora', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   color: var(--ink);
-  background: #eef2fb;
+  background: var(--bg);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
@@ -65,19 +161,22 @@ body {
 .btn:active { transform: translateY(0) scale(0.97); }
 .btn-primary { background: linear-gradient(135deg, var(--brand-strong), var(--brand-2)); color: #fff; box-shadow: var(--shadow-brand); }
 .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 9px 24px rgba(37,99,235,0.42); }
-.btn-ghost { background: #fff; color: var(--ink-soft); border: 1px solid var(--line); box-shadow: var(--shadow-xs); }
-.btn-ghost:hover { background: #f8fafc; color: var(--ink); border-color: #d7dfea; }
-.btn-danger { background: #fee2e2; color: #dc2626; border: none; }
-.btn-danger:hover { background: #fecaca; }
-.btn-success { background: #d1fae5; color: #059669; border: none; }
-.btn-success:hover { background: #a7f3d0; }
+.btn-ghost { background: var(--surface); color: var(--ink-soft); border: 1px solid var(--line); box-shadow: var(--shadow-xs); }
+.btn-ghost:hover { background: var(--surface-2); color: var(--ink); border-color: var(--line); }
+.btn-danger { background: var(--tint-red); color: #dc2626; border: none; }
+.btn-danger:hover { filter: brightness(0.95); }
+.btn-success { background: var(--tint-green); color: #059669; border: none; }
+.btn-success:hover { filter: brightness(0.95); }
+:root[data-theme="dark"] .btn-danger { color: #f87171; }
+:root[data-theme="dark"] .btn-success { color: #34d399; }
 .btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
 
 /* ─── Inputs ─────────────────────────────────────────────────────────────── */
-.input { width: 100%; padding: 10px 14px; border: 1.5px solid var(--line); border-radius: var(--radius); font-size: 14px; font-family: inherit; outline: none; transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease; color: #1e293b; background: #f7f9fc; }
+.input { width: 100%; padding: 10px 14px; border: 1.5px solid var(--line); border-radius: var(--radius); font-size: 14px; font-family: inherit; outline: none; transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease; color: var(--ink); background: var(--surface-2); }
 .input::placeholder { color: var(--faint); }
-.input:hover { border-color: #d7dfea; }
-.input:focus { border-color: var(--brand); background: #fff; box-shadow: var(--ring); }
+.input:hover { border-color: var(--muted); }
+.input:focus { border-color: var(--brand); background: var(--surface); box-shadow: var(--ring); }
+select.input option { color: var(--ink); background: var(--surface); }
 
 /* ─── Focus accessibilité ────────────────────────────────────────────────── */
 /* Indicateur de focus visible partout (WCAG 2.4.7), affiné pour .btn/.input */
@@ -109,7 +208,7 @@ button.nav-item { width: 100%; border: none; background: transparent; font-famil
 
 /* ─── Utilitaires ────────────────────────────────────────────────────────── */
 .spinner { width: 13px; height: 13px; border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block; flex-shrink: 0; }
-.skeleton { background: linear-gradient(90deg, #eef2f7 25%, #f8fafc 50%, #eef2f7 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: 8px; }
+.skeleton { background: linear-gradient(90deg, var(--line-soft) 25%, var(--surface-2) 50%, var(--line-soft) 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: 8px; }
 .table-wrap { width: 100%; overflow-x: auto; }
 
 /* ─── Responsive ─────────────────────────────────────────────────────────── */

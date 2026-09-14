@@ -1,5 +1,12 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { userTitle } from "../utils/userTitles";
+import { getThemePref, applyTheme } from "../utils/theme";
+
+const THEME_OPTIONS = [
+  { value: "auto", label: "Auto", title: "Suivre le réglage du système" },
+  { value: "light", label: "☀", title: "Thème clair" },
+  { value: "dark", label: "☾", title: "Thème sombre" },
+];
 
 const NAV_ITEMS = [
   { id: "dashboard", label: "Dashboard", icon: "M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" },
@@ -17,11 +24,26 @@ const NAV_ITEMS = [
   { id: "admin", label: "Administration", icon: "M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 0 0-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 0 0-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 0 0-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 0 0-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 0 0 1.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0z", adminOnly: true },
 ];
 
-const TYPE_LABELS = { contact: "Client", candidat: "Candidat", mission: "Poste" };
-const TYPE_COLORS = { contact: "#2563eb", candidat: "#059669", mission: "#d97706" };
-const TYPE_BG = { contact: "#eff6ff", candidat: "#ecfdf5", mission: "#fffbeb" };
+// Regroupement de la navigation par usage
+const SECTIONS = [
+  { key: "suivi", label: "Suivi", ids: ["dashboard", "clients", "candidats", "missions", "pipeline", "activites", "evaluation"] },
+  { key: "analyse", label: "Analyse", ids: ["placements", "revenue", "objectifs"] },
+  { key: "espace", label: "Espace", ids: ["partenaires", "profil", "admin"] },
+];
 
-export default function Sidebar({ activeTab, setActiveTab, currentUser, onLogout, setDetailId, setSearch, setFilterStatus, contacts = [], missions = [], onGlobalSearch }) {
+const TYPE_LABELS = { contact: "Client", candidat: "Candidat", mission: "Poste", activity: "Activité" };
+const TYPE_COLORS = { contact: "var(--c-blue)", candidat: "var(--c-green)", mission: "var(--c-amber)", activity: "var(--c-violet)" };
+const TYPE_BG = { contact: "var(--tint-blue-soft)", candidat: "var(--tint-green-soft)", mission: "var(--tint-amber-soft)", activity: "var(--tint-violet-soft)" };
+
+const QUICK_ADD = [
+  { type: "candidat", label: "Candidat" },
+  { type: "client", label: "Client / Prospect" },
+  { type: "mission", label: "Poste" },
+  { type: "candidature", label: "Candidature (pipeline)" },
+  { type: "activity", label: "Activité / Suivi" },
+];
+
+export default function Sidebar({ activeTab, setActiveTab, currentUser, onLogout, setDetailId, setSearch, setFilterStatus, contacts = [], missions = [], activities = [], onQuickAdd }) {
   const isAdmin = ["admin", "superadmin"].includes(currentUser?.userRole);
   const isSuperAdmin = currentUser?.userRole === "superadmin";
   const visibleItems = NAV_ITEMS.filter(item => {
@@ -30,10 +52,31 @@ export default function Sidebar({ activeTab, setActiveTab, currentUser, onLogout
     return true;
   });
 
+  // Badge « en retard » sur Activités (tâches non terminées dont l'échéance est passée)
+  const overdueCount = useMemo(() => {
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    return activities.filter(a => !a.completed && a.dueDate && new Date(a.dueDate) < todayStart).length;
+  }, [activities]);
+
   const [globalQuery, setGlobalQuery] = useState("");
   const [showResults, setShowResults] = useState(false);
+  const [showQuickAdd, setShowQuickAdd] = useState(false);
+  const [theme, setTheme] = useState(getThemePref);
+  const changeTheme = (v) => setTheme(applyTheme(v));
   const resultsRef = useRef(null);
   const inputRef = useRef(null);
+  const quickAddRef = useRef(null);
+
+  // Fermer le menu d'ajout rapide au clic extérieur / Échap
+  useEffect(() => {
+    if (!showQuickAdd) return;
+    const onDown = (e) => { if (quickAddRef.current && !quickAddRef.current.contains(e.target)) setShowQuickAdd(false); };
+    const onKey = (e) => { if (e.key === "Escape") setShowQuickAdd(false); };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => { document.removeEventListener("mousedown", onDown); document.removeEventListener("keydown", onKey); };
+  }, [showQuickAdd]);
 
   // Close results on outside click
   useEffect(() => {
@@ -74,12 +117,25 @@ export default function Sidebar({ activeTab, setActiveTab, currentUser, onLogout
         });
       }
     }
+    for (const a of activities) {
+      const searchable = `${a.subject} ${a.contactName || ""} ${a.description || ""}`.toLowerCase();
+      if (searchable.includes(q)) {
+        all.push({
+          id: a.id,
+          type: "activity",
+          tab: "activites",
+          name: a.subject,
+          detail: [a.type, a.contactName, a.completed ? "terminée" : null].filter(Boolean).join(" — "),
+        });
+      }
+    }
     return { results: all.slice(0, 10), moreCount: Math.max(0, all.length - 10) };
-  }, [globalQuery, contacts, missions]);
+  }, [globalQuery, contacts, missions, activities]);
 
   const handleSelect = (result) => {
     setActiveTab(result.tab);
-    setDetailId(result.id);
+    // Les activités n'ont pas de fiche détail : on ouvre simplement l'onglet
+    setDetailId(result.type === "activity" ? null : result.id);
     setSearch("");
     setFilterStatus("Tous");
     setGlobalQuery("");
@@ -87,16 +143,52 @@ export default function Sidebar({ activeTab, setActiveTab, currentUser, onLogout
   };
 
   return (
-    <aside className="app-sidebar" style={{ width: 220, background: "rgba(255,255,255,0.85)", backdropFilter: "blur(12px)", padding: "24px 12px", display: "flex", flexDirection: "column", gap: 4, boxShadow: "1px 0 0 #eef2f7, 6px 0 28px rgba(15,23,42,0.04)", flexShrink: 0 }}>
+    <aside className="app-sidebar" style={{ width: 220, background: "var(--sidebar-bg)", backdropFilter: "blur(12px)", padding: "24px 12px", display: "flex", flexDirection: "column", gap: 4, boxShadow: "1px 0 0 var(--line-soft), 6px 0 28px rgba(15,23,42,0.04)", flexShrink: 0 }}>
       <div style={{ padding: "0 6px 20px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <img src="/logo-valo.svg" alt="VALO" style={{ width: 36, height: 36, borderRadius: 8, objectFit: "cover" }} />
           <div className="sidebar-text">
-            <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>VALO Recrutement</div>
-            <div style={{ fontSize: 10.5, color: "#64748b" }}>CRM v2.0</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)" }}>VALO Recrutement</div>
+            <div style={{ fontSize: 10.5, color: "var(--muted)" }}>CRM v2.0</div>
           </div>
         </div>
       </div>
+
+      {/* Ajout rapide (accessible depuis n'importe quelle page — raccourci « n ») */}
+      {onQuickAdd && (
+        <div ref={quickAddRef} className="sidebar-text" style={{ padding: "0 4px 10px", position: "relative" }}>
+          <button
+            type="button"
+            className="btn btn-primary"
+            style={{ width: "100%", justifyContent: "center", fontSize: 13 }}
+            aria-haspopup="menu"
+            aria-expanded={showQuickAdd}
+            title="Ajouter rapidement (raccourci : n)"
+            onClick={() => setShowQuickAdd(v => !v)}
+          >
+            ＋ Ajouter
+          </button>
+          {showQuickAdd && (
+            <div role="menu" aria-label="Ajout rapide" style={{
+              position: "absolute", top: "100%", left: 4, right: 4, zIndex: 999, marginTop: 4,
+              background: "var(--surface)", borderRadius: 12, boxShadow: "0 8px 30px rgba(0,0,0,0.15)", border: "1px solid var(--line)", padding: 4,
+            }}>
+              {QUICK_ADD.map(q => (
+                <button
+                  key={q.type}
+                  type="button"
+                  role="menuitem"
+                  className="nav-item"
+                  style={{ padding: "8px 12px", fontSize: 13 }}
+                  onClick={() => { setShowQuickAdd(false); onQuickAdd(q.type); }}
+                >
+                  {q.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Global search */}
       <div className="sidebar-text" style={{ padding: "0 4px 12px", position: "relative" }}>
@@ -110,16 +202,17 @@ export default function Sidebar({ activeTab, setActiveTab, currentUser, onLogout
             value={globalQuery}
             onChange={e => { setGlobalQuery(e.target.value); setShowResults(true); }}
             onFocus={() => setShowResults(true)}
-            placeholder="Rechercher..."
-            aria-label="Recherche globale (contacts, candidats, postes)"
+            id="global-search"
+            placeholder="Rechercher...  ( / )"
+            aria-label="Recherche globale (contacts, candidats, postes, activités) — raccourci /"
             style={{ paddingLeft: 32, fontSize: 12.5, padding: "8px 10px 8px 32px" }}
           />
         </div>
         {showResults && results.length > 0 && (
           <div ref={resultsRef} style={{
             position: "absolute", top: "100%", left: 4, right: 4, zIndex: 999,
-            background: "white", borderRadius: 12, boxShadow: "0 8px 30px rgba(0,0,0,0.15)",
-            border: "1px solid #e2e8f0", maxHeight: 340, overflowY: "auto", marginTop: 4,
+            background: "var(--surface)", borderRadius: 12, boxShadow: "0 8px 30px rgba(0,0,0,0.15)",
+            border: "1px solid var(--line)", maxHeight: 340, overflowY: "auto", marginTop: 4,
           }}>
             {results.map(r => (
               <div
@@ -127,9 +220,9 @@ export default function Sidebar({ activeTab, setActiveTab, currentUser, onLogout
                 onClick={() => handleSelect(r)}
                 style={{
                   display: "flex", alignItems: "center", gap: 10, padding: "9px 12px",
-                  cursor: "pointer", borderBottom: "1px solid #eef2f7",
+                  cursor: "pointer", borderBottom: "1px solid var(--line-soft)",
                 }}
-                onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
+                onMouseEnter={e => e.currentTarget.style.background = "var(--surface-2)"}
                 onMouseLeave={e => e.currentTarget.style.background = "transparent"}
               >
                 <span style={{
@@ -140,13 +233,13 @@ export default function Sidebar({ activeTab, setActiveTab, currentUser, onLogout
                   {TYPE_LABELS[r.type]}
                 </span>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 12.5, fontWeight: 600, color: "#0f172a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{r.name}</div>
-                  <div style={{ fontSize: 10.5, color: "#64748b", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{r.detail}</div>
+                  <div style={{ fontSize: 12.5, fontWeight: 600, color: "var(--ink)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{r.name}</div>
+                  <div style={{ fontSize: 10.5, color: "var(--muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{r.detail}</div>
                 </div>
               </div>
             ))}
             {moreCount > 0 && (
-              <div style={{ padding: "8px 12px", fontSize: 11, color: "#64748b", textAlign: "center", background: "#f8fafc" }}>
+              <div style={{ padding: "8px 12px", fontSize: 11, color: "var(--muted)", textAlign: "center", background: "var(--surface-2)" }}>
                 + {moreCount} autre{moreCount > 1 ? "s" : ""} résultat{moreCount > 1 ? "s" : ""} — affinez votre recherche
               </div>
             )}
@@ -155,41 +248,70 @@ export default function Sidebar({ activeTab, setActiveTab, currentUser, onLogout
         {showResults && globalQuery.trim().length >= 2 && results.length === 0 && (
           <div ref={resultsRef} style={{
             position: "absolute", top: "100%", left: 4, right: 4, zIndex: 999,
-            background: "white", borderRadius: 12, boxShadow: "0 8px 30px rgba(0,0,0,0.15)",
-            border: "1px solid #e2e8f0", padding: "14px 12px", textAlign: "center",
-            fontSize: 12, color: "#64748b", marginTop: 4,
+            background: "var(--surface)", borderRadius: 12, boxShadow: "0 8px 30px rgba(0,0,0,0.15)",
+            border: "1px solid var(--line)", padding: "14px 12px", textAlign: "center",
+            fontSize: 12, color: "var(--muted)", marginTop: 4,
           }}>
             Aucun résultat
           </div>
         )}
       </div>
 
-      <div className="sidebar-text" style={{ fontSize: 10, fontWeight: 700, color: "#64748b", padding: "0 8px 6px", letterSpacing: "0.08em", textTransform: "uppercase" }}>Navigation</div>
-      <nav aria-label="Navigation principale" style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-        {visibleItems.map(item => (
-          <button
-            key={item.id}
-            type="button"
-            className={`nav-item ${activeTab === item.id ? "active" : ""}`}
-            title={item.label}
-            aria-label={item.label}
-            aria-current={activeTab === item.id ? "page" : undefined}
-            onClick={() => { setActiveTab(item.id); setDetailId(null); setSearch(""); setFilterStatus("Tous"); }}
-          >
-            <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d={item.icon}/></svg>
-            <span className="sidebar-text">{item.label}</span>
-          </button>
-        ))}
+      <nav aria-label="Navigation principale" style={{ display: "flex", flexDirection: "column", gap: 4, overflowY: "auto", minHeight: 0 }}>
+        {SECTIONS.map(section => {
+          const items = visibleItems.filter(i => section.ids.includes(i.id));
+          if (items.length === 0) return null;
+          return (
+            <div key={section.key} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              <div className="sidebar-text" style={{ fontSize: 10, fontWeight: 700, color: "var(--muted)", padding: "8px 8px 4px", letterSpacing: "0.08em", textTransform: "uppercase" }}>{section.label}</div>
+              {items.map(item => {
+                const badge = item.id === "activites" && overdueCount > 0 ? overdueCount : 0;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    className={`nav-item ${activeTab === item.id ? "active" : ""}`}
+                    title={badge ? `${item.label} — ${badge} en retard` : item.label}
+                    aria-label={badge ? `${item.label}, ${badge} en retard` : item.label}
+                    aria-current={activeTab === item.id ? "page" : undefined}
+                    onClick={() => { setActiveTab(item.id); setDetailId(null); setSearch(""); setFilterStatus("Tous"); }}
+                  >
+                    <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d={item.icon}/></svg>
+                    <span className="sidebar-text" style={{ flex: 1 }}>{item.label}</span>
+                    {badge > 0 && (
+                      <span aria-hidden="true" style={{ minWidth: 18, height: 18, padding: "0 5px", borderRadius: 999, background: activeTab === item.id ? "rgba(255,255,255,0.25)" : "var(--tint-red)", color: activeTab === item.id ? "#fff" : "var(--c-red)", fontSize: 10.5, fontWeight: 700, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>{badge}</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          );
+        })}
       </nav>
       <div className="sidebar-text" style={{ marginTop: "auto" }}>
-        <div style={{ padding: "12px 8px", borderTop: "1px solid #f1f5f9" }}>
+        <div style={{ padding: "12px 8px", borderTop: "1px solid var(--line-soft)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
             <div style={{ width: 30, height: 30, background: "linear-gradient(135deg, #dbeafe, #bfdbfe)", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "#1d4ed8" }}>{currentUser?.fullName?.[0] || "?"}</div>
             <div>
-              <div style={{ fontSize: 12.5, fontWeight: 600, color: "#0f172a" }}>{currentUser?.fullName || "Utilisateur"}</div>
-              {userTitle(currentUser) && <div style={{ fontSize: 10.5, fontWeight: 600, color: "#2563eb" }}>{userTitle(currentUser)}</div>}
-              <div style={{ fontSize: 10.5, color: "#64748b" }}>{currentUser?.login || ""}</div>
+              <div style={{ fontSize: 12.5, fontWeight: 600, color: "var(--ink)" }}>{currentUser?.fullName || "Utilisateur"}</div>
+              {userTitle(currentUser) && <div style={{ fontSize: 10.5, fontWeight: 600, color: "var(--c-blue)" }}>{userTitle(currentUser)}</div>}
+              <div style={{ fontSize: 10.5, color: "var(--muted)" }}>{currentUser?.login || ""}</div>
             </div>
+          </div>
+          <div role="group" aria-label="Thème d'affichage" style={{ display: "flex", gap: 3, background: "var(--surface-3)", borderRadius: 8, padding: 3, marginBottom: 8 }}>
+            {THEME_OPTIONS.map(o => (
+              <button
+                key={o.value}
+                type="button"
+                title={o.title}
+                aria-label={o.title}
+                aria-pressed={theme === o.value}
+                onClick={() => changeTheme(o.value)}
+                style={{ flex: 1, padding: "5px 0", fontSize: 12, fontWeight: 600, borderRadius: 6, border: "none", cursor: "pointer", fontFamily: "inherit", background: theme === o.value ? "var(--surface)" : "transparent", color: theme === o.value ? "var(--brand)" : "var(--muted)", boxShadow: theme === o.value ? "var(--shadow-xs)" : "none" }}
+              >
+                {o.label}
+              </button>
+            ))}
           </div>
           <button className="btn btn-ghost" style={{ width: "100%", justifyContent: "center", fontSize: 12.5, padding: "7px 12px" }} onClick={onLogout}>Déconnexion</button>
         </div>

@@ -103,8 +103,8 @@ export default function CandidatsPage({ contacts, search, setSearch, onAdd, onEd
     <div>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
         <div>
-          <h1 style={{ fontSize: 26, fontWeight: 800, color: "#0f172a" }}>Candidats</h1>
-          <p style={{ fontSize: 13.5, color: "#64748b", marginTop: 3 }}>{filtered.length} candidat{filtered.length > 1 ? "s" : ""}</p>
+          <h1 style={{ fontSize: 26, fontWeight: 800, color: "var(--ink)" }}>Candidats</h1>
+          <p style={{ fontSize: 13.5, color: "var(--muted)", marginTop: 3 }}>{filtered.length} candidat{filtered.length > 1 ? "s" : ""}</p>
         </div>
         <div className="page-header-actions" style={{ display: "flex", gap: 10 }}>
           <button
@@ -137,7 +137,7 @@ export default function CandidatsPage({ contacts, search, setSearch, onAdd, onEd
         </select>
         <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
           <input type="date" className="input" style={{ width: "auto" }} value={dateFrom} onChange={e => setDateFrom(e.target.value)} title="Date début" aria-label="Date de création — début" />
-          <span aria-hidden="true" style={{ fontSize: 12, color: "#64748b" }}>→</span>
+          <span aria-hidden="true" style={{ fontSize: 12, color: "var(--muted)" }}>→</span>
           <input type="date" className="input" style={{ width: "auto" }} value={dateTo} onChange={e => setDateTo(e.target.value)} title="Date fin" aria-label="Date de création — fin" />
         </div>
         {(filterSkill || filterValidation || filterOwner || dateFrom || dateTo) && <button className="btn btn-ghost" style={{ fontSize: 12, padding: "6px 12px" }} onClick={() => { setFilterSkill(""); setFilterValidation(""); setFilterOwner(""); setDateFrom(""); setDateTo(""); }}>Réinitialiser filtres</button>}
@@ -149,7 +149,7 @@ export default function CandidatsPage({ contacts, search, setSearch, onAdd, onEd
       {/* Status Manager */}
       {showStatusManager && (
         <div className="card" style={{ marginBottom: 20, padding: 16 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", marginBottom: 12 }}>Gestion des statuts de validation</div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)", marginBottom: 12 }}>Gestion des statuts de validation</div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
             {validationStatuses.map(s => (
               <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", borderRadius: 10, background: s.bg, border: `1px solid ${s.color}20` }}>
@@ -157,15 +157,15 @@ export default function CandidatsPage({ contacts, search, setSearch, onAdd, onEd
                 <button type="button" onClick={() => deleteStatus(s.id)} aria-label={`Supprimer le statut ${s.label}`} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 16, color: s.color, padding: "0 4px", lineHeight: 1, minWidth: 24, minHeight: 24 }} title="Supprimer">×</button>
               </div>
             ))}
-            {validationStatuses.length === 0 && <span style={{ fontSize: 12, color: "#64748b" }}>Aucun statut défini</span>}
+            {validationStatuses.length === 0 && <span style={{ fontSize: 12, color: "var(--muted)" }}>Aucun statut défini</span>}
           </div>
           <div style={{ display: "flex", gap: 10, alignItems: "end" }}>
             <div style={{ flex: 1 }}>
-              <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", marginBottom: 4, display: "block" }}>Nouveau statut</label>
+              <label style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", marginBottom: 4, display: "block" }}>Nouveau statut</label>
               <input className="input" value={newStatusLabel} onChange={e => setNewStatusLabel(e.target.value)} placeholder="Ex: En attente, Approuvé..." onKeyDown={e => e.key === "Enter" && addStatus()} />
             </div>
             <div>
-              <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", marginBottom: 4, display: "block" }}>Couleur</label>
+              <label style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", marginBottom: 4, display: "block" }}>Couleur</label>
               <div style={{ display: "flex", gap: 4 }}>
                 {COLOR_PRESETS.map((cp, i) => (
                   <button key={i} type="button" aria-label={cp.name} aria-pressed={newStatusColorIdx === i} onClick={() => setNewStatusColorIdx(i)} style={{
@@ -181,9 +181,9 @@ export default function CandidatsPage({ contacts, search, setSearch, onAdd, onEd
       )}
       <div className="card table-wrap" style={{ padding: 0, overflow: "auto" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 640 }}>
-          <thead><tr style={{ borderBottom: "1px solid #e2e8f0" }}>
+          <thead><tr style={{ borderBottom: "1px solid var(--line)" }}>
             {[{ label: "Candidat", col: "name" }, { label: "Ville", col: "city" }, { label: "Compétences", col: null }, { label: "Statut", col: null }, { label: "Salaire", col: "salary" }, { label: "Actions", col: null }].map(h => (
-              <th key={h.label} scope="col" aria-sort={h.col ? (sortBy === h.col ? (sortDir === "asc" ? "ascending" : "descending") : "none") : undefined} style={{ padding: "14px 20px", textAlign: "left", fontSize: 11.5, fontWeight: 700, color: "#64748b", textTransform: "uppercase", userSelect: "none" }}>
+              <th key={h.label} scope="col" aria-sort={h.col ? (sortBy === h.col ? (sortDir === "asc" ? "ascending" : "descending") : "none") : undefined} style={{ padding: "14px 20px", textAlign: "left", fontSize: 11.5, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", userSelect: "none" }}>
                 {h.col
                   ? <button type="button" onClick={() => handleSort(h.col)} style={{ background: "none", border: "none", padding: 0, font: "inherit", color: "inherit", textTransform: "inherit", cursor: "pointer" }}>{h.label}{sortIcon(h.col)}</button>
                   : h.label}
@@ -191,32 +191,32 @@ export default function CandidatsPage({ contacts, search, setSearch, onAdd, onEd
             ))}
           </tr></thead>
           <tbody>
-            {filtered.length === 0 && <tr><td colSpan={6} style={{ padding: 40, textAlign: "center", color: "#64748b" }}>Aucun candidat</td></tr>}
+            {filtered.length === 0 && <tr><td colSpan={6} style={{ padding: 40, textAlign: "center", color: "var(--muted)" }}>Aucun candidat</td></tr>}
             {paged.map(c => {
               const vc = VALIDATION_COLORS[c.validationStatus];
               return (
-              <tr key={c.id} className="row-hover" tabIndex={0} aria-label={`Ouvrir la fiche de ${c.name}`} onKeyDown={e => { if (e.key === "Enter") onDetail(c.id); }} style={{ borderBottom: "1px solid #eef2f7" }} onClick={() => onDetail(c.id)}>
+              <tr key={c.id} className="row-hover" tabIndex={0} aria-label={`Ouvrir la fiche de ${c.name}`} onKeyDown={e => { if (e.key === "Enter") onDetail(c.id); }} style={{ borderBottom: "1px solid var(--line-soft)" }} onClick={() => onDetail(c.id)}>
                 <td style={{ padding: "14px 20px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <div style={{ width: 34, height: 34, background: "#fef3c7", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: "#d97706" }}>{c.name[0]}</div>
+                    <div style={{ width: 34, height: 34, background: "var(--tint-amber)", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: "var(--c-amber)" }}>{c.name[0]}</div>
                     <div>
-                      <div style={{ fontSize: 13.5, fontWeight: 600, color: "#0f172a" }}>{c.name}</div>
-                      <div style={{ fontSize: 12, color: "#64748b" }}>{c.email} {c.phone && `- ${c.phone}`}</div>
+                      <div style={{ fontSize: 13.5, fontWeight: 600, color: "var(--ink)" }}>{c.name}</div>
+                      <div style={{ fontSize: 12, color: "var(--muted)" }}>{c.email} {c.phone && `- ${c.phone}`}</div>
                     </div>
                   </div>
                 </td>
-                <td style={{ padding: "14px 20px", fontSize: 13.5, color: "#374151" }}>{c.city || "—"}</td>
+                <td style={{ padding: "14px 20px", fontSize: 13.5, color: "var(--ink-2)" }}>{c.city || "—"}</td>
                 <td style={{ padding: "14px 20px" }}>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
                     {(c.skills || "").split(",").filter(Boolean).slice(0, 3).map((s, i) => (
-                      <span key={i} style={{ fontSize: 11, background: "#eff6ff", color: "#2563eb", padding: "2px 8px", borderRadius: 12, fontWeight: 500 }}>{s.trim()}</span>
+                      <span key={i} style={{ fontSize: 11, background: "var(--tint-blue-soft)", color: "var(--c-blue)", padding: "2px 8px", borderRadius: 12, fontWeight: 500 }}>{s.trim()}</span>
                     ))}
                   </div>
                 </td>
                 <td style={{ padding: "14px 20px" }}>
-                  {c.validationStatus ? <span style={{ fontSize: 11.5, fontWeight: 600, padding: "3px 10px", borderRadius: 12, background: vc?.bg || "#f1f5f9", color: vc?.color || "#64748b" }}>{c.validationStatus}</span> : <span style={{ fontSize: 12, color: "#64748b" }}>—</span>}
+                  {c.validationStatus ? <span style={{ fontSize: 11.5, fontWeight: 600, padding: "3px 10px", borderRadius: 12, background: vc?.bg || "var(--surface-3)", color: vc?.color || "var(--muted)" }}>{c.validationStatus}</span> : <span style={{ fontSize: 12, color: "var(--muted)" }}>—</span>}
                 </td>
-                <td style={{ padding: "14px 20px", fontSize: 13.5, fontWeight: 600, color: c.salaryExpectation > 0 ? "#0f172a" : "#64748b" }}>{c.salaryExpectation > 0 ? fmtCAD(c.salaryExpectation) : "—"}</td>
+                <td style={{ padding: "14px 20px", fontSize: 13.5, fontWeight: 600, color: c.salaryExpectation > 0 ? "var(--ink)" : "var(--muted)" }}>{c.salaryExpectation > 0 ? fmtCAD(c.salaryExpectation) : "—"}</td>
                 <td style={{ padding: "14px 20px" }} onClick={e => e.stopPropagation()}>
                   <div style={{ display: "flex", gap: 6 }}>
                     <button className="btn btn-ghost" style={{ padding: "6px 10px", fontSize: 12 }} onClick={() => onEdit(c)}>Modifier</button>

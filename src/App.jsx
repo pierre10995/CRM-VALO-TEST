@@ -8,6 +8,7 @@ import Sidebar from "./components/Sidebar";
 import ModalWrapper from "./components/common/ModalWrapper";
 import { ToastProvider, useToast } from "./components/common/Toast";
 import { ConfirmProvider, useConfirm } from "./components/common/ConfirmDialog";
+import useCrmData from "./hooks/useCrmData";
 
 // Pages
 import DashboardPage from "./components/pages/DashboardPage";
@@ -54,17 +55,11 @@ function CRMInner() {
   const [loginError, setLoginError] = useState("");
   const [activeTab, setActiveTab] = useState("dashboard");
 
-  // Data
-  const [contacts, setContacts] = useState([]);
-  const [missions, setMissions] = useState([]);
-  const [candidatures, setCandidatures] = useState([]);
-  const [activities, setActivities] = useState([]);
-  const [users, setUsers] = useState([]);
-  const [fiscalYears, setFiscalYears] = useState([]);
-  const [sectors, setSectors] = useState([]);
-  const [workModes, setWorkModes] = useState([]);
-  const [validationStatuses, setValidationStatuses] = useState([]);
-  const [loaded, setLoaded] = useState(false);
+  // Données (états par entité + rechargement ciblé) — voir hooks/useCrmData.js
+  const {
+    contacts, missions, candidatures, activities, users, fiscalYears, sectors, workModes, validationStatuses,
+    candidates, clients, loaded, reload, loadAll, setActivities,
+  } = useCrmData();
 
   // UI state
   const [modal, setModal] = useState(null);
@@ -75,42 +70,6 @@ function CRMInner() {
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("Tous");
   const [saving, setSaving] = useState(false);
-
-  const candidates = contacts.filter(c => c.status === "Candidat");
-  const clients = contacts.filter(c => c.status === "Client" || c.status === "Prospect");
-
-  // ─── Chargement des données ────────────────────────────────────────────────
-  // Chaque clé correspond à un endpoint ; les mutations ne rechargent que les
-  // clés impactées (au lieu des 10 endpoints à chaque clic).
-  const ENDPOINTS = {
-    contacts: ["/api/contacts", setContacts],
-    missions: ["/api/missions", setMissions],
-    candidatures: ["/api/candidatures", setCandidatures],
-    activities: ["/api/activities", setActivities],
-    users: ["/api/users", setUsers],
-    fiscalYears: ["/api/fiscal-years", setFiscalYears],
-    sectors: ["/api/sectors", setSectors],
-    workModes: ["/api/work-modes", setWorkModes],
-    validationStatuses: ["/api/validation-statuses", setValidationStatuses],
-  };
-  // Numéro de séquence par clé : si deux rechargements se croisent, seul le
-  // plus récent est appliqué (évite qu'une réponse ancienne écrase la nouvelle).
-  const loadSeq = useRef({});
-
-  const reload = async (...keys) => {
-    const targets = keys.length ? keys : Object.keys(ENDPOINTS);
-    const seqs = {};
-    targets.forEach(k => { seqs[k] = (loadSeq.current[k] || 0) + 1; loadSeq.current[k] = seqs[k]; });
-    // allSettled : un endpoint en échec (ex. réservé admin pour un non-admin)
-    // ne doit pas empêcher le chargement du reste.
-    const results = await Promise.allSettled(targets.map(k => api.get(ENDPOINTS[k][0])));
-    results.forEach((r, i) => {
-      const k = targets[i];
-      if (r.status === "fulfilled" && loadSeq.current[k] === seqs[k]) ENDPOINTS[k][1](r.value);
-    });
-    setLoaded(true);
-  };
-  const loadAll = () => reload();
 
   useEffect(() => {
     const session = localStorage.getItem("crm_user");
@@ -294,7 +253,50 @@ function CRMInner() {
     setDetailId(id);
   };
 
-  if (!authed) return <LoginScreen form={loginForm} setForm={setLoginForm} showPwd={showPwd} setShowPwd={setShowPwd} error={loginError} onLogin={handleLogin} />;
+  // ─── Ajout rapide (barre latérale + raccourci « n ») ───────────────────────
+  const quickAdd = (type) => {
+    if (type === "client") openModal("client", { status: "Prospect", sector: "Tech", revenue: 0 });
+    else if (type === "mission") openModal("mission", { status: "Ouverte", priority: "Normale", contractType: "CDI" });
+    else if (type === "activity") openModal("activity", { type: "Appel" });
+    else if (type === "candidature") openCandidature();
+    else openModal("candidat", { status: "Candidat", sector: "Tech", salaryExpectation: 0 });
+  };
+  // Type d'élément « naturel » selon l'onglet courant
+  const contextQuickAddType = () => ({ clients: "client", missions: "mission", activites: "activity", pipeline: "candidature" }[activeTab] || "candidat");
+
+  // ─── Raccourcis clavier ────────────────────────────────────────────────────
+  //   /        focus sur la recherche globale
+  //   n        nouvel élément (selon l'onglet courant)
+  //   g puis d/c/k/p/l/a   Dashboard / Clients / Candidats(K) / Postes / piLine / Activités
+  useEffect(() => {
+    if (!authed || currentUser?.role === "partner") return;
+    let pendingG = 0;
+    const isTyping = (e) => {
+      const t = e.target;
+      return t?.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(t?.tagName);
+    };
+    const onKey = (e) => {
+      if (e.ctrlKey || e.metaKey || e.altKey || isTyping(e) || modal) return;
+      if (e.key === "/") { e.preventDefault(); document.getElementById("global-search")?.focus(); return; }
+      if (e.key === "n") { e.preventDefault(); quickAdd(contextQuickAddType()); return; }
+      if (e.key === "g") { pendingG = Date.now(); return; }
+      if (pendingG && Date.now() - pendingG < 1500) {
+        const tab = { d: "dashboard", c: "clients", k: "candidats", p: "missions", l: "pipeline", a: "activites" }[e.key];
+        if (tab) { e.preventDefault(); setActiveTab(tab); setDetailId(null); }
+        pendingG = 0;
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [authed, currentUser, modal, activeTab]);
+
+  // Les styles globaux (tokens de thème, police) doivent aussi être présents sur l'écran de connexion
+  if (!authed) return (
+    <>
+      <style>{GLOBAL_STYLES}</style>
+      <LoginScreen form={loginForm} setForm={setLoginForm} showPwd={showPwd} setShowPwd={setShowPwd} error={loginError} onLogin={handleLogin} />
+    </>
+  );
 
   // Partner portal
   if (currentUser?.role === "partner") {
@@ -307,10 +309,10 @@ function CRMInner() {
   }
 
   return (
-    <div style={{ display: "flex", height: "100vh", fontFamily: "'Sora', sans-serif", background: "linear-gradient(160deg, #f6f8fe 0%, #eef2fb 55%, #e9eef9 100%)", overflow: "hidden" }}>
+    <div style={{ display: "flex", height: "100vh", fontFamily: "'Sora', sans-serif", background: "var(--app-bg)", overflow: "hidden" }}>
       <style>{GLOBAL_STYLES}</style>
 
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} currentUser={currentUser} onLogout={handleLogout} setDetailId={setDetailId} setSearch={setSearch} setFilterStatus={setFilterStatus} contacts={contacts} missions={missions} />
+      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} currentUser={currentUser} onLogout={handleLogout} setDetailId={setDetailId} setSearch={setSearch} setFilterStatus={setFilterStatus} contacts={contacts} missions={missions} activities={activities} onQuickAdd={quickAdd} />
 
       {/* Main Content */}
       <main className="app-main" style={{ flex: 1, overflow: "auto", padding: 28 }}>

@@ -39,10 +39,10 @@ function fmtDue(dueDate, { todayStart }) {
 }
 
 const GROUPS = [
-  { key: "overdue", label: "En retard", color: "#dc2626", bg: "#fef2f2" },
-  { key: "today", label: "Aujourd'hui", color: "#2563eb", bg: "#eff6ff" },
+  { key: "overdue", label: "En retard", color: "var(--c-red)", bg: "var(--tint-red-soft)" },
+  { key: "today", label: "Aujourd'hui", color: "var(--c-blue)", bg: "var(--tint-blue-soft)" },
   { key: "upcoming", label: "À venir", color: "#0891b2", bg: "#ecfeff" },
-  { key: "nodate", label: "Sans échéance", color: "#64748b", bg: "#f8fafc" },
+  { key: "nodate", label: "Sans échéance", color: "var(--muted)", bg: "var(--surface-2)" },
 ];
 
 export default function ActivitesPage({ activities, contacts, missions, users, currentUser, onAdd, onEdit, onToggle, onDelete, goToContact }) {
@@ -76,20 +76,20 @@ export default function ActivitesPage({ activities, contacts, missions, users, c
     const clickable = a.contactId && goToContact;
     return (
       <div key={a.id} style={{ display: "flex", alignItems: "center", gap: 14, padding: "13px 20px", borderBottom: "1px solid var(--line-soft, #eef2f8)" }}>
-        <div style={{ width: 36, height: 36, borderRadius: 10, flexShrink: 0, background: a.completed ? "#d1fae5" : `${typeColors[a.type]}18`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700, color: a.completed ? "#059669" : typeColors[a.type] }}>
+        <div style={{ width: 36, height: 36, borderRadius: 10, flexShrink: 0, background: a.completed ? "var(--tint-green)" : `${typeColors[a.type]}18`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700, color: a.completed ? "var(--c-green)" : typeColors[a.type] }}>
           {typeIcons[a.type] || "?"}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 13.5, fontWeight: 600, color: "#0f172a", textDecoration: a.completed ? "line-through" : "none" }}>{a.subject}</div>
-          <div style={{ fontSize: 12, color: "#64748b" }}>
+          <div style={{ fontSize: 13.5, fontWeight: 600, color: "var(--ink)", textDecoration: a.completed ? "line-through" : "none" }}>{a.subject}</div>
+          <div style={{ fontSize: 12, color: "var(--muted)" }}>
             {a.type}
-            {a.contactName && <> · <span onClick={clickable ? (e) => { e.stopPropagation(); goToContact(a.contactId); } : undefined} style={{ color: clickable ? "#2563eb" : "#64748b", cursor: clickable ? "pointer" : "default" }}>{a.contactName}</span></>}
+            {a.contactName && <> · <span onClick={clickable ? (e) => { e.stopPropagation(); goToContact(a.contactId); } : undefined} style={{ color: clickable ? "var(--c-blue)" : "var(--muted)", cursor: clickable ? "pointer" : "default" }}>{a.contactName}</span></>}
             {a.userName ? ` · ${a.userName}` : ""}
           </div>
-          {a.description && <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>{a.description}</div>}
+          {a.description && <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>{a.description}</div>}
         </div>
         {a.dueDate && !a.completed && (
-          <span style={{ fontSize: 11.5, fontWeight: 700, whiteSpace: "nowrap", padding: "3px 10px", borderRadius: 999, background: bucket(a) === "overdue" ? "#fef2f2" : bucket(a) === "today" ? "#eff6ff" : "#f1f5f9", color: bucket(a) === "overdue" ? "#dc2626" : bucket(a) === "today" ? "#2563eb" : "#64748b" }}>
+          <span style={{ fontSize: 11.5, fontWeight: 700, whiteSpace: "nowrap", padding: "3px 10px", borderRadius: 999, background: bucket(a) === "overdue" ? "var(--tint-red-soft)" : bucket(a) === "today" ? "var(--tint-blue-soft)" : "var(--surface-3)", color: bucket(a) === "overdue" ? "var(--c-red)" : bucket(a) === "today" ? "var(--c-blue)" : "var(--muted)" }}>
             {due(a.dueDate)}
           </span>
         )}
@@ -108,10 +108,10 @@ export default function ActivitesPage({ activities, contacts, missions, users, c
     <div>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
         <div>
-          <h1 style={{ fontSize: 26, fontWeight: 800, color: "#0f172a" }}>Activités</h1>
-          <p style={{ fontSize: 13.5, color: "#64748b", marginTop: 3 }}>
-            {overdueCount > 0 && <span style={{ color: "#dc2626", fontWeight: 600 }}>{overdueCount} en retard · </span>}
-            <span style={{ color: todayCount > 0 ? "#2563eb" : "#64748b", fontWeight: todayCount > 0 ? 600 : 400 }}>{todayCount} aujourd'hui</span>
+          <h1 style={{ fontSize: 26, fontWeight: 800, color: "var(--ink)" }}>Activités</h1>
+          <p style={{ fontSize: 13.5, color: "var(--muted)", marginTop: 3 }}>
+            {overdueCount > 0 && <span style={{ color: "var(--c-red)", fontWeight: 600 }}>{overdueCount} en retard · </span>}
+            <span style={{ color: todayCount > 0 ? "var(--c-blue)" : "var(--muted)", fontWeight: todayCount > 0 ? 600 : 400 }}>{todayCount} aujourd'hui</span>
             {` · ${openCount} à faire`}
           </p>
         </div>
@@ -120,9 +120,9 @@ export default function ActivitesPage({ activities, contacts, missions, users, c
 
       {/* Filtres */}
       <div className="page-header-actions" style={{ display: "flex", gap: 10, marginBottom: 20, flexWrap: "wrap", alignItems: "center" }}>
-        <div style={{ display: "flex", gap: 4, background: "#f1f5f9", borderRadius: 10, padding: 4 }}>
+        <div style={{ display: "flex", gap: 4, background: "var(--surface-3)", borderRadius: 10, padding: 4 }}>
           {[{ k: "all", l: "Toutes" }, { k: "me", l: "Les miennes" }].map(o => (
-            <button key={o.k} type="button" aria-pressed={scope === o.k} onClick={() => setScope(o.k)} style={{ padding: "7px 16px", fontSize: 13, fontWeight: 600, borderRadius: 8, border: "none", cursor: "pointer", background: scope === o.k ? "#fff" : "transparent", color: scope === o.k ? "#1d4ed8" : "#64748b", boxShadow: scope === o.k ? "0 1px 3px rgba(15,23,42,0.08)" : "none" }}>{o.l}</button>
+            <button key={o.k} type="button" aria-pressed={scope === o.k} onClick={() => setScope(o.k)} style={{ padding: "7px 16px", fontSize: 13, fontWeight: 600, borderRadius: 8, border: "none", cursor: "pointer", background: scope === o.k ? "#fff" : "transparent", color: scope === o.k ? "#1d4ed8" : "var(--muted)", boxShadow: scope === o.k ? "0 1px 3px rgba(15,23,42,0.08)" : "none" }}>{o.l}</button>
           ))}
         </div>
         <select className="input" style={{ width: "auto", minWidth: 150 }} value={typeFilter} onChange={e => setTypeFilter(e.target.value)}>
@@ -136,7 +136,7 @@ export default function ActivitesPage({ activities, contacts, missions, users, c
 
       {openCount === 0 && (
         <div className="card" style={{ padding: 40, textAlign: "center" }}>
-          <p style={{ fontSize: 14, color: "#64748b" }}>Aucune activité à faire 🎉</p>
+          <p style={{ fontSize: 14, color: "var(--muted)" }}>Aucune activité à faire 🎉</p>
           <button className="btn btn-primary" style={{ marginTop: 14 }} onClick={onAdd}>+ Planifier une activité</button>
         </div>
       )}
@@ -157,7 +157,7 @@ export default function ActivitesPage({ activities, contacts, missions, users, c
       {/* Terminées */}
       {showDone && buckets.done.length > 0 && (
         <div style={{ marginBottom: 18 }}>
-          <div style={{ fontSize: 12.5, fontWeight: 700, color: "#059669", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 8 }}>Terminées ({buckets.done.length})</div>
+          <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--c-green)", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 8 }}>Terminées ({buckets.done.length})</div>
           <div className="card" style={{ padding: 0, overflow: "hidden", opacity: 0.72 }}>
             {buckets.done.map(renderRow)}
           </div>

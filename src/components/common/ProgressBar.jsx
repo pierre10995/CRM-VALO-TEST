@@ -8,7 +8,7 @@ export default function ProgressBar({ value, max = 100, height = 6, showLabel = 
 
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-      <div style={{ flex: 1, height, background: "#f1f5f9", borderRadius: height / 2 }}>
+      <div style={{ flex: 1, height, background: "var(--surface-3)", borderRadius: height / 2 }}>
         <div style={{
           width: `${pct}%`, height: "100%",
           background: color, borderRadius: height / 2,
@@ -16,7 +16,7 @@ export default function ProgressBar({ value, max = 100, height = 6, showLabel = 
         }} />
       </div>
       {showLabel && (
-        <span style={{ fontSize: 12, fontWeight: 700, color: pct >= 100 ? "#059669" : pct >= 50 ? "#2563eb" : "#d97706", minWidth: 36 }}>
+        <span style={{ fontSize: 12, fontWeight: 700, color: pct >= 100 ? "var(--c-green)" : pct >= 50 ? "var(--c-blue)" : "var(--c-amber)", minWidth: 36 }}>
           {pct}%
         </span>
       )}

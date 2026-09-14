@@ -31,6 +31,21 @@ Le schéma est créé/migré automatiquement au démarrage (`server/db.js`, idem
 | `npm run lint` | ESLint (front, serveur, tests) |
 | `npm run backup` | Sauvegarde `pg_dump` (voir ci-dessous) |
 
+## Raccourcis clavier
+
+| Touche | Action |
+|---|---|
+| `/` | Focus sur la recherche globale (contacts, candidats, postes, activités) |
+| `n` | Nouvel élément selon l'onglet courant (candidat, client, poste, candidature, activité) |
+| `g` puis `d` / `c` / `k` / `p` / `l` / `a` | Aller au Dashboard / Clients / Candidats / Postes / Pipeline / Activités |
+| `Échap` | Fermer la modale ou le menu ouvert |
+
+Le bouton **＋ Ajouter** de la barre latérale ouvre le même menu d'ajout rapide.
+
+## Thème clair / sombre
+
+Sélecteur **Auto / ☀ / ☾** en bas de la barre latérale (préférence mémorisée dans le navigateur ; « Auto » suit le réglage du système). Les couleurs sont définies par des tokens CSS dans `src/utils/styles.js` (`:root` et `:root[data-theme="dark"]`) — pour ajuster la charte, modifier ces tokens plutôt que les composants.
+
 ## Variables d'environnement
 
 Voir `.env.example`. Obligatoires : `DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, et en production `JWT_SECRET`. Le serveur refuse de démarrer si elles manquent ; les clés optionnelles absentes (`ANTHROPIC_API_KEY`, `RESEND_API_KEY`) sont signalées au démarrage.

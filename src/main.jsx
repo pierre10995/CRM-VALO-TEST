@@ -1,6 +1,10 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
+import { initTheme } from './utils/theme.js'
+
+// Applique le thème (clair/sombre/auto) avant le premier rendu pour éviter un flash
+initTheme()
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

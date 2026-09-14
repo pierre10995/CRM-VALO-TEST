@@ -90,8 +90,8 @@ export default function PlacementsPage({ candidatures, candidates, missions, goT
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 800, color: "#0f172a" }}>Suivi des placements</h1>
-          <p style={{ fontSize: 13, color: "#64748b", marginTop: 4 }}>{filteredPlacements.length} candidat{filteredPlacements.length !== 1 ? "s" : ""} placé{filteredPlacements.length !== 1 ? "s" : ""}{filterOwner ? ` (filtre : ${filterOwner})` : ""}</p>
+          <h1 style={{ fontSize: 22, fontWeight: 800, color: "var(--ink)" }}>Suivi des placements</h1>
+          <p style={{ fontSize: 13, color: "var(--muted)", marginTop: 4 }}>{filteredPlacements.length} candidat{filteredPlacements.length !== 1 ? "s" : ""} placé{filteredPlacements.length !== 1 ? "s" : ""}{filterOwner ? ` (filtre : ${filterOwner})` : ""}</p>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <select className="input" style={{ minWidth: 160, fontSize: 13 }} value={filterOwner} onChange={e => setFilterOwner(e.target.value)}>
@@ -109,10 +109,10 @@ export default function PlacementsPage({ candidatures, candidates, missions, goT
       {/* Add form */}
       {showAdd && (
         <div className="card" style={{ padding: 20, marginBottom: 20 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", marginBottom: 12 }}>Nouveau placement</div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)", marginBottom: 12 }}>Nouveau placement</div>
           <div className="resp-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 12 }}>
             <div>
-              <label style={{ fontSize: 11, fontWeight: 700, color: "#64748b", marginBottom: 4, display: "block" }}>CANDIDATURE PLACÉE *</label>
+              <label style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", marginBottom: 4, display: "block" }}>CANDIDATURE PLACÉE *</label>
               <SearchSelect
                 value={addForm.candidatureId || ""}
                 onChange={v => setAddForm(p => ({ ...p, candidatureId: v }))}
@@ -121,11 +121,11 @@ export default function PlacementsPage({ candidatures, candidates, missions, goT
               />
             </div>
             <div>
-              <label style={{ fontSize: 11, fontWeight: 700, color: "#64748b", marginBottom: 4, display: "block" }}>DATE DE DÉMARRAGE</label>
+              <label style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", marginBottom: 4, display: "block" }}>DATE DE DÉMARRAGE</label>
               <input className="input" type="date" value={addForm.startDate || ""} onChange={e => setAddForm(p => ({ ...p, startDate: e.target.value }))} />
             </div>
             <div>
-              <label style={{ fontSize: 11, fontWeight: 700, color: "#64748b", marginBottom: 4, display: "block" }}>FIN PÉRIODE D'ESSAI</label>
+              <label style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", marginBottom: 4, display: "block" }}>FIN PÉRIODE D'ESSAI</label>
               <input className="input" type="date" value={addForm.probationDate || ""} onChange={e => setAddForm(p => ({ ...p, probationDate: e.target.value }))} />
             </div>
           </div>
@@ -138,8 +138,8 @@ export default function PlacementsPage({ candidatures, candidates, missions, goT
 
       {placedCandidatures.length === 0 && placements.length === 0 && (
         <div className="card" style={{ padding: 40, textAlign: "center" }}>
-          <p style={{ fontSize: 14, color: "#64748b" }}>Aucun candidat placé pour le moment.</p>
-          <p style={{ fontSize: 12, color: "#64748b", marginTop: 6 }}>Les candidatures avec le statut « Placé » dans le pipeline apparaîtront ici.</p>
+          <p style={{ fontSize: 14, color: "var(--muted)" }}>Aucun candidat placé pour le moment.</p>
+          <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>Les candidatures avec le statut « Placé » dans le pipeline apparaîtront ici.</p>
         </div>
       )}
 
@@ -150,69 +150,69 @@ export default function PlacementsPage({ candidatures, candidates, missions, goT
             /* Edit mode */
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-                <div style={{ width: 38, height: 38, background: "linear-gradient(135deg, #d1fae5, #6ee7b7)", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 800, color: "#059669" }}>{p.candidateName?.[0] || "?"}</div>
+                <div style={{ width: 38, height: 38, background: "linear-gradient(135deg, #d1fae5, #6ee7b7)", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 800, color: "var(--c-green)" }}>{p.candidateName?.[0] || "?"}</div>
                 <div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: "#0f172a" }}>{p.candidateName}</div>
-                  <div style={{ fontSize: 12, color: "#64748b" }}>{p.missionTitle} — {p.company || p.missionCompany}</div>
-                  {p.owner && <div style={{ fontSize: 11, color: "#2563eb", marginTop: 2 }}>Propriétaire : {p.owner}</div>}
+                  <div style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)" }}>{p.candidateName}</div>
+                  <div style={{ fontSize: 12, color: "var(--muted)" }}>{p.missionTitle} — {p.company || p.missionCompany}</div>
+                  {p.owner && <div style={{ fontSize: 11, color: "var(--c-blue)", marginTop: 2 }}>Propriétaire : {p.owner}</div>}
                 </div>
               </div>
               <div className="resp-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
                 {/* Start section */}
-                <div style={{ background: "#f8fafc", borderRadius: 10, padding: 14 }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: "#2563eb", marginBottom: 10 }}>DÉMARRAGE</div>
+                <div style={{ background: "var(--surface-2)", borderRadius: 10, padding: 14 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "var(--c-blue)", marginBottom: 10 }}>DÉMARRAGE</div>
                   <div style={{ marginBottom: 8 }}>
-                    <label style={{ fontSize: 11, color: "#64748b", display: "block", marginBottom: 3 }}>Date de démarrage</label>
+                    <label style={{ fontSize: 11, color: "var(--muted)", display: "block", marginBottom: 3 }}>Date de démarrage</label>
                     <input className="input" type="date" value={form.startDate || ""} onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))} />
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
                     <input type="checkbox" checked={form.startInvoiceSent || false} onChange={e => setForm(f => ({ ...f, startInvoiceSent: e.target.checked }))} />
-                    <label style={{ fontSize: 12, color: "#0f172a" }}>Facture envoyée</label>
+                    <label style={{ fontSize: 12, color: "var(--ink)" }}>Facture envoyée</label>
                   </div>
                   {form.startInvoiceSent && (
                     <div style={{ marginBottom: 8 }}>
-                      <label style={{ fontSize: 11, color: "#64748b", display: "block", marginBottom: 3 }}>Nom de la facture</label>
+                      <label style={{ fontSize: 11, color: "var(--muted)", display: "block", marginBottom: 3 }}>Nom de la facture</label>
                       <input className="input" value={form.startInvoiceName || ""} onChange={e => setForm(f => ({ ...f, startInvoiceName: e.target.value }))} placeholder="FAC-2026-001" />
                     </div>
                   )}
                   {form.startInvoiceSent && (
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <input type="checkbox" checked={form.startInvoicePaid || false} onChange={e => setForm(f => ({ ...f, startInvoicePaid: e.target.checked }))} />
-                      <label style={{ fontSize: 12, color: "#0f172a" }}>Facture payée</label>
+                      <label style={{ fontSize: 12, color: "var(--ink)" }}>Facture payée</label>
                     </div>
                   )}
                 </div>
                 {/* Probation section */}
-                <div style={{ background: "#f8fafc", borderRadius: 10, padding: 14 }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: "#d97706", marginBottom: 10 }}>VALIDATION PÉRIODE D'ESSAI</div>
+                <div style={{ background: "var(--surface-2)", borderRadius: 10, padding: 14 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "var(--c-amber)", marginBottom: 10 }}>VALIDATION PÉRIODE D'ESSAI</div>
                   <div style={{ marginBottom: 8 }}>
-                    <label style={{ fontSize: 11, color: "#64748b", display: "block", marginBottom: 3 }}>Date de validation</label>
+                    <label style={{ fontSize: 11, color: "var(--muted)", display: "block", marginBottom: 3 }}>Date de validation</label>
                     <input className="input" type="date" value={form.probationDate || ""} onChange={e => setForm(f => ({ ...f, probationDate: e.target.value }))} />
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
                     <input type="checkbox" checked={form.probationInvoiceSent || false} onChange={e => setForm(f => ({ ...f, probationInvoiceSent: e.target.checked }))} />
-                    <label style={{ fontSize: 12, color: "#0f172a" }}>Facture envoyée</label>
+                    <label style={{ fontSize: 12, color: "var(--ink)" }}>Facture envoyée</label>
                   </div>
                   {form.probationInvoiceSent && (
                     <div style={{ marginBottom: 8 }}>
-                      <label style={{ fontSize: 11, color: "#64748b", display: "block", marginBottom: 3 }}>Nom de la facture</label>
+                      <label style={{ fontSize: 11, color: "var(--muted)", display: "block", marginBottom: 3 }}>Nom de la facture</label>
                       <input className="input" value={form.probationInvoiceName || ""} onChange={e => setForm(f => ({ ...f, probationInvoiceName: e.target.value }))} placeholder="FAC-2026-002" />
                     </div>
                   )}
                   {form.probationInvoiceSent && (
                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
                       <input type="checkbox" checked={form.probationInvoicePaid || false} onChange={e => setForm(f => ({ ...f, probationInvoicePaid: e.target.checked }))} />
-                      <label style={{ fontSize: 12, color: "#0f172a" }}>Facture payée</label>
+                      <label style={{ fontSize: 12, color: "var(--ink)" }}>Facture payée</label>
                     </div>
                   )}
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10, paddingTop: 10, borderTop: "1px solid #e2e8f0" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10, paddingTop: 10, borderTop: "1px solid var(--line)" }}>
                     <input type="checkbox" checked={form.probationValidated || false} onChange={e => setForm(f => ({ ...f, probationValidated: e.target.checked }))} />
-                    <label style={{ fontSize: 12, fontWeight: 600, color: "#059669" }}>Période d'essai validée</label>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: "var(--c-green)" }}>Période d'essai validée</label>
                   </div>
                 </div>
               </div>
               <div style={{ marginBottom: 14 }}>
-                <label style={{ fontSize: 11, color: "#64748b", display: "block", marginBottom: 3 }}>Notes</label>
+                <label style={{ fontSize: 11, color: "var(--muted)", display: "block", marginBottom: 3 }}>Notes</label>
                 <textarea className="input" style={{ resize: "vertical", minHeight: 50 }} value={form.notes || ""} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} placeholder="Notes..." />
               </div>
               <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
@@ -225,19 +225,19 @@ export default function PlacementsPage({ candidatures, candidates, missions, goT
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-                  <div style={{ width: 38, height: 38, background: "linear-gradient(135deg, #d1fae5, #6ee7b7)", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 800, color: "#059669" }}>{p.candidateName?.[0] || "?"}</div>
+                  <div style={{ width: 38, height: 38, background: "linear-gradient(135deg, #d1fae5, #6ee7b7)", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 800, color: "var(--c-green)" }}>{p.candidateName?.[0] || "?"}</div>
                   <div>
                     <div
                       onClick={goToContact && p.candidateId ? () => goToContact(p.candidateId) : undefined}
-                      style={{ fontSize: 15, fontWeight: 700, color: goToContact && p.candidateId ? "#2563eb" : "#0f172a", cursor: goToContact && p.candidateId ? "pointer" : "default" }}
+                      style={{ fontSize: 15, fontWeight: 700, color: goToContact && p.candidateId ? "var(--c-blue)" : "var(--ink)", cursor: goToContact && p.candidateId ? "pointer" : "default" }}
                       title={goToContact && p.candidateId ? "Voir la fiche candidat" : undefined}
                     >{p.candidateName}</div>
                     <div
                       onClick={goToMission && p.missionId ? () => goToMission(p.missionId) : undefined}
-                      style={{ fontSize: 12, color: "#64748b", cursor: goToMission && p.missionId ? "pointer" : "default", textDecoration: goToMission && p.missionId ? "underline" : "none" }}
+                      style={{ fontSize: 12, color: "var(--muted)", cursor: goToMission && p.missionId ? "pointer" : "default", textDecoration: goToMission && p.missionId ? "underline" : "none" }}
                       title={goToMission && p.missionId ? "Voir le poste" : undefined}
                     >{p.missionTitle} — {p.company || p.missionCompany}</div>
-                    {p.owner && <div style={{ fontSize: 11, color: "#2563eb", marginTop: 2 }}>Propriétaire : {p.owner}</div>}
+                    {p.owner && <div style={{ fontSize: 11, color: "var(--c-blue)", marginTop: 2 }}>Propriétaire : {p.owner}</div>}
                   </div>
                 </div>
                 {canEdit && (
@@ -249,55 +249,55 @@ export default function PlacementsPage({ candidatures, candidates, missions, goT
               </div>
               <div className="resp-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
                 {/* Start info */}
-                <div style={{ background: "#f8fafc", borderRadius: 10, padding: 14 }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: "#2563eb", marginBottom: 8 }}>DÉMARRAGE</div>
-                  <div style={{ fontSize: 13, color: "#0f172a", marginBottom: 6 }}>
-                    <span style={{ color: "#64748b", fontSize: 11 }}>Date : </span>
+                <div style={{ background: "var(--surface-2)", borderRadius: 10, padding: 14 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "var(--c-blue)", marginBottom: 8 }}>DÉMARRAGE</div>
+                  <div style={{ fontSize: 13, color: "var(--ink)", marginBottom: 6 }}>
+                    <span style={{ color: "var(--muted)", fontSize: 11 }}>Date : </span>
                     {p.startDate ? new Date(p.startDate).toLocaleDateString("fr-CA") : "—"}
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-                    <span style={{ color: "#64748b", fontSize: 11 }}>Facture : </span>
-                    <span className="tag" style={{ background: p.startInvoiceSent ? "#d1fae5" : "#fee2e2", color: p.startInvoiceSent ? "#059669" : "#dc2626", fontSize: 11 }}>
+                    <span style={{ color: "var(--muted)", fontSize: 11 }}>Facture : </span>
+                    <span className="tag" style={{ background: p.startInvoiceSent ? "var(--tint-green)" : "var(--tint-red)", color: p.startInvoiceSent ? "var(--c-green)" : "var(--c-red)", fontSize: 11 }}>
                       {p.startInvoiceSent ? "Envoyée" : "Non envoyée"}
                     </span>
                     {p.startInvoiceSent && (
-                      <span className="tag" style={{ background: p.startInvoicePaid ? "#dbeafe" : "#fef3c7", color: p.startInvoicePaid ? "#2563eb" : "#d97706", fontSize: 11 }}>
+                      <span className="tag" style={{ background: p.startInvoicePaid ? "var(--tint-blue)" : "var(--tint-amber)", color: p.startInvoicePaid ? "var(--c-blue)" : "var(--c-amber)", fontSize: 11 }}>
                         {p.startInvoicePaid ? "Payée" : "Non payée"}
                       </span>
                     )}
                     {p.startInvoiceSent && p.startInvoiceName && (
-                      <span style={{ fontSize: 11, color: "#64748b" }}>{p.startInvoiceName}</span>
+                      <span style={{ fontSize: 11, color: "var(--muted)" }}>{p.startInvoiceName}</span>
                     )}
                   </div>
                 </div>
                 {/* Probation info */}
-                <div style={{ background: "#f8fafc", borderRadius: 10, padding: 14 }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: "#d97706", marginBottom: 8 }}>VALIDATION PÉRIODE D'ESSAI</div>
-                  <div style={{ fontSize: 13, color: "#0f172a", marginBottom: 6 }}>
-                    <span style={{ color: "#64748b", fontSize: 11 }}>Date : </span>
+                <div style={{ background: "var(--surface-2)", borderRadius: 10, padding: 14 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "var(--c-amber)", marginBottom: 8 }}>VALIDATION PÉRIODE D'ESSAI</div>
+                  <div style={{ fontSize: 13, color: "var(--ink)", marginBottom: 6 }}>
+                    <span style={{ color: "var(--muted)", fontSize: 11 }}>Date : </span>
                     {p.probationDate ? new Date(p.probationDate).toLocaleDateString("fr-CA") : "—"}
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-                    <span style={{ color: "#64748b", fontSize: 11 }}>Facture : </span>
-                    <span className="tag" style={{ background: p.probationInvoiceSent ? "#d1fae5" : "#fee2e2", color: p.probationInvoiceSent ? "#059669" : "#dc2626", fontSize: 11 }}>
+                    <span style={{ color: "var(--muted)", fontSize: 11 }}>Facture : </span>
+                    <span className="tag" style={{ background: p.probationInvoiceSent ? "var(--tint-green)" : "var(--tint-red)", color: p.probationInvoiceSent ? "var(--c-green)" : "var(--c-red)", fontSize: 11 }}>
                       {p.probationInvoiceSent ? "Envoyée" : "Non envoyée"}
                     </span>
                     {p.probationInvoiceSent && (
-                      <span className="tag" style={{ background: p.probationInvoicePaid ? "#dbeafe" : "#fef3c7", color: p.probationInvoicePaid ? "#2563eb" : "#d97706", fontSize: 11 }}>
+                      <span className="tag" style={{ background: p.probationInvoicePaid ? "var(--tint-blue)" : "var(--tint-amber)", color: p.probationInvoicePaid ? "var(--c-blue)" : "var(--c-amber)", fontSize: 11 }}>
                         {p.probationInvoicePaid ? "Payée" : "Non payée"}
                       </span>
                     )}
                     {p.probationInvoiceSent && p.probationInvoiceName && (
-                      <span style={{ fontSize: 11, color: "#64748b" }}>{p.probationInvoiceName}</span>
+                      <span style={{ fontSize: 11, color: "var(--muted)" }}>{p.probationInvoiceName}</span>
                     )}
                   </div>
                   <div style={{ marginTop: 10 }}>
                     {p.probationValidated ? (
-                      <span className="tag" style={{ background: "#d1fae5", color: "#059669", fontSize: 11, fontWeight: 700, padding: "4px 12px" }}>
+                      <span className="tag" style={{ background: "var(--tint-green)", color: "var(--c-green)", fontSize: 11, fontWeight: 700, padding: "4px 12px" }}>
                         Période d'essai validée
                       </span>
                     ) : !canEdit ? (
-                      <span className="tag" style={{ background: "#fef3c7", color: "#d97706", fontSize: 11 }}>En période d'essai</span>
+                      <span className="tag" style={{ background: "var(--tint-amber)", color: "var(--c-amber)", fontSize: 11 }}>En période d'essai</span>
                     ) : (
                       <button
                         className="btn btn-primary"
@@ -325,7 +325,7 @@ export default function PlacementsPage({ candidatures, candidates, missions, goT
                 </div>
               </div>
               {p.notes && (
-                <div style={{ marginTop: 10, fontSize: 12, color: "#64748b", fontStyle: "italic" }}>{p.notes}</div>
+                <div style={{ marginTop: 10, fontSize: 12, color: "var(--muted)", fontStyle: "italic" }}>{p.notes}</div>
               )}
             </div>
           )}

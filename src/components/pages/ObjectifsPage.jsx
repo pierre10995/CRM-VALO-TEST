@@ -136,8 +136,8 @@ export default function ObjectifsPage({ contacts, missions, candidatures, users,
     <div>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
         <div>
-          <h1 style={{ fontSize: 26, fontWeight: 800, color: "#0f172a" }}>Objectifs</h1>
-          <p style={{ fontSize: 13.5, color: "#64748b", marginTop: 3 }}>Suivi des objectifs par utilisateur, connecté au chiffre d'affaires</p>
+          <h1 style={{ fontSize: 26, fontWeight: 800, color: "var(--ink)" }}>Objectifs</h1>
+          <p style={{ fontSize: 13.5, color: "var(--muted)", marginTop: 3 }}>Suivi des objectifs par utilisateur, connecté au chiffre d'affaires</p>
         </div>
         <button className="btn btn-primary" onClick={() => { setShowAddForm(!showAddForm); setAddForm({ period: selectedPeriod, fiscalYearId: activeFY?.id || "" }); }}>
           {showAddForm ? "Annuler" : "+ Définir un objectif"}
@@ -152,8 +152,8 @@ export default function ObjectifsPage({ contacts, missions, candidatures, users,
           label={activeFY && activeFY.target > 0 ? `Progression ${activeFY.label}` : "Objectifs définis"}
           value={activeFY && activeFY.target > 0 ? `${Math.round((globalCA / activeFY.target) * 100)}%` : objectives.length}
           subtitle={activeFY && activeFY.target > 0 ? `${fmtCAD(globalCA)} / ${fmtCAD(activeFY.target)}` : undefined}
-          bg={activeFY && activeFY.target > 0 ? (globalCA >= activeFY.target ? "#ecfdf5" : "#fffbeb") : "#f5f3ff"}
-          color={activeFY && activeFY.target > 0 ? (globalCA >= activeFY.target ? "#059669" : "#d97706") : "#8b5cf6"}
+          bg={activeFY && activeFY.target > 0 ? (globalCA >= activeFY.target ? "var(--tint-green-soft)" : "var(--tint-amber-soft)") : "var(--tint-violet-soft)"}
+          color={activeFY && activeFY.target > 0 ? (globalCA >= activeFY.target ? "var(--c-green)" : "var(--c-amber)") : "#8b5cf6"}
         />
         <KPICard
           label="Postes gagnés"
@@ -172,8 +172,8 @@ export default function ObjectifsPage({ contacts, missions, candidatures, users,
             <button key={p.id} onClick={() => setSelectedPeriod(p.id)} className="btn" style={{
               padding: "8px 16px", fontSize: 13,
               background: selectedPeriod === p.id ? "linear-gradient(135deg, #2563eb, #3b82f6)" : "white",
-              color: selectedPeriod === p.id ? "white" : "#64748b",
-              border: selectedPeriod === p.id ? "none" : "1.5px solid #e2e8f0",
+              color: selectedPeriod === p.id ? "white" : "var(--muted)",
+              border: selectedPeriod === p.id ? "none" : "1.5px solid var(--line)",
               boxShadow: selectedPeriod === p.id ? "0 4px 12px rgba(37,99,235,0.3)" : "none",
             }}>{p.label}</button>
           ))}
@@ -201,10 +201,10 @@ export default function ObjectifsPage({ contacts, missions, candidatures, users,
 
         return (
           <div key={sp.value ?? "year"} style={{ marginBottom: 24 }}>
-            <div style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", marginBottom: 12, padding: "8px 0", borderBottom: "2px solid #e2e8f0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", marginBottom: 12, padding: "8px 0", borderBottom: "2px solid var(--line)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <span>{sp.label}</span>
               {periodObjs.length > 0 && (
-                <span style={{ fontSize: 12, color: "#64748b", fontWeight: 500 }}>
+                <span style={{ fontSize: 12, color: "var(--muted)", fontWeight: 500 }}>
                   {periodObjs.length} objectif{periodObjs.length > 1 ? "s" : ""}
                 </span>
               )}
@@ -212,7 +212,7 @@ export default function ObjectifsPage({ contacts, missions, candidatures, users,
 
             {periodObjs.length === 0 && (
               <div className="card" style={{ padding: 20, textAlign: "center" }}>
-                <p style={{ fontSize: 13, color: "#64748b" }}>Aucun objectif défini pour cette période</p>
+                <p style={{ fontSize: 13, color: "var(--muted)" }}>Aucun objectif défini pour cette période</p>
               </div>
             )}
 
@@ -239,15 +239,15 @@ export default function ObjectifsPage({ contacts, missions, candidatures, users,
         );
       }) : (
         <div className="card" style={{ padding: 40, textAlign: "center" }}>
-          <p style={{ fontSize: 14, color: "#64748b" }}>Sélectionnez une année fiscale pour voir les objectifs</p>
-          <p style={{ fontSize: 12, color: "#64748b", marginTop: 6 }}>Les années fiscales sont créées dans la page Chiffre d'affaires</p>
+          <p style={{ fontSize: 14, color: "var(--muted)" }}>Sélectionnez une année fiscale pour voir les objectifs</p>
+          <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>Les années fiscales sont créées dans la page Chiffre d'affaires</p>
         </div>
       )}
 
       {activeFY && filteredObjectives.length === 0 && !showAddForm && (
         <div className="card" style={{ padding: 40, textAlign: "center" }}>
-          <p style={{ fontSize: 14, color: "#64748b" }}>Aucun objectif défini pour {activeFY.label} en mode {PERIODS.find(p => p.id === selectedPeriod)?.label.toLowerCase()}</p>
-          <p style={{ fontSize: 12, color: "#64748b", marginTop: 6 }}>Cliquez sur « + Définir un objectif » pour commencer</p>
+          <p style={{ fontSize: 14, color: "var(--muted)" }}>Aucun objectif défini pour {activeFY.label} en mode {PERIODS.find(p => p.id === selectedPeriod)?.label.toLowerCase()}</p>
+          <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>Cliquez sur « + Définir un objectif » pour commencer</p>
         </div>
       )}
     </div>

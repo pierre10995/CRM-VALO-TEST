@@ -84,8 +84,8 @@ export default function RevenuePage({ contacts, missions, candidatures, users, f
     <div>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
         <div>
-          <h1 style={{ fontSize: 26, fontWeight: 800, color: "#0f172a" }}>Chiffre d'affaires</h1>
-          <p style={{ fontSize: 13.5, color: "#64748b", marginTop: 3 }}>CA basé sur les postes pourvus (candidats placés)</p>
+          <h1 style={{ fontSize: 26, fontWeight: 800, color: "var(--ink)" }}>Chiffre d'affaires</h1>
+          <p style={{ fontSize: 13.5, color: "var(--muted)", marginTop: 3 }}>CA basé sur les postes pourvus (candidats placés)</p>
         </div>
       </div>
 
@@ -95,7 +95,7 @@ export default function RevenuePage({ contacts, missions, candidatures, users, f
       {/* Fiscal year management */}
       <div className="card" style={{ marginBottom: 24 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>Années fiscales</div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)" }}>Années fiscales</div>
           <button className="btn btn-primary" style={{ padding: "6px 14px", fontSize: 12 }} onClick={() => { setShowAddYear(!showAddYear); setEditingYear(null); }}>
             {showAddYear ? "Annuler" : "+ Ajouter une année"}
           </button>
@@ -103,21 +103,21 @@ export default function RevenuePage({ contacts, missions, candidatures, users, f
 
         {/* Add form */}
         {showAddYear && (
-          <div className="resp-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr auto", gap: 10, marginBottom: 16, padding: 14, background: "#f0fdf4", borderRadius: 10, border: "1px solid #bbf7d0" }}>
+          <div className="resp-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr auto", gap: 10, marginBottom: 16, padding: 14, background: "var(--tint-green-soft)", borderRadius: 10, border: "1px solid #bbf7d0" }}>
             <div>
-              <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", marginBottom: 4, display: "block" }}>Libellé</label>
+              <label style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", marginBottom: 4, display: "block" }}>Libellé</label>
               <input className="input" placeholder="2027-2028" value={newYear.label} onChange={e => setNewYear(p => ({ ...p, label: e.target.value }))} />
             </div>
             <div>
-              <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", marginBottom: 4, display: "block" }}>Début</label>
+              <label style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", marginBottom: 4, display: "block" }}>Début</label>
               <input className="input" type="date" value={newYear.startDate} onChange={e => setNewYear(p => ({ ...p, startDate: e.target.value }))} />
             </div>
             <div>
-              <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", marginBottom: 4, display: "block" }}>Fin</label>
+              <label style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", marginBottom: 4, display: "block" }}>Fin</label>
               <input className="input" type="date" value={newYear.endDate} onChange={e => setNewYear(p => ({ ...p, endDate: e.target.value }))} />
             </div>
             <div>
-              <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", marginBottom: 4, display: "block" }}>Objectif ($)</label>
+              <label style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", marginBottom: 4, display: "block" }}>Objectif ($)</label>
               <input className="input" type="number" value={newYear.target || ""} onChange={e => setNewYear(p => ({ ...p, target: e.target.value }))} />
             </div>
             <button className="btn btn-primary" style={{ alignSelf: "end", padding: "10px 16px" }} onClick={addFiscalYear}>Ajouter</button>
@@ -129,8 +129,8 @@ export default function RevenuePage({ contacts, missions, candidatures, users, f
           <button onClick={() => setSelectedYear("all")} className="btn" style={{
             padding: "8px 16px",
             background: selectedYear === "all" ? "linear-gradient(135deg, #2563eb, #3b82f6)" : "white",
-            color: selectedYear === "all" ? "white" : "#64748b",
-            border: selectedYear === "all" ? "none" : "1.5px solid #e2e8f0",
+            color: selectedYear === "all" ? "white" : "var(--muted)",
+            border: selectedYear === "all" ? "none" : "1.5px solid var(--line)",
             boxShadow: selectedYear === "all" ? "0 4px 12px rgba(37,99,235,0.3)" : "none",
             fontSize: 13,
           }}>Toutes les années</button>
@@ -138,8 +138,8 @@ export default function RevenuePage({ contacts, missions, candidatures, users, f
             <button key={fy.id} onClick={() => setSelectedYear(String(fy.id))} className="btn" style={{
               padding: "8px 16px",
               background: selectedYear === String(fy.id) ? "linear-gradient(135deg, #2563eb, #3b82f6)" : "white",
-              color: selectedYear === String(fy.id) ? "white" : "#64748b",
-              border: selectedYear === String(fy.id) ? "none" : "1.5px solid #e2e8f0",
+              color: selectedYear === String(fy.id) ? "white" : "var(--muted)",
+              border: selectedYear === String(fy.id) ? "none" : "1.5px solid var(--line)",
               boxShadow: selectedYear === String(fy.id) ? "0 4px 12px rgba(37,99,235,0.3)" : "none",
               fontSize: 13,
             }}>
@@ -162,7 +162,7 @@ export default function RevenuePage({ contacts, missions, candidatures, users, f
         />
 
         {fyWithCA.length === 0 && !showAddYear && (
-          <p style={{ fontSize: 13, color: "#64748b", textAlign: "center", padding: 20 }}>Aucune année fiscale. Cliquez sur « + Ajouter une année » pour commencer.</p>
+          <p style={{ fontSize: 13, color: "var(--muted)", textAlign: "center", padding: 20 }}>Aucune année fiscale. Cliquez sur « + Ajouter une année » pour commencer.</p>
         )}
       </div>
 
@@ -172,8 +172,8 @@ export default function RevenuePage({ contacts, missions, candidatures, users, f
           <button key={o.id} onClick={() => setActiveOnglet(o.id)} className="btn" style={{
             padding: "10px 20px",
             background: activeOnglet === o.id ? "linear-gradient(135deg, #2563eb, #3b82f6)" : "white",
-            color: activeOnglet === o.id ? "white" : "#64748b",
-            border: activeOnglet === o.id ? "none" : "1.5px solid #e2e8f0",
+            color: activeOnglet === o.id ? "white" : "var(--muted)",
+            border: activeOnglet === o.id ? "none" : "1.5px solid var(--line)",
             boxShadow: activeOnglet === o.id ? "0 4px 12px rgba(37,99,235,0.3)" : "none",
             fontSize: 13.5,
           }}>{o.label}</button>
@@ -191,8 +191,8 @@ export default function RevenuePage({ contacts, missions, candidatures, users, f
             label={`Objectif ${activeFY.label}`}
             value={`${activeFY.target > 0 ? Math.round((currentCA / activeFY.target) * 100) : 0}%`}
             subtitle={`${fmtCAD(currentCA)} / ${fmtCAD(activeFY.target)}`}
-            bg={currentCA >= activeFY.target ? "#ecfdf5" : "#fffbeb"}
-            color={currentCA >= activeFY.target ? "#059669" : "#d97706"}
+            bg={currentCA >= activeFY.target ? "var(--tint-green-soft)" : "var(--tint-amber-soft)"}
+            color={currentCA >= activeFY.target ? "var(--c-green)" : "var(--c-amber)"}
           />
         )}
       </div>
@@ -205,12 +205,12 @@ export default function RevenuePage({ contacts, missions, candidatures, users, f
               <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
                 <div style={{ width: 44, height: 44, background: "linear-gradient(135deg, #dbeafe, #bfdbfe)", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, fontWeight: 700, color: "#1d4ed8" }}>{u.fullName[0]}</div>
                 <div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: "#0f172a" }}>{u.fullName}</div>
-                  <div style={{ fontSize: 12, color: "#64748b" }}>{u.count} poste{u.count > 1 ? "s" : ""} gagné{u.count > 1 ? "s" : ""}</div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)" }}>{u.fullName}</div>
+                  <div style={{ fontSize: 12, color: "var(--muted)" }}>{u.count} poste{u.count > 1 ? "s" : ""} gagné{u.count > 1 ? "s" : ""}</div>
                 </div>
               </div>
-              <div style={{ fontSize: 26, fontWeight: 800, color: "#059669" }}>{fmtCAD(u.ca)}</div>
-              <div style={{ fontSize: 12, color: "#64748b", marginTop: 4 }}>Voir le détail →</div>
+              <div style={{ fontSize: 26, fontWeight: 800, color: "var(--c-green)" }}>{fmtCAD(u.ca)}</div>
+              <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>Voir le détail →</div>
             </div>
           ))}
         </div>
@@ -218,27 +218,27 @@ export default function RevenuePage({ contacts, missions, candidatures, users, f
 
       {/* Won missions list */}
       <div className="card">
-        <h3 style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", marginBottom: 18 }}>
+        <h3 style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", marginBottom: 18 }}>
           {activeOnglet === "total" ? "Postes gagnés" : `Postes gagnés — ${currentLabel}`}
           {activeFY && ` (${activeFY.label})`}
         </h3>
-        {currentMissions.length === 0 && <p style={{ color: "#64748b", fontSize: 13 }}>Aucun poste gagné</p>}
+        {currentMissions.length === 0 && <p style={{ color: "var(--muted)", fontSize: 13 }}>Aucun poste gagné</p>}
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           {currentMissions.map(m => (
             <div key={m.id}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
                 <div>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: "#0f172a" }}>{m.title}</div>
-                  <div style={{ fontSize: 12.5, color: "#64748b" }}>{m.company} — {m.location || "—"}</div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)" }}>{m.title}</div>
+                  <div style={{ fontSize: 12.5, color: "var(--muted)" }}>{m.company} — {m.location || "—"}</div>
                 </div>
                 <div style={{ textAlign: "right" }}>
-                  <div style={{ fontSize: 16, fontWeight: 800, color: "#059669", whiteSpace: "nowrap" }}>{fmtCAD(m.commission)}</div>
+                  <div style={{ fontSize: 16, fontWeight: 800, color: "var(--c-green)", whiteSpace: "nowrap" }}>{fmtCAD(m.commission)}</div>
                   {m.recruiterCommission > 0 && (
-                    <div style={{ fontSize: 11, color: "#dc2626", whiteSpace: "nowrap" }}>- {fmtCAD(m.recruiterCommission)} recruteur</div>
+                    <div style={{ fontSize: 11, color: "var(--c-red)", whiteSpace: "nowrap" }}>- {fmtCAD(m.recruiterCommission)} recruteur</div>
                   )}
                 </div>
               </div>
-              <div style={{ height: 7, background: "#f1f5f9", borderRadius: 4 }}>
+              <div style={{ height: 7, background: "var(--surface-3)", borderRadius: 4 }}>
                 <div style={{ width: `${((m.commission || 0) / maxCommission) * 100}%`, height: "100%", background: "linear-gradient(90deg, #059669, #34d399)", borderRadius: 4 }} />
               </div>
             </div>
