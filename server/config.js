@@ -48,6 +48,8 @@ export const config = {
 
   anthropic: {
     apiKey: process.env.ANTHROPIC_API_KEY || "",
+    // Modèle centralisé (modifiable via ANTHROPIC_MODEL sans changer le code).
+    model: process.env.ANTHROPIC_MODEL || "claude-sonnet-4-5",
   },
 
   supabase: {

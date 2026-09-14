@@ -2,13 +2,15 @@ import { useState, useEffect } from "react";
 import api from "../../services/api";
 import { fmtCAD } from "../../utils/constants";
 import { wonMissionsForFY, sumCommission, findCurrentFY } from "../../utils/revenue";
+import usePersistedState from "../../hooks/usePersistedState";
 
-export default function DashboardPage({ stats, activities, contacts, missions, candidatures, fiscalYears, loaded = true, onNavigate, goToContact, goToMission, isAdmin }) {
+export default function DashboardPage({ stats, activities, contacts, missions, candidatures, fiscalYears, loaded = true, onNavigate, goToContact, goToMission, onPlanFollowUp, currentUser, isAdmin }) {
   const [reminders, setReminders] = useState([]);
   const [dismissedKeys, setDismissedKeys] = useState(() => {
     try { return JSON.parse(localStorage.getItem("crm_dismissed_reminders") || "[]"); } catch { return []; }
   });
   const [partnerSubmissions, setPartnerSubmissions] = useState([]);
+  const [scope, setScope] = usePersistedState("dashboard.scope", "all"); // "all" | "me"
 
   useEffect(() => {
     api.get("/api/auto-reminders").then(data => { if (Array.isArray(data)) setReminders(data); }).catch(() => {});
@@ -25,20 +27,34 @@ export default function DashboardPage({ stats, activities, contacts, missions, c
   };
 
   const visibleReminders = reminders.filter(r => !dismissedKeys.includes(reminderKey(r)));
-
-  // Partner proposals: only show "En attente" stage (not yet accepted/archived)
   const pendingPartnerProposals = partnerSubmissions.filter(s => s.stage === "En attente");
 
-  const totalClients = contacts.filter(c => c.status === "Client").length;
-  const totalCandidats = contacts.filter(c => c.status === "Candidat").length;
-  const missionsOuvertes = missions.filter(m => m.status === "Ouverte" || m.status === "En cours").length;
-  const placements = candidatures.filter(cd => cd.stage === "Placé").length;
+  // ─── Périmètre : toute l'équipe ou uniquement mes éléments ──────────────────
+  const mine = scope === "me";
+  const uname = currentUser?.fullName;
+  const uid = currentUser?.id;
+  const sContacts = mine ? contacts.filter(c => c.owner === uname) : contacts;
+  const sMissions = mine ? missions.filter(m => String(m.assignedTo) === String(uid)) : missions;
+  const sMissionIds = new Set(sMissions.map(m => m.id));
+  const sCandidatures = mine ? candidatures.filter(cd => sMissionIds.has(cd.missionId)) : candidatures;
+  const sActivities = mine ? activities.filter(a => String(a.userId) === String(uid)) : activities;
 
-  // CA de l'année fiscale en cours — même source de vérité que la page Chiffre d'affaires
+  const totalClients = sContacts.filter(c => c.status === "Client").length;
+  const totalCandidats = sContacts.filter(c => c.status === "Candidat").length;
+  const missionsOuvertes = sMissions.filter(m => m.status === "Ouverte" || m.status === "En cours").length;
+  const placements = sCandidatures.filter(cd => cd.stage === "Placé").length;
+
   const currentFY = findCurrentFY(fiscalYears);
-  const caFYMissions = wonMissionsForFY(missions, currentFY ? currentFY.id : "all");
+  const caFYMissions = wonMissionsForFY(sMissions, currentFY ? currentFY.id : "all");
   const totalCommissions = sumCommission(caFYMissions);
-  const recentActivities = activities.slice(0, 8);
+  const recentActivities = sActivities.slice(0, 8);
+
+  // ─── Agenda du jour ─────────────────────────────────────────────────────────
+  const now = new Date();
+  const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const dayEnd = new Date(dayStart); dayEnd.setDate(dayEnd.getDate() + 1);
+  const overdueTasks = sActivities.filter(a => !a.completed && a.dueDate && new Date(a.dueDate) < dayStart).length;
+  const todayTasks = sActivities.filter(a => !a.completed && a.dueDate && new Date(a.dueDate) >= dayStart && new Date(a.dueDate) < dayEnd).length;
 
   const fyLabel = currentFY ? currentFY.label : "Année en cours";
   const kpis = [
@@ -54,12 +70,43 @@ export default function DashboardPage({ stats, activities, contacts, missions, c
     else if (r.contactId && goToContact) goToContact(r.contactId);
   };
 
+  // Pastilles du bandeau « topo du jour »
+  const topo = [
+    { label: overdueTasks > 1 ? "en retard" : "en retard", value: overdueTasks, color: "#dc2626", bg: "#fef2f2", onClick: () => onNavigate && onNavigate("activites") },
+    { label: "à faire aujourd'hui", value: todayTasks, color: "#2563eb", bg: "#eff6ff", onClick: () => onNavigate && onNavigate("activites") },
+    { label: visibleReminders.length > 1 ? "relances" : "relance", value: visibleReminders.length, color: "#d97706", bg: "#fffbeb", onClick: null },
+    { label: pendingPartnerProposals.length > 1 ? "propositions" : "proposition", value: pendingPartnerProposals.length, color: "#059669", bg: "#f0fdf4", onClick: () => onNavigate && onNavigate("partenaires") },
+  ];
+
   return (
     <div style={{ animation: "fadeIn 0.4s ease" }}>
-      <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 26, fontWeight: 800, color: "#0f172a" }}>Dashboard</h1>
-        <p style={{ fontSize: 13.5, color: "#64748b", marginTop: 3 }}>{new Date().toLocaleDateString("fr-CA", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</p>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 22, flexWrap: "wrap", gap: 12 }}>
+        <div>
+          <h1 style={{ fontSize: 26, fontWeight: 800, color: "#0f172a" }}>Dashboard</h1>
+          <p style={{ fontSize: 13.5, color: "#64748b", marginTop: 3 }}>{new Date().toLocaleDateString("fr-CA", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</p>
+        </div>
+        <div style={{ display: "flex", gap: 4, background: "#f1f5f9", borderRadius: 10, padding: 4 }}>
+          {[{ k: "all", l: "Équipe" }, { k: "me", l: "Moi" }].map(o => (
+            <button key={o.k} onClick={() => setScope(o.k)} style={{ padding: "7px 18px", fontSize: 13, fontWeight: 600, borderRadius: 8, border: "none", cursor: "pointer", background: scope === o.k ? "#fff" : "transparent", color: scope === o.k ? "#1d4ed8" : "#64748b", boxShadow: scope === o.k ? "0 1px 3px rgba(15,23,42,0.08)" : "none" }}>{o.l}</button>
+          ))}
+        </div>
       </div>
+
+      {/* Mon topo du jour */}
+      <div className="card" style={{ marginBottom: 20, padding: 16, display: "flex", gap: 12, flexWrap: "wrap" }}>
+        {topo.map((t, i) => (
+          <div
+            key={i}
+            onClick={t.onClick || undefined}
+            className={t.onClick ? "row-hover" : undefined}
+            style={{ flex: "1 1 150px", display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", borderRadius: 12, background: t.bg, cursor: t.onClick ? "pointer" : "default" }}
+          >
+            <span style={{ fontSize: 26, fontWeight: 800, color: t.color }}>{t.value}</span>
+            <span style={{ fontSize: 12.5, fontWeight: 600, color: "#475569", lineHeight: 1.2 }}>{t.label}</span>
+          </div>
+        ))}
+      </div>
+
       <div className="resp-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 24 }}>
         {!loaded && kpis.map((kpi, i) => (
           <div key={i} className="card">
@@ -113,13 +160,23 @@ export default function DashboardPage({ stats, activities, contacts, missions, c
               const clickable = (r.missionId && goToMission) || (r.contactId && goToContact);
               return (
               <div key={i} onClick={clickable ? () => goToReminder(r) : undefined} className={clickable ? "row-hover" : undefined} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "white", borderRadius: 8, border: "1px solid #fef3c7", cursor: clickable ? "pointer" : "default" }}>
-                <div style={{ width: 28, height: 28, borderRadius: 8, background: r.type === "prospect" ? "#dbeafe" : r.type === "candidature" ? "#fef3c7" : "#fee2e2", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: r.type === "prospect" ? "#2563eb" : r.type === "candidature" ? "#d97706" : "#dc2626" }}>
+                <div style={{ width: 28, height: 28, borderRadius: 8, flexShrink: 0, background: r.type === "prospect" ? "#dbeafe" : r.type === "candidature" ? "#fef3c7" : "#fee2e2", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: r.type === "prospect" ? "#2563eb" : r.type === "candidature" ? "#d97706" : "#dc2626" }}>
                   {r.type === "prospect" ? "P" : r.type === "candidature" ? "C" : "M"}
                 </div>
-                <div style={{ flex: 1 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 12.5, color: "#0f172a" }}>{r.message}</div>
                 </div>
-                <span style={{ fontSize: 11, fontWeight: 700, color: r.days >= 14 ? "#dc2626" : "#d97706", background: r.days >= 14 ? "#fef2f2" : "#fffbeb", padding: "2px 8px", borderRadius: 8 }}>{r.days}j</span>
+                <span style={{ fontSize: 11, fontWeight: 700, whiteSpace: "nowrap", color: r.days >= 14 ? "#dc2626" : "#d97706", background: r.days >= 14 ? "#fef2f2" : "#fffbeb", padding: "2px 8px", borderRadius: 8 }}>{r.days}j</span>
+                {onPlanFollowUp && (r.contactId || r.missionId) && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onPlanFollowUp(r); }}
+                    title="Planifier un suivi"
+                    className="btn btn-ghost"
+                    style={{ padding: "4px 10px", fontSize: 11, whiteSpace: "nowrap", flexShrink: 0 }}
+                  >
+                    Planifier
+                  </button>
+                )}
                 <button
                   onClick={(e) => { e.stopPropagation(); dismissReminder(r); }}
                   title="Marquer comme fait"

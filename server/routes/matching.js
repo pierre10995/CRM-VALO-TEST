@@ -27,7 +27,7 @@ router.post("/mission/:id", asyncHandler(async (req, res) => {
   const anthropic = new Anthropic({ apiKey: config.anthropic.apiKey });
 
   const message = await anthropic.messages.create({
-    model: "claude-sonnet-4-20250514",
+    model: config.anthropic.model,
     max_tokens: 1500,
     messages: [{ role: "user", content: `Tu es un expert en recrutement. Analyse cette mission et classe les candidats par compatibilité.
 
@@ -77,7 +77,7 @@ router.post("/candidate/:id", asyncHandler(async (req, res) => {
   const anthropic = new Anthropic({ apiKey: config.anthropic.apiKey });
 
   const message = await anthropic.messages.create({
-    model: "claude-sonnet-4-20250514",
+    model: config.anthropic.model,
     max_tokens: 1500,
     messages: [{ role: "user", content: `Tu es un expert en recrutement. Analyse ce candidat et classe les missions par compatibilité.
 
