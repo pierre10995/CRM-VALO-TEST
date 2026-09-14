@@ -18,5 +18,5 @@ jobs:
       - run: npm run lint --if-present
       - run: npm test
       - run: npm run build
-      - name: Audit des dépendances (niveau high)
-        run: npm audit --audit-level=high || true
+      - name: Audit des dépendances (échoue dès une vulnérabilité high/critical)
+        run: npm audit --audit-level=high
