@@ -3,7 +3,8 @@ import api from "../../services/api";
 import SearchSelect from "../common/SearchSelect";
 import { useConfirm } from "../common/ConfirmDialog";
 
-export default function PlacementsPage({ candidatures, candidates, missions, goToContact, goToMission }) {
+// canEdit : le suivi de facturation n'est modifiable que par les admins.
+export default function PlacementsPage({ candidatures, candidates, missions, goToContact, goToMission, canEdit = true }) {
   const confirm = useConfirm();
   const [placements, setPlacements] = useState([]);
   const [editing, setEditing] = useState(null);
@@ -97,9 +98,11 @@ export default function PlacementsPage({ candidatures, candidates, missions, goT
             <option value="">Tous les propriétaires</option>
             {owners.map(o => <option key={o} value={o}>{o}</option>)}
           </select>
-          <button className="btn btn-primary" onClick={() => { setShowAdd(true); setAddForm({}); }} disabled={placedCandidatures.length === 0}>
-            + Ajouter un placement
-          </button>
+          {canEdit && (
+            <button className="btn btn-primary" onClick={() => { setShowAdd(true); setAddForm({}); }} disabled={placedCandidatures.length === 0}>
+              + Ajouter un placement
+            </button>
+          )}
         </div>
       </div>
 
@@ -237,10 +240,12 @@ export default function PlacementsPage({ candidatures, candidates, missions, goT
                     {p.owner && <div style={{ fontSize: 11, color: "#2563eb", marginTop: 2 }}>Propriétaire : {p.owner}</div>}
                   </div>
                 </div>
-                <div style={{ display: "flex", gap: 6 }}>
-                  <button className="btn btn-ghost" style={{ padding: "4px 10px", fontSize: 11 }} onClick={() => startEdit(p)}>Modifier</button>
-                  <button className="btn btn-danger" style={{ padding: "4px 10px", fontSize: 11 }} onClick={() => handleDelete(p.id)}>Suppr.</button>
-                </div>
+                {canEdit && (
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <button className="btn btn-ghost" style={{ padding: "4px 10px", fontSize: 11 }} onClick={() => startEdit(p)}>Modifier</button>
+                    <button className="btn btn-danger" style={{ padding: "4px 10px", fontSize: 11 }} onClick={() => handleDelete(p.id)}>Suppr.</button>
+                  </div>
+                )}
               </div>
               <div className="resp-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
                 {/* Start info */}
@@ -291,6 +296,8 @@ export default function PlacementsPage({ candidatures, candidates, missions, goT
                       <span className="tag" style={{ background: "#d1fae5", color: "#059669", fontSize: 11, fontWeight: 700, padding: "4px 12px" }}>
                         Période d'essai validée
                       </span>
+                    ) : !canEdit ? (
+                      <span className="tag" style={{ background: "#fef3c7", color: "#d97706", fontSize: 11 }}>En période d'essai</span>
                     ) : (
                       <button
                         className="btn btn-primary"

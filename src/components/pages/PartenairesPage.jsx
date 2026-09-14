@@ -144,7 +144,8 @@ export default function PartenairesPage({ missions, currentUser }) {
   };
 
   const updateStage = async (candidatureId, stage) => {
-    const res = await api.put(`/api/candidatures/${candidatureId}`, { stage, rating: 0, notes: "", interviewDate: null });
+    // Mise à jour partielle : on ne touche qu'à l'étape (le résumé partenaire est conservé)
+    const res = await api.put(`/api/candidatures/${candidatureId}`, { stage });
     if (res.ok) await loadSubmissions();
   };
 

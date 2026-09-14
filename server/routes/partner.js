@@ -6,8 +6,8 @@ import { partnerAuthMiddleware, uploadLimiter, emailCheckLimiter } from "../midd
 import { validate } from "../validators/validate.js";
 import { partnerSubmitSchema } from "../validators/schemas.js";
 import { asyncHandler, AppError } from "../helpers/errors.js";
-import { sanitizeFileName } from "../helpers/sanitize.js";
-import { fmtMission } from "../formatters.js";
+import { sanitizeFileName, escapeHtml } from "../helpers/sanitize.js";
+import { fmtMissionForPartner } from "../formatters.js";
 import { logger } from "../helpers/logger.js";
 
 const router = Router();
@@ -30,7 +30,7 @@ router.get("/missions", asyncHandler(async (req, res) => {
     LEFT JOIN fiscal_years fy ON m.fiscal_year_id = fy.id
     ORDER BY m.created_at DESC
   `, [req.partner.id]);
-  res.json(rows.map(fmtMission));
+  res.json(rows.map(fmtMissionForPartner));
 }));
 
 // ─── Get single mission detail (if affiliated) ─────────────────────────────
@@ -49,7 +49,7 @@ router.get("/missions/:id", asyncHandler(async (req, res) => {
   `, [req.partner.id, req.params.id]);
 
   if (rows.length === 0) throw new AppError(404, "Mission non trouvée ou non affiliée");
-  res.json(fmtMission(rows[0]));
+  res.json(fmtMissionForPartner(rows[0]));
 }));
 
 // ─── List files attached to an affiliated mission ───────────────────────────
@@ -110,9 +110,11 @@ router.get("/candidatures", asyncHandler(async (req, res) => {
   }
   q += " ORDER BY cd.created_at DESC";
   const { rows } = await pool.query(q, params);
+  // Les notes internes de candidature ne sont pas exposées au partenaire :
+  // les échanges passent par candidature_comments (visible_to_partner).
   res.json(rows.map(r => ({
     id: r.id, candidateId: r.candidate_id, missionId: r.mission_id,
-    stage: r.stage, notes: r.notes || "", createdAt: r.created_at,
+    stage: r.stage, createdAt: r.created_at,
     candidateName: r.candidate_name || "", candidateEmail: r.candidate_email || "",
     candidatePhone: r.candidate_phone || "",
     missionTitle: r.mission_title || "", missionCompany: r.mission_company || "",
@@ -207,14 +209,14 @@ router.post("/submit", uploadLimiter, validate(partnerSubmitSchema), asyncHandle
           to: mission.assigned_email,
           subject: `Nouveau candidat proposé : ${name} pour ${mission.title}`,
           html: `<h2>Nouveau candidat proposé par un partenaire</h2>
-            <p>Le partenaire <strong>${partner?.name || "Inconnu"}</strong>${partner?.company ? ` (${partner.company})` : ""} a soumis un candidat pour votre mission.</p>
+            <p>Le partenaire <strong>${escapeHtml(partner?.name || "Inconnu")}</strong>${partner?.company ? ` (${escapeHtml(partner.company)})` : ""} a soumis un candidat pour votre mission.</p>
             <table style="border-collapse:collapse;margin:16px 0;">
-              <tr><td style="padding:6px 12px;font-weight:bold;background:#f8fafc;">Mission</td><td style="padding:6px 12px;">${mission.title} — ${mission.company}</td></tr>
-              <tr><td style="padding:6px 12px;font-weight:bold;background:#f8fafc;">Candidat</td><td style="padding:6px 12px;">${name}</td></tr>
-              ${email ? `<tr><td style="padding:6px 12px;font-weight:bold;background:#f8fafc;">Email</td><td style="padding:6px 12px;">${email}</td></tr>` : ""}
-              ${phone ? `<tr><td style="padding:6px 12px;font-weight:bold;background:#f8fafc;">Téléphone</td><td style="padding:6px 12px;">${phone}</td></tr>` : ""}
+              <tr><td style="padding:6px 12px;font-weight:bold;background:#f8fafc;">Mission</td><td style="padding:6px 12px;">${escapeHtml(mission.title)} — ${escapeHtml(mission.company)}</td></tr>
+              <tr><td style="padding:6px 12px;font-weight:bold;background:#f8fafc;">Candidat</td><td style="padding:6px 12px;">${escapeHtml(name)}</td></tr>
+              ${email ? `<tr><td style="padding:6px 12px;font-weight:bold;background:#f8fafc;">Email</td><td style="padding:6px 12px;">${escapeHtml(email)}</td></tr>` : ""}
+              ${phone ? `<tr><td style="padding:6px 12px;font-weight:bold;background:#f8fafc;">Téléphone</td><td style="padding:6px 12px;">${escapeHtml(phone)}</td></tr>` : ""}
             </table>
-            ${summary ? `<p><strong>Résumé :</strong><br/>${summary.replace(/\n/g, "<br/>")}</p>` : ""}
+            ${summary ? `<p><strong>Résumé :</strong><br/>${escapeHtml(summary).replace(/\n/g, "<br/>")}</p>` : ""}
             <p style="color:#64748b;font-size:13px;">Connectez-vous au CRM pour consulter le profil et le CV.</p>`,
         });
         logger.info("Email notification partenaire envoyé", { to: mission.assigned_email, partner: partner?.name });

@@ -306,7 +306,7 @@ function CRMInner() {
         {activeTab === "pipeline" && <PipelinePage candidatures={candidatures} candidates={candidates} missions={missions} users={users} onEdit={cd => openModal("candidature", { ...cd })} onAdd={() => openModal("candidature", { stage: "Présélectionné", rating: 0 })} onDelete={deleteCandidature} loadAll={loadAll} />}
         {activeTab === "activites" && <ActivitesPage activities={activities} contacts={contacts} missions={missions} users={users} currentUser={currentUser} onAdd={() => openModal("activity", { type: "Appel" })} onEdit={a => openModal("activity", { ...a })} onToggle={toggleActivity} onDelete={deleteActivity} goToContact={goToContact} />}
         {activeTab === "evaluation" && <EvaluationPage candidates={candidates} missions={missions} loadAll={loadAll} />}
-        {activeTab === "placements" && <PlacementsPage candidatures={candidatures} candidates={candidates} missions={missions} goToContact={goToContact} goToMission={goToMission} />}
+        {activeTab === "placements" && <PlacementsPage candidatures={candidatures} candidates={candidates} missions={missions} goToContact={goToContact} goToMission={goToMission} canEdit={isAdmin} />}
         {activeTab === "revenue" && <RevenuePage contacts={contacts} missions={missions} candidatures={candidatures} users={users} fiscalYears={fiscalYears} loadAll={loadAll} />}
         {activeTab === "objectifs" && <ObjectifsPage contacts={contacts} missions={missions} candidatures={candidatures} users={users} fiscalYears={fiscalYears} loadAll={loadAll} />}
         {activeTab === "partenaires" && <PartenairesPage missions={missions} currentUser={currentUser} />}

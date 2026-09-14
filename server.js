@@ -6,7 +6,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 import { config } from "./server/config.js";
-import { initDB } from "./server/db.js";
+import { initDB, pool } from "./server/db.js";
 import { authMiddleware, aiLimiter, uploadLimiter } from "./server/middleware.js";
 import { errorMiddleware } from "./server/helpers/errors.js";
 import { logger } from "./server/helpers/logger.js";
@@ -50,11 +50,28 @@ app.use(express.json({ limit: config.limits.jsonPayload }));
 
 const publicPaths = ["/login", "/logout", "/forgot-password", "/reset-password", "/partner/login", "/partner/logout"];
 
+// Le rôle est relu en base à chaque requête (et non figé dans le JWT) : une
+// rétrogradation ou une suppression de compte prend effet immédiatement.
+async function refreshUserRole(req, res, next) {
+  try {
+    if (!req.user?.id) return next();
+    const { rows } = await pool.query("SELECT role FROM users WHERE id = $1", [req.user.id]);
+    if (rows.length === 0) {
+      res.clearCookie(config.jwt.cookieName);
+      return res.status(401).json({ error: "Compte introuvable, veuillez vous reconnecter" });
+    }
+    req.user.userRole = rows[0].role || "user";
+    next();
+  } catch (err) {
+    next(err);
+  }
+}
+
 app.use("/api", (req, res, next) => {
   if (publicPaths.includes(req.path)) return next();
   // Partner-facing routes handle their own auth via partnerAuthMiddleware
   if (req.path.startsWith("/partner/") && !req.path.startsWith("/partners")) return next();
-  authMiddleware(req, res, next);
+  authMiddleware(req, res, (err) => (err ? next(err) : refreshUserRole(req, res, next)));
 });
 
 // ─── Routes ──────────────────────────────────────────────────────────────────
@@ -75,7 +92,7 @@ app.use("/api/evaluations", aiLimiter, evaluationRoutes);
 app.use("/api/matching", aiLimiter, matchingRoutes);
 app.use("/api", statsRoutes);
 app.use("/api", cvParserRoutes);
-app.use("/api", uploadLimiter, bulkCvRoutes);
+app.use("/api", uploadLimiter, aiLimiter, bulkCvRoutes);
 
 // ─── Serve frontend ──────────────────────────────────────────────────────────
 

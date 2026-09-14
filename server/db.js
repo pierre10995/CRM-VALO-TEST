@@ -21,8 +21,6 @@ async function initDB() {
     `);
     await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS auth_id UUID UNIQUE`);
     await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(20) DEFAULT 'user'`);
-    await client.query(`UPDATE users SET role = 'superadmin' WHERE login = 'pierre@valo-inno.com'`);
-    await client.query(`UPDATE users SET role = 'admin' WHERE login = 'oceane@valo-inno.com' AND role = 'user'`);
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS password_resets (
@@ -401,6 +399,14 @@ async function initDB() {
         console.log("Users seeded (Supabase Auth)");
       }
       await markSeeded("users");
+    }
+
+    // Attribution initiale des rôles — one-shot (tracé dans seed_log), jamais
+    // ré-exécuté : les rôles se gèrent ensuite via PUT /api/users/:id/role.
+    if (!await alreadySeeded("roles_v1")) {
+      await client.query(`UPDATE users SET role = 'superadmin' WHERE login = 'pierre@valo-inno.com' AND role <> 'superadmin'`);
+      await client.query(`UPDATE users SET role = 'admin' WHERE login = 'oceane@valo-inno.com' AND role = 'user'`);
+      await markSeeded("roles_v1");
     }
 
     await client.query("UPDATE users SET login = 'oceane@valo-inno.com' WHERE login = 'oceane'");

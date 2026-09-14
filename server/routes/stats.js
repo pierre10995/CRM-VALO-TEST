@@ -7,7 +7,7 @@ import { validate } from "../validators/validate.js";
 import { validationStatusSchema, cvSummarySchema, userCreateSchema, userUpdateSchema } from "../validators/schemas.js";
 import { asyncHandler, AppError } from "../helpers/errors.js";
 import { logger } from "../helpers/logger.js";
-import { adminOnly, superAdminOnly } from "../middleware.js";
+import { adminOnly, superAdminOnly, aiLimiter } from "../middleware.js";
 
 const router = Router();
 
@@ -94,9 +94,16 @@ router.put("/users/:id", adminOnly, validate(userUpdateSchema), asyncHandler(asy
   const { fullName, login, password } = req.body;
   const { supabaseAdmin } = await import("../supabase.js");
 
-  const { rows: current } = await pool.query("SELECT id, auth_id, login FROM users WHERE id = $1", [req.params.id]);
+  const { rows: current } = await pool.query("SELECT id, auth_id, login, role FROM users WHERE id = $1", [req.params.id]);
   if (current.length === 0) throw new AppError(404, "Utilisateur non trouvé");
   const user = current[0];
+
+  // Un admin ne peut pas modifier (email/mot de passe) un compte super admin :
+  // sinon il pourrait en prendre le contrôle.
+  const isSelf = String(user.id) === String(req.user?.id);
+  if (user.role === "superadmin" && req.user?.userRole !== "superadmin" && !isSelf) {
+    throw new AppError(403, "Seul un super administrateur peut modifier ce compte");
+  }
 
   const emailChanged = login.trim().toLowerCase() !== user.login.toLowerCase();
   if (emailChanged) {
@@ -162,13 +169,18 @@ router.delete("/users/:id", superAdminOnly, asyncHandler(async (req, res) => {
 
 // ─── Audit log ──────────────────────────────────────────────────────────────
 
-router.get("/audit-log", superAdminOnly, asyncHandler(async (req, res) => {
+// Historique d'une entité (fiches) : accessible aux admins.
+// Journal complet (page Administration) : super admin uniquement.
+router.get("/audit-log", adminOnly, asyncHandler(async (req, res) => {
   const { entityType, entityId } = req.query;
   let q = "SELECT * FROM audit_log";
   const params = [];
   if (entityType && entityId) {
+    if (!/^\d+$/.test(String(entityId))) throw new AppError(400, "entityId invalide");
     q += " WHERE LOWER(entity_type) = LOWER($1) AND entity_id = $2";
-    params.push(entityType, entityId);
+    params.push(String(entityType).slice(0, 30), Number(entityId));
+  } else if (req.user?.userRole !== "superadmin") {
+    throw new AppError(403, "Accès réservé au super administrateur");
   }
   q += " ORDER BY created_at DESC LIMIT 200";
   const { rows } = await pool.query(q, params);
@@ -177,16 +189,6 @@ router.get("/audit-log", superAdminOnly, asyncHandler(async (req, res) => {
     entityType: r.entity_type, entityId: r.entity_id,
     details: r.details || "", createdAt: r.created_at,
   })));
-}));
-
-router.post("/audit-log", asyncHandler(async (req, res) => {
-  const { action, entityType, entityId, details } = req.body;
-  const userName = req.user?.login || "Système";
-  await pool.query(
-    "INSERT INTO audit_log (user_name, action, entity_type, entity_id, details) VALUES ($1,$2,$3,$4,$5)",
-    [userName, action, entityType, entityId || null, details || ""]
-  );
-  res.status(201).json({ ok: true });
 }));
 
 // ─── Tags CRUD ──────────────────────────────────────────────────────────────
@@ -336,7 +338,7 @@ router.get("/auto-reminders", asyncHandler(async (req, res) => {
 
 // ─── CV Summary (AI) ─────────────────────────────────────────────────────────
 
-router.post("/cv-summary/generate", validate(cvSummarySchema), asyncHandler(async (req, res) => {
+router.post("/cv-summary/generate", aiLimiter, validate(cvSummarySchema), asyncHandler(async (req, res) => {
   const { candidateId } = req.body;
 
   if (!config.anthropic.apiKey) throw new AppError(400, "Clé API Anthropic manquante");

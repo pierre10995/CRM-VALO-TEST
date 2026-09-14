@@ -39,14 +39,26 @@ router.put("/:id", validate(candidatureUpdateSchema), asyncHandler(async (req, r
   // Récupérer l'état avant mise à jour pour détecter les changements d'étape
   const { rows: before } = await pool.query("SELECT stage, partner_id FROM candidatures WHERE id = $1", [req.params.id]);
 
+  // Mise à jour partielle : uniquement les colonnes fournies
+  const sets = [];
+  const params = [];
+  const add = (col, val) => { params.push(val); sets.push(`${col}=$${params.length}`); };
+  if (d.stage !== undefined) add("stage", d.stage);
+  if (d.rating !== undefined) add("rating", d.rating);
+  if (d.notes !== undefined) add("notes", d.notes);
+  if (d.interviewDate !== undefined) add("interview_date", d.interviewDate);
+  if (sets.length === 0) return res.status(400).json({ error: "Aucune modification fournie" });
+  params.push(req.params.id);
   const { rows } = await pool.query(
-    `UPDATE candidatures SET stage=$1, rating=$2, notes=$3, interview_date=$4, updated_at=NOW() WHERE id=$5 RETURNING *`,
-    [d.stage, d.rating, d.notes, d.interviewDate, req.params.id]
+    `UPDATE candidatures SET ${sets.join(", ")}, updated_at=NOW() WHERE id=$${params.length} RETURNING *`,
+    params
   );
   if (rows.length === 0) return res.status(404).json({ error: "Candidature non trouvée" });
+  const newStage = rows[0].stage;
+  const newNotes = rows[0].notes;
 
   // Notifier le partenaire si l'étape a changé
-  if (before.length > 0 && before[0].partner_id && d.stage !== before[0].stage) {
+  if (before.length > 0 && before[0].partner_id && newStage !== before[0].stage) {
     const cd = rows[0];
     const { rows: cRows } = await pool.query("SELECT name FROM contacts WHERE id = $1", [cd.candidate_id]);
     const candidateName = cRows[0]?.name || "Candidat";
@@ -57,17 +69,17 @@ router.put("/:id", validate(candidatureUpdateSchema), asyncHandler(async (req, r
       "Entretien": `Votre candidat "${candidateName}" est convoqué en entretien.`,
       "Finaliste": `Votre candidat "${candidateName}" est finaliste !`,
       "Placé": `Votre candidat "${candidateName}" a été placé avec succès !`,
-      "Refusé": `Votre candidat "${candidateName}" n'a pas été retenu.${d.notes ? ` Motif : ${d.notes}` : ""}`,
+      "Refusé": `Votre candidat "${candidateName}" n'a pas été retenu.${newNotes ? ` Motif : ${newNotes}` : ""}`,
       "Archivé": `La candidature de "${candidateName}" a été archivée.`,
     };
-    const message = stageMessages[d.stage] || `Le statut de "${candidateName}" est passé à "${d.stage}".`;
+    const message = stageMessages[newStage] || `Le statut de "${candidateName}" est passé à "${newStage}".`;
     await pool.query(
       "INSERT INTO partner_notifications (partner_id, candidature_id, type, message) VALUES ($1, $2, $3, $4)",
       [before[0].partner_id, cd.id, "stage_change", message]
     );
   }
 
-  if (d.stage === "Placé") {
+  if (newStage === "Placé") {
     const cd = rows[0];
     const { rows: mRows } = await pool.query("SELECT status, company FROM missions WHERE id = $1", [cd.mission_id]);
     if (mRows.length > 0 && mRows[0].status === "Gagné") {

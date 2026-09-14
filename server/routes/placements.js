@@ -3,9 +3,12 @@ import { pool } from "../db.js";
 import { fmtPlacement } from "../formatters.js";
 import { validate } from "../validators/validate.js";
 import { placementCreateSchema, placementUpdateSchema } from "../validators/schemas.js";
-import { asyncHandler } from "../helpers/errors.js";
+import { asyncHandler, AppError } from "../helpers/errors.js";
+import { adminOnly } from "../middleware.js";
 
 const router = Router();
+
+// Les placements portent le suivi de facturation : écriture réservée aux admins.
 
 router.get("/", asyncHandler(async (req, res) => {
   const { rows } = await pool.query(`
@@ -19,7 +22,7 @@ router.get("/", asyncHandler(async (req, res) => {
   res.json(rows.map(fmtPlacement));
 }));
 
-router.post("/", validate(placementCreateSchema), asyncHandler(async (req, res) => {
+router.post("/", adminOnly, validate(placementCreateSchema), asyncHandler(async (req, res) => {
   const d = req.body;
   const { rows } = await pool.query(
     `INSERT INTO placements (candidature_id, candidate_id, mission_id, company, start_date, probation_date, start_invoice_sent, start_invoice_name, start_invoice_paid, probation_invoice_sent, probation_invoice_name, probation_invoice_paid, probation_validated, notes)
@@ -29,7 +32,7 @@ router.post("/", validate(placementCreateSchema), asyncHandler(async (req, res) 
   res.json(fmtPlacement(rows[0]));
 }));
 
-router.put("/:id", validate(placementUpdateSchema), asyncHandler(async (req, res) => {
+router.put("/:id", adminOnly, validate(placementUpdateSchema), asyncHandler(async (req, res) => {
   const d = req.body;
   const { rows } = await pool.query(
     `UPDATE placements SET start_date=$1, probation_date=$2, start_invoice_sent=$3, start_invoice_name=$4, start_invoice_paid=$5, probation_invoice_sent=$6, probation_invoice_name=$7, probation_invoice_paid=$8, probation_validated=$9, notes=$10 WHERE id=$11 RETURNING *`,
@@ -39,8 +42,13 @@ router.put("/:id", validate(placementUpdateSchema), asyncHandler(async (req, res
   res.json(fmtPlacement(rows[0]));
 }));
 
-router.delete("/:id", asyncHandler(async (req, res) => {
-  await pool.query("DELETE FROM placements WHERE id=$1", [req.params.id]);
+router.delete("/:id", adminOnly, asyncHandler(async (req, res) => {
+  const { rows } = await pool.query("DELETE FROM placements WHERE id=$1 RETURNING id, candidate_id, mission_id", [req.params.id]);
+  if (rows.length === 0) throw new AppError(404, "Placement non trouvé");
+  await pool.query(
+    "INSERT INTO audit_log (user_name, action, entity_type, entity_id, details) VALUES ($1,$2,$3,$4,$5)",
+    [req.user?.login || "Système", "Supprimer", "placement", rows[0].id, `candidat #${rows[0].candidate_id} / mission #${rows[0].mission_id}`]
+  );
   res.json({ ok: true });
 }));
 
