@@ -1,4 +1,5 @@
 import { fmtCAD } from "../../utils/constants";
+import { userTitle } from "../../utils/userTitles";
 
 export default function ProfilePage({ currentUser, contacts, missions, candidatures, users, setActiveTab, goToContact, goToMission }) {
   const userName = currentUser?.fullName || "";
@@ -39,6 +40,7 @@ export default function ProfilePage({ currentUser, contacts, missions, candidatu
         </div>
         <div style={{ flex: 1 }}>
           <h1 style={{ fontSize: 22, fontWeight: 800, color: "#0f172a", margin: 0 }}>{userName}</h1>
+          {userTitle(currentUser) && <p style={{ fontSize: 13, fontWeight: 600, color: "#2563eb", marginTop: 4 }}>{userTitle(currentUser)}</p>}
           <p style={{ fontSize: 13, color: "#64748b", marginTop: 4 }}>{currentUser?.login}</p>
         </div>
         <div style={{ display: "flex", gap: 16 }}>

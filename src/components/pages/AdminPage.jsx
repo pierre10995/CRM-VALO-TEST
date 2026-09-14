@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import api from "../../services/api";
 import { useConfirm } from "../common/ConfirmDialog";
+import { userTitle } from "../../utils/userTitles";
 
 export default function AdminPage({ currentUser, loadAll }) {
   const confirm = useConfirm();
@@ -272,7 +273,10 @@ export default function AdminPage({ currentUser, loadAll }) {
                   <td style={tdStyle}>
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                       <div style={{ width: 32, height: 32, background: "linear-gradient(135deg, #dbeafe, #bfdbfe)", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "#1d4ed8" }}>{u.fullName?.[0] || "?"}</div>
-                      <span style={{ fontSize: 13.5, fontWeight: 600, color: "#0f172a" }}>{u.fullName}</span>
+                      <div>
+                        <div style={{ fontSize: 13.5, fontWeight: 600, color: "#0f172a" }}>{u.fullName}</div>
+                        {userTitle(u) && <div style={{ fontSize: 11.5, fontWeight: 600, color: "#2563eb" }}>{userTitle(u)}</div>}
+                      </div>
                     </div>
                   </td>
                   <td style={{ ...tdStyle, color: "#64748b" }}>{u.login}</td>
