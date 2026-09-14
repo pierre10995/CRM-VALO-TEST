@@ -112,6 +112,7 @@ export default function PipelinePage({ candidatures, candidates, missions, users
           borderLeft: stale ? "3px solid #f59e0b" : "3px solid transparent",
           opacity: draggedId === cd.id ? 0.4 : 1,
           transition: "opacity 0.15s",
+          minWidth: 0, overflow: "hidden",
         }}
         onClick={() => onEdit(cd)}
       >
@@ -142,9 +143,10 @@ export default function PipelinePage({ candidatures, candidates, missions, users
           ))}
           <select
             aria-label={`Changer l'étape de ${cd.candidateName}`}
+            title="Changer d'étape"
             value={cd.stage}
             onChange={e => { if (e.target.value !== cd.stage) quickMove(cd, e.target.value); }}
-            style={{ marginLeft: "auto", fontSize: 11, padding: "3px 6px", borderRadius: 6, border: "1px solid var(--line)", background: "var(--surface)", color: "var(--ink-soft)", fontFamily: "inherit", minHeight: 24 }}
+            style={{ flexBasis: "100%", width: "100%", minWidth: 0, boxSizing: "border-box", fontSize: 11, padding: "3px 6px", borderRadius: 6, border: "1px solid var(--line)", background: "var(--surface-2)", color: "var(--muted)", fontFamily: "inherit", minHeight: 24, marginTop: 2 }}
           >
             {allCols.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
           </select>
@@ -225,7 +227,8 @@ export default function PipelinePage({ candidatures, candidates, missions, users
           </div>
         );
       })()}
-      <div className="resp-grid" style={{ display: "grid", gridTemplateColumns: `repeat(${allCols.length}, 1fr)`, gap: 12, overflowX: "auto" }}>
+      {/* Colonnes à largeur minimale : défilement horizontal plutôt que cartes écrasées */}
+      <div className="resp-grid" style={{ display: "grid", gridTemplateColumns: `repeat(${allCols.length}, minmax(230px, 1fr))`, gap: 12, overflowX: "auto", paddingBottom: 8 }}>
         {allCols.map(col => {
           const items = filteredCandidatures.filter(cd => cd.stage === col.key);
           const isOver = dropTarget === col.key;
@@ -240,7 +243,7 @@ export default function PipelinePage({ candidatures, candidates, missions, users
               style={{
                 background: isOver ? `${col.color}15` : col.bg,
                 border: `1.5px ${isOver ? "dashed" : "solid"} ${isOver ? col.color : col.border}`,
-                borderRadius: 14, padding: 12, minWidth: 160,
+                borderRadius: 14, padding: 12, minWidth: 0,
                 transition: "background 0.15s, border 0.15s",
               }}
             >
