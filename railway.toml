@@ -1,8 +1,10 @@
 [build]
 builder = "nixpacks"
-# npm ci = builds reproductibles (respecte package-lock) ; les tests bloquent
-# le déploiement s'ils échouent.
-buildCommand = "npm ci --include=dev && npm test && npm run build"
+# npm install (et non npm ci) : Nixpacks monte un volume de cache dans
+# node_modules/.cache que `npm ci` tente de supprimer → EBUSY. `npm install`
+# respecte package-lock.json tant que package.json n'a pas changé.
+# Les tests bloquent le déploiement s'ils échouent.
+buildCommand = "npm install --include=dev --no-audit --no-fund && npm test && npm run build"
 
 [deploy]
 startCommand = "npm run start"
