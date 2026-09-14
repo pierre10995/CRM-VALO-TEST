@@ -132,10 +132,10 @@ export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, o
     <div className="card" role="dialog" aria-modal="true" aria-label={`Fiche candidat : ${c.name}`} style={{ width: 600, maxHeight: "90vh", overflowY: "auto", padding: 28 }}>
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 20 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div style={{ width: 50, height: 50, background: "linear-gradient(135deg, #fef3c7, #fde68a)", borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, fontWeight: 800, color: "#d97706" }}>{c.name[0]}</div>
+          <div style={{ width: 50, height: 50, background: "linear-gradient(135deg, #fef3c7, #fde68a)", borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, fontWeight: 800, color: "var(--c-amber)" }}>{c.name[0]}</div>
           <div>
-            <h2 style={{ fontSize: 18, fontWeight: 700, color: "#0f172a" }}>{c.name}</h2>
-            <p style={{ fontSize: 13, color: "#64748b" }}>Fiche Candidat</p>
+            <h2 style={{ fontSize: 18, fontWeight: 700, color: "var(--ink)" }}>{c.name}</h2>
+            <p style={{ fontSize: 13, color: "var(--muted)" }}>Fiche Candidat</p>
           </div>
         </div>
         <button type="button" className="btn btn-ghost" style={{ padding: "6px 8px" }} onClick={onClose} aria-label="Fermer la fiche candidat" title="Fermer">X</button>
@@ -143,59 +143,59 @@ export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, o
 
       {/* Info section */}
       <div className="resp-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
-        <div style={{ background: "#f8fafc", borderRadius: 10, padding: 12 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", marginBottom: 4 }}>EMAIL</div>
-          <div style={{ fontSize: 13, color: "#0f172a" }}>{c.email || "—"}</div>
+        <div style={{ background: "var(--surface-2)", borderRadius: 10, padding: 12 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", marginBottom: 4 }}>EMAIL</div>
+          <div style={{ fontSize: 13, color: "var(--ink)" }}>{c.email || "—"}</div>
         </div>
-        <div style={{ background: "#f8fafc", borderRadius: 10, padding: 12 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", marginBottom: 4 }}>TELEPHONE</div>
-          <div style={{ fontSize: 13, color: "#0f172a" }}>{c.phone || "—"}</div>
+        <div style={{ background: "var(--surface-2)", borderRadius: 10, padding: 12 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", marginBottom: 4 }}>TELEPHONE</div>
+          <div style={{ fontSize: 13, color: "var(--ink)" }}>{c.phone || "—"}</div>
         </div>
-        <div style={{ background: "#f8fafc", borderRadius: 10, padding: 12 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", marginBottom: 4 }}>VILLE</div>
-          <div style={{ fontSize: 13, color: "#0f172a" }}>{c.city || "—"}</div>
+        <div style={{ background: "var(--surface-2)", borderRadius: 10, padding: 12 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", marginBottom: 4 }}>VILLE</div>
+          <div style={{ fontSize: 13, color: "var(--ink)" }}>{c.city || "—"}</div>
         </div>
-        <div style={{ background: "#f8fafc", borderRadius: 10, padding: 12 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", marginBottom: 4 }}>SALAIRE SOUHAITE</div>
-          <div style={{ fontSize: 13, color: "#0f172a", fontWeight: 600 }}>{c.salaryExpectation > 0 ? fmtCAD(c.salaryExpectation) : "—"}</div>
+        <div style={{ background: "var(--surface-2)", borderRadius: 10, padding: 12 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", marginBottom: 4 }}>SALAIRE SOUHAITE</div>
+          <div style={{ fontSize: 13, color: "var(--ink)", fontWeight: 600 }}>{c.salaryExpectation > 0 ? fmtCAD(c.salaryExpectation) : "—"}</div>
         </div>
-        <div style={{ background: "#f8fafc", borderRadius: 10, padding: 12 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", marginBottom: 4 }}>DISPONIBILITE</div>
-          <div style={{ fontSize: 13, color: "#0f172a" }}>{c.availability || "—"}</div>
+        <div style={{ background: "var(--surface-2)", borderRadius: 10, padding: 12 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", marginBottom: 4 }}>DISPONIBILITE</div>
+          <div style={{ fontSize: 13, color: "var(--ink)" }}>{c.availability || "—"}</div>
         </div>
-        <div style={{ background: "#f8fafc", borderRadius: 10, padding: 12 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", marginBottom: 4 }}>SECTEUR</div>
-          <div style={{ fontSize: 13, color: "#0f172a" }}>{c.sector || "—"}</div>
+        <div style={{ background: "var(--surface-2)", borderRadius: 10, padding: 12 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", marginBottom: 4 }}>SECTEUR</div>
+          <div style={{ fontSize: 13, color: "var(--ink)" }}>{c.sector || "—"}</div>
         </div>
-        <div style={{ background: "#f8fafc", borderRadius: 10, padding: 12, gridColumn: "1 / -1" }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", marginBottom: 4 }}>LINKEDIN</div>
+        <div style={{ background: "var(--surface-2)", borderRadius: 10, padding: 12, gridColumn: "1 / -1" }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", marginBottom: 4 }}>LINKEDIN</div>
           <div style={{ fontSize: 13 }}>
-            {c.linkedin ? <a href={c.linkedin} target="_blank" rel="noopener noreferrer" style={{ color: "#2563eb", textDecoration: "none" }}>{c.linkedin}</a> : <span style={{ color: "#0f172a" }}>—</span>}
+            {c.linkedin ? <a href={c.linkedin} target="_blank" rel="noopener noreferrer" style={{ color: "var(--c-blue)", textDecoration: "none" }}>{c.linkedin}</a> : <span style={{ color: "var(--ink)" }}>—</span>}
           </div>
         </div>
-        <div style={{ background: "#f8fafc", borderRadius: 10, padding: 12, gridColumn: "1 / -1" }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", marginBottom: 4 }}>POSTE CIBLÉ</div>
-          <div style={{ fontSize: 13, color: "#0f172a", fontWeight: 600 }}>{c.targetPosition || "—"}</div>
+        <div style={{ background: "var(--surface-2)", borderRadius: 10, padding: 12, gridColumn: "1 / -1" }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", marginBottom: 4 }}>POSTE CIBLÉ</div>
+          <div style={{ fontSize: 13, color: "var(--ink)", fontWeight: 600 }}>{c.targetPosition || "—"}</div>
         </div>
       </div>
 
       {/* Statut validation */}
       <div style={{ marginBottom: 20 }}>
-        <div style={{ fontSize: 12, fontWeight: 700, color: "#64748b", marginBottom: 8 }}>STATUT VALIDATION</div>
+        <div style={{ fontSize: 12, fontWeight: 700, color: "var(--muted)", marginBottom: 8 }}>STATUT VALIDATION</div>
         {c.validationStatus ? (() => {
           const vs = validationStatuses.find(s => s.label === c.validationStatus);
-          const vc = vs ? { bg: vs.bg, color: vs.color } : { bg: "#f1f5f9", color: "#64748b" };
+          const vc = vs ? { bg: vs.bg, color: vs.color } : { bg: "var(--surface-3)", color: "var(--muted)" };
           return <span style={{ fontSize: 13, fontWeight: 600, padding: "5px 14px", borderRadius: 16, background: vc.bg, color: vc.color }}>{c.validationStatus}</span>;
-        })() : <span style={{ fontSize: 13, color: "#64748b" }}>Non défini</span>}
+        })() : <span style={{ fontSize: 13, color: "var(--muted)" }}>Non défini</span>}
       </div>
 
       {/* Skills */}
       {c.skills && (
         <div style={{ marginBottom: 20 }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: "#64748b", marginBottom: 8 }}>COMPETENCES</div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "var(--muted)", marginBottom: 8 }}>COMPETENCES</div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
             {c.skills.split(",").filter(Boolean).map((s, i) => (
-              <span key={i} style={{ fontSize: 12, background: "#eff6ff", color: "#2563eb", padding: "4px 12px", borderRadius: 16, fontWeight: 500 }}>{s.trim()}</span>
+              <span key={i} style={{ fontSize: 12, background: "var(--tint-blue-soft)", color: "var(--c-blue)", padding: "4px 12px", borderRadius: 16, fontWeight: 500 }}>{s.trim()}</span>
             ))}
           </div>
         </div>
@@ -203,25 +203,25 @@ export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, o
 
       {/* Notes */}
       {c.notes && (
-        <div style={{ background: "#f8fafc", borderRadius: 10, padding: 12, marginBottom: 20 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", marginBottom: 4 }}>NOTES</div>
-          <div style={{ fontSize: 13, color: "#374151", lineHeight: 1.5 }}>{c.notes}</div>
+        <div style={{ background: "var(--surface-2)", borderRadius: 10, padding: 12, marginBottom: 20 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", marginBottom: 4 }}>NOTES</div>
+          <div style={{ fontSize: 13, color: "var(--ink-2)", lineHeight: 1.5 }}>{c.notes}</div>
         </div>
       )}
 
       {/* CV Section */}
       <div style={{ marginBottom: 20 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>CV</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)" }}>CV</div>
           <button className="btn btn-primary" style={{ padding: "6px 14px", fontSize: 12 }} onClick={() => handleUpload("cv")} disabled={uploading}>
             {uploading ? "Envoi..." : "+ Ajouter CV"}
           </button>
         </div>
-        {cvFiles.length === 0 && <p style={{ fontSize: 12, color: "#64748b" }}>Aucun CV</p>}
+        {cvFiles.length === 0 && <p style={{ fontSize: 12, color: "var(--muted)" }}>Aucun CV</p>}
         {cvFiles.map(f => (
-          <div key={f.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "#f8fafc", borderRadius: 8, marginBottom: 6 }}>
-            <span style={{ fontSize: 13, color: "#0f172a", flex: 1 }}>{f.file_name}</span>
-            <span style={{ fontSize: 11, color: "#64748b" }}>{new Date(f.created_at).toLocaleDateString("fr-CA")}</span>
+          <div key={f.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "var(--surface-2)", borderRadius: 8, marginBottom: 6 }}>
+            <span style={{ fontSize: 13, color: "var(--ink)", flex: 1 }}>{f.file_name}</span>
+            <span style={{ fontSize: 11, color: "var(--muted)" }}>{new Date(f.created_at).toLocaleDateString("fr-CA")}</span>
             <button className="btn btn-primary" style={{ padding: "4px 10px", fontSize: 11 }} onClick={() => previewFile(f.id, f.file_name)}>Voir</button>
             <button className="btn btn-ghost" style={{ padding: "4px 10px", fontSize: 11 }} onClick={() => downloadFile(f.id, f.file_name)}>Télécharger</button>
             <button className="btn btn-danger" style={{ padding: "4px 10px", fontSize: 11 }} onClick={async () => (await confirm("Cette suppression est définitive. Voulez-vous continuer ?", { title: "Supprimer définitivement", confirmLabel: "Supprimer" })) && deleteFile(f.id)}>Suppr.</button>
@@ -233,40 +233,40 @@ export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, o
       {cvFiles.length > 0 && (
         <div style={{ marginBottom: 20 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>Résumé IA du CV</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)" }}>Résumé IA du CV</div>
             <button className="btn btn-primary" style={{ padding: "6px 14px", fontSize: 12 }} onClick={generateCvSummary} disabled={loadingSummary}>
               {loadingSummary ? "Analyse en cours..." : cvSummary ? "Relancer l'analyse" : "Analyser le CV"}
             </button>
           </div>
-          {!cvSummary && !loadingSummary && <p style={{ fontSize: 12, color: "#64748b" }}>Cliquez pour générer un résumé IA du CV</p>}
+          {!cvSummary && !loadingSummary && <p style={{ fontSize: 12, color: "var(--muted)" }}>Cliquez pour générer un résumé IA du CV</p>}
           {cvSummary && (
             <div style={{ background: "#f0f9ff", borderRadius: 10, padding: 14, border: "1px solid #bae6fd" }}>
-              <p style={{ fontSize: 13, color: "#0f172a", lineHeight: 1.6, marginBottom: 10 }}>{cvSummary.summary}</p>
+              <p style={{ fontSize: 13, color: "var(--ink)", lineHeight: 1.6, marginBottom: 10 }}>{cvSummary.summary}</p>
               <div className="resp-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
-                {cvSummary.current_role && <div><span style={{ fontSize: 10, fontWeight: 700, color: "#64748b" }}>POSTE ACTUEL</span><div style={{ fontSize: 12, color: "#0f172a" }}>{cvSummary.current_role}</div></div>}
-                {cvSummary.experience_years && <div><span style={{ fontSize: 10, fontWeight: 700, color: "#64748b" }}>EXPERIENCE</span><div style={{ fontSize: 12, color: "#0f172a" }}>{cvSummary.experience_years} ans</div></div>}
-                {cvSummary.education && <div><span style={{ fontSize: 10, fontWeight: 700, color: "#64748b" }}>FORMATION</span><div style={{ fontSize: 12, color: "#0f172a" }}>{cvSummary.education}</div></div>}
-                {cvSummary.salary_estimate && <div><span style={{ fontSize: 10, fontWeight: 700, color: "#64748b" }}>SALAIRE ESTIME</span><div style={{ fontSize: 12, color: "#0f172a" }}>{cvSummary.salary_estimate}</div></div>}
+                {cvSummary.current_role && <div><span style={{ fontSize: 10, fontWeight: 700, color: "var(--muted)" }}>POSTE ACTUEL</span><div style={{ fontSize: 12, color: "var(--ink)" }}>{cvSummary.current_role}</div></div>}
+                {cvSummary.experience_years && <div><span style={{ fontSize: 10, fontWeight: 700, color: "var(--muted)" }}>EXPERIENCE</span><div style={{ fontSize: 12, color: "var(--ink)" }}>{cvSummary.experience_years} ans</div></div>}
+                {cvSummary.education && <div><span style={{ fontSize: 10, fontWeight: 700, color: "var(--muted)" }}>FORMATION</span><div style={{ fontSize: 12, color: "var(--ink)" }}>{cvSummary.education}</div></div>}
+                {cvSummary.salary_estimate && <div><span style={{ fontSize: 10, fontWeight: 700, color: "var(--muted)" }}>SALAIRE ESTIME</span><div style={{ fontSize: 12, color: "var(--ink)" }}>{cvSummary.salary_estimate}</div></div>}
               </div>
               {cvSummary.key_skills?.length > 0 && (
                 <div style={{ marginBottom: 8 }}>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: "#64748b" }}>COMPETENCES CLES</span>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: "var(--muted)" }}>COMPETENCES CLES</span>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 4 }}>
-                    {cvSummary.key_skills.map((s, i) => <span key={i} style={{ fontSize: 11, background: "#dbeafe", color: "#2563eb", padding: "2px 8px", borderRadius: 10 }}>{s}</span>)}
+                    {cvSummary.key_skills.map((s, i) => <span key={i} style={{ fontSize: 11, background: "var(--tint-blue)", color: "var(--c-blue)", padding: "2px 8px", borderRadius: 10 }}>{s}</span>)}
                   </div>
                 </div>
               )}
               {cvSummary.languages?.length > 0 && (
                 <div style={{ marginBottom: 8 }}>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: "#64748b" }}>LANGUES</span>
-                  <div style={{ fontSize: 12, color: "#0f172a", marginTop: 2 }}>{cvSummary.languages.join(", ")}</div>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: "var(--muted)" }}>LANGUES</span>
+                  <div style={{ fontSize: 12, color: "var(--ink)", marginTop: 2 }}>{cvSummary.languages.join(", ")}</div>
                 </div>
               )}
               {cvSummary.strengths?.length > 0 && (
                 <div>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: "#64748b" }}>POINTS FORTS</span>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: "var(--muted)" }}>POINTS FORTS</span>
                   <ul style={{ margin: "4px 0 0 16px", padding: 0 }}>
-                    {cvSummary.strengths.map((s, i) => <li key={i} style={{ fontSize: 12, color: "#374151", lineHeight: 1.5 }}>{s}</li>)}
+                    {cvSummary.strengths.map((s, i) => <li key={i} style={{ fontSize: 12, color: "var(--ink-2)", lineHeight: 1.5 }}>{s}</li>)}
                   </ul>
                 </div>
               )}
@@ -278,16 +278,16 @@ export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, o
       {/* Compte-rendus */}
       <div style={{ marginBottom: 20 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>Comptes-rendus d'entretien</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)" }}>Comptes-rendus d'entretien</div>
           <button className="btn btn-primary" style={{ padding: "6px 14px", fontSize: 12 }} onClick={() => handleUpload("compte-rendu")} disabled={uploading}>
             {uploading ? "Envoi..." : "+ Ajouter CR"}
           </button>
         </div>
-        {crFiles.length === 0 && <p style={{ fontSize: 12, color: "#64748b" }}>Aucun compte-rendu</p>}
+        {crFiles.length === 0 && <p style={{ fontSize: 12, color: "var(--muted)" }}>Aucun compte-rendu</p>}
         {crFiles.map(f => (
-          <div key={f.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "#f8fafc", borderRadius: 8, marginBottom: 6 }}>
-            <span style={{ fontSize: 13, color: "#0f172a", flex: 1 }}>{f.file_name}</span>
-            <span style={{ fontSize: 11, color: "#64748b" }}>{new Date(f.created_at).toLocaleDateString("fr-CA")}</span>
+          <div key={f.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "var(--surface-2)", borderRadius: 8, marginBottom: 6 }}>
+            <span style={{ fontSize: 13, color: "var(--ink)", flex: 1 }}>{f.file_name}</span>
+            <span style={{ fontSize: 11, color: "var(--muted)" }}>{new Date(f.created_at).toLocaleDateString("fr-CA")}</span>
             <button className="btn btn-primary" style={{ padding: "4px 10px", fontSize: 11 }} onClick={() => previewFile(f.id, f.file_name)}>Voir</button>
             <button className="btn btn-ghost" style={{ padding: "4px 10px", fontSize: 11 }} onClick={() => downloadFile(f.id, f.file_name)}>Télécharger</button>
             <button className="btn btn-danger" style={{ padding: "4px 10px", fontSize: 11 }} onClick={async () => (await confirm("Cette suppression est définitive. Voulez-vous continuer ?", { title: "Supprimer définitivement", confirmLabel: "Supprimer" })) && deleteFile(f.id)}>Suppr.</button>
@@ -298,24 +298,24 @@ export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, o
       {/* Candidatures */}
       <div style={{ marginBottom: 20 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>Candidatures ({myCandidatures.length})</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)" }}>Candidatures ({myCandidatures.length})</div>
           {onAddCandidature && (
             <button className="btn btn-primary" style={{ padding: "6px 14px", fontSize: 12 }} onClick={() => onAddCandidature(c.id)}>
               + Proposer pour un poste
             </button>
           )}
         </div>
-        {myCandidatures.length === 0 && <p style={{ fontSize: 12, color: "#64748b" }}>Aucune candidature — proposez ce candidat pour un poste</p>}
+        {myCandidatures.length === 0 && <p style={{ fontSize: 12, color: "var(--muted)" }}>Aucune candidature — proposez ce candidat pour un poste</p>}
         {myCandidatures.map(cd => (
           <div
             key={cd.id}
             onClick={goToMission ? () => goToMission(cd.missionId) : undefined}
             className={goToMission ? "row-hover" : undefined}
-            style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "#f8fafc", borderRadius: 8, marginBottom: 6, cursor: goToMission ? "pointer" : "default" }}
+            style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "var(--surface-2)", borderRadius: 8, marginBottom: 6, cursor: goToMission ? "pointer" : "default" }}
             title={goToMission ? "Voir le poste" : undefined}
           >
-            <span style={{ fontSize: 13, color: "#0f172a", flex: 1 }}>{cd.missionTitle} — {cd.missionCompany}</span>
-            <span className="tag" style={{ background: cd.stage === "Placé" ? "#d1fae5" : cd.stage === "Refusé" ? "#fee2e2" : "#dbeafe", color: cd.stage === "Placé" ? "#059669" : cd.stage === "Refusé" ? "#dc2626" : "#2563eb" }}>{cd.stage}</span>
+            <span style={{ fontSize: 13, color: "var(--ink)", flex: 1 }}>{cd.missionTitle} — {cd.missionCompany}</span>
+            <span className="tag" style={{ background: cd.stage === "Placé" ? "var(--tint-green)" : cd.stage === "Refusé" ? "var(--tint-red)" : "var(--tint-blue)", color: cd.stage === "Placé" ? "var(--c-green)" : cd.stage === "Refusé" ? "var(--c-red)" : "var(--c-blue)" }}>{cd.stage}</span>
           </div>
         ))}
       </div>
@@ -323,13 +323,13 @@ export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, o
       {/* Évaluations IA */}
       {evaluations.length > 0 && (
         <div style={{ marginBottom: 20 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a", marginBottom: 10 }}>Évaluations IA ({evaluations.length})</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)", marginBottom: 10 }}>Évaluations IA ({evaluations.length})</div>
           {evaluations.map(ev => {
-            const scoreColor = ev.score >= 70 ? "#059669" : ev.score >= 40 ? "#d97706" : "#dc2626";
+            const scoreColor = ev.score >= 70 ? "var(--c-green)" : ev.score >= 40 ? "var(--c-amber)" : "var(--c-red)";
             return (
-              <div key={ev.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "#f8fafc", borderRadius: 8, marginBottom: 6 }}>
-                <div style={{ width: 32, height: 32, borderRadius: "50%", background: ev.score >= 70 ? "#ecfdf5" : ev.score >= 40 ? "#fffbeb" : "#fef2f2", border: `2px solid ${scoreColor}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 800, color: scoreColor }}>{ev.score}</div>
-                <span style={{ fontSize: 13, color: "#0f172a", flex: 1 }}>{ev.missionTitle} — {ev.missionCompany}</span>
+              <div key={ev.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "var(--surface-2)", borderRadius: 8, marginBottom: 6 }}>
+                <div style={{ width: 32, height: 32, borderRadius: "50%", background: ev.score >= 70 ? "var(--tint-green-soft)" : ev.score >= 40 ? "var(--tint-amber-soft)" : "var(--tint-red-soft)", border: `2px solid ${scoreColor}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 800, color: scoreColor }}>{ev.score}</div>
+                <span style={{ fontSize: 13, color: "var(--ink)", flex: 1 }}>{ev.missionTitle} — {ev.missionCompany}</span>
                 <button className="btn btn-danger" style={{ padding: "4px 8px", fontSize: 10 }} onClick={async () => (await confirm("Cette suppression est définitive. Voulez-vous continuer ?", { title: "Supprimer définitivement", confirmLabel: "Supprimer" })) && deleteEvaluation(ev.id)}>Suppr.</button>
               </div>
             );
@@ -340,25 +340,25 @@ export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, o
       {/* Matching IA - missions suggérées */}
       <div style={{ marginBottom: 20 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>Missions suggérées par l'IA</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)" }}>Missions suggérées par l'IA</div>
           <button className="btn btn-primary" style={{ padding: "6px 14px", fontSize: 12 }} onClick={findSuggestions} disabled={loadingSuggestions}>
             {loadingSuggestions ? "Analyse en cours..." : "Trouver des missions"}
           </button>
         </div>
-        {suggestions.length === 0 && !loadingSuggestions && <p style={{ fontSize: 12, color: "#64748b" }}>Cliquez pour lancer le matching IA</p>}
+        {suggestions.length === 0 && !loadingSuggestions && <p style={{ fontSize: 12, color: "var(--muted)" }}>Cliquez pour lancer le matching IA</p>}
         {suggestions.map((s, i) => {
-          const scoreColor = s.score >= 70 ? "#059669" : s.score >= 40 ? "#d97706" : "#dc2626";
+          const scoreColor = s.score >= 70 ? "var(--c-green)" : s.score >= 40 ? "var(--c-amber)" : "var(--c-red)";
           const alreadyProposed = myCandidatures.some(cd => cd.missionId === s.id);
           return (
-            <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "#f8fafc", borderRadius: 8, marginBottom: 6 }}>
-              <div style={{ width: 32, height: 32, borderRadius: "50%", background: s.score >= 70 ? "#ecfdf5" : s.score >= 40 ? "#fffbeb" : "#fef2f2", border: `2px solid ${scoreColor}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 800, color: scoreColor }}>{s.score}</div>
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "var(--surface-2)", borderRadius: 8, marginBottom: 6 }}>
+              <div style={{ width: 32, height: 32, borderRadius: "50%", background: s.score >= 70 ? "var(--tint-green-soft)" : s.score >= 40 ? "var(--tint-amber-soft)" : "var(--tint-red-soft)", border: `2px solid ${scoreColor}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 800, color: scoreColor }}>{s.score}</div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: "#0f172a" }}>{s.title} — {s.company}</div>
-                <div style={{ fontSize: 11, color: "#64748b" }}>{s.reason}</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: "var(--ink)" }}>{s.title} — {s.company}</div>
+                <div style={{ fontSize: 11, color: "var(--muted)" }}>{s.reason}</div>
               </div>
               {onAddCandidature && (
                 alreadyProposed
-                  ? <span style={{ fontSize: 11, color: "#64748b", whiteSpace: "nowrap" }}>Déjà proposé</span>
+                  ? <span style={{ fontSize: 11, color: "var(--muted)", whiteSpace: "nowrap" }}>Déjà proposé</span>
                   : <button className="btn btn-ghost" style={{ padding: "4px 10px", fontSize: 11, whiteSpace: "nowrap" }} onClick={() => onAddCandidature(c.id, s.id)}>+ Proposer</button>
               )}
             </div>
@@ -378,9 +378,9 @@ export default function FicheCandidat({ contact: c, onClose, onEdit, onDelete, o
       {/* PDF Preview Modal */}
       {previewUrl && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={closePreview}>
-          <div style={{ background: "#fff", borderRadius: 12, width: "80vw", height: "85vh", display: "flex", flexDirection: "column", overflow: "hidden" }} onClick={e => e.stopPropagation()}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 20px", borderBottom: "1px solid #e2e8f0" }}>
-              <span style={{ fontSize: 14, fontWeight: 600, color: "#0f172a" }}>{previewName}</span>
+          <div style={{ background: "var(--surface)", borderRadius: 12, width: "80vw", height: "85vh", display: "flex", flexDirection: "column", overflow: "hidden" }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 20px", borderBottom: "1px solid var(--line)" }}>
+              <span style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)" }}>{previewName}</span>
               <button className="btn btn-ghost" style={{ padding: "4px 10px", fontSize: 12 }} onClick={closePreview}>Fermer</button>
             </div>
             <iframe src={previewUrl} style={{ flex: 1, border: "none" }} title="Prévisualisation PDF" />

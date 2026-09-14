@@ -17,16 +17,16 @@ export default function Field({ label, error, hint, children }) {
       id: child.props.id || autoId,
       "aria-invalid": error ? true : undefined,
       "aria-describedby": describedBy,
-      style: error ? { ...child.props.style, borderColor: "#dc2626" } : child.props.style,
+      style: error ? { ...child.props.style, borderColor: "var(--c-red)" } : child.props.style,
     });
   });
 
   return (
     <div>
-      <label htmlFor={autoId} style={{ fontSize: 12.5, fontWeight: 600, color: "#374151", display: "block", marginBottom: 6 }}>{label}</label>
+      <label htmlFor={autoId} style={{ fontSize: 12.5, fontWeight: 600, color: "var(--ink-2)", display: "block", marginBottom: 6 }}>{label}</label>
       {decorated}
-      {hint && !error && <p id={hintId} style={{ fontSize: 11.5, color: "#64748b", marginTop: 4 }}>{hint}</p>}
-      {error && <p id={errId} role="alert" style={{ fontSize: 11.5, color: "#dc2626", marginTop: 4 }}>{error}</p>}
+      {hint && !error && <p id={hintId} style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 4 }}>{hint}</p>}
+      {error && <p id={errId} role="alert" style={{ fontSize: 11.5, color: "var(--c-red)", marginTop: 4 }}>{error}</p>}
     </div>
   );
 }

@@ -46,7 +46,7 @@ export default function ModalWrapper({ onClose, title, children, width = 520 }) 
         style={{ width: `min(${width}px, 100%)`, maxHeight: "90vh", overflowY: "auto", padding: 28, outline: "none" }}
       >
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 22 }}>
-          <h2 style={{ fontSize: 17, fontWeight: 700, color: "#0f172a" }}>{title}</h2>
+          <h2 style={{ fontSize: 17, fontWeight: 700, color: "var(--ink)" }}>{title}</h2>
           <button type="button" className="btn btn-ghost" style={{ padding: "6px 8px" }} onClick={onClose} aria-label="Fermer" title="Fermer">X</button>
         </div>
         {children}

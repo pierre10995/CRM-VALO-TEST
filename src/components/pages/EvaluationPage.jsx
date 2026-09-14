@@ -48,15 +48,15 @@ export default function EvaluationPage({ candidates, missions, loadAll }) {
   return (
     <div>
       <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 26, fontWeight: 800, color: "#0f172a" }}>Évaluation IA</h1>
-        <p style={{ fontSize: 13.5, color: "#64748b", marginTop: 3 }}>Évaluez la compatibilité entre un candidat et un poste</p>
+        <h1 style={{ fontSize: 26, fontWeight: 800, color: "var(--ink)" }}>Évaluation IA</h1>
+        <p style={{ fontSize: 13.5, color: "var(--muted)", marginTop: 3 }}>Évaluez la compatibilité entre un candidat et un poste</p>
       </div>
 
       <div className="card" style={{ marginBottom: 24 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", marginBottom: 16 }}>Lancer une évaluation</div>
+        <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)", marginBottom: 16 }}>Lancer une évaluation</div>
         <div className="resp-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: 12, alignItems: "end" }}>
           <div>
-            <label style={{ fontSize: 12, fontWeight: 600, color: "#64748b", marginBottom: 6, display: "block" }}>Candidat</label>
+            <label style={{ fontSize: 12, fontWeight: 600, color: "var(--muted)", marginBottom: 6, display: "block" }}>Candidat</label>
             <SearchSelect
               value={candidateId}
               onChange={setCandidateId}
@@ -65,7 +65,7 @@ export default function EvaluationPage({ candidates, missions, loadAll }) {
             />
           </div>
           <div>
-            <label style={{ fontSize: 12, fontWeight: 600, color: "#64748b", marginBottom: 6, display: "block" }}>Poste</label>
+            <label style={{ fontSize: 12, fontWeight: 600, color: "var(--muted)", marginBottom: 6, display: "block" }}>Poste</label>
             <SearchSelect
               value={missionId}
               onChange={setMissionId}
@@ -77,18 +77,18 @@ export default function EvaluationPage({ candidates, missions, loadAll }) {
             {loading ? "Analyse en cours..." : "Évaluer"}
           </button>
         </div>
-        {error && <div style={{ padding: "8px 12px", background: "#fee2e2", borderRadius: 8, fontSize: 12, color: "#dc2626", marginTop: 12 }}>{error}</div>}
+        {error && <div style={{ padding: "8px 12px", background: "var(--tint-red)", borderRadius: 8, fontSize: 12, color: "var(--c-red)", marginTop: 12 }}>{error}</div>}
       </div>
 
-      <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", marginBottom: 12 }}>Historique ({evaluations.length})</div>
-      {evaluations.length === 0 && <div className="card" style={{ textAlign: "center", color: "#64748b" }}>Aucune évaluation</div>}
+      <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)", marginBottom: 12 }}>Historique ({evaluations.length})</div>
+      {evaluations.length === 0 && <div className="card" style={{ textAlign: "center", color: "var(--muted)" }}>Aucune évaluation</div>}
       {evaluations.map(ev => {
         let positives = [], negatives = [], clarifs = [];
         try { positives = JSON.parse(ev.positives); } catch {}
         try { negatives = JSON.parse(ev.negatives); } catch {}
         try { clarifs = JSON.parse(ev.clarifications); } catch {}
-        const scoreColor = ev.score >= 70 ? "#059669" : ev.score >= 40 ? "#d97706" : "#dc2626";
-        const scoreBg = ev.score >= 70 ? "#ecfdf5" : ev.score >= 40 ? "#fffbeb" : "#fef2f2";
+        const scoreColor = ev.score >= 70 ? "var(--c-green)" : ev.score >= 40 ? "var(--c-amber)" : "var(--c-red)";
+        const scoreBg = ev.score >= 70 ? "var(--tint-green-soft)" : ev.score >= 40 ? "var(--tint-amber-soft)" : "var(--tint-red-soft)";
 
         return (
           <div key={ev.id} className="card" style={{ marginBottom: 12, border: `1.5px solid ${scoreBg}` }}>
@@ -96,37 +96,37 @@ export default function EvaluationPage({ candidates, missions, loadAll }) {
               <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
                 <div style={{ width: 56, height: 56, borderRadius: "50%", background: scoreBg, border: `3px solid ${scoreColor}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, fontWeight: 800, color: scoreColor }}>{ev.score}</div>
                 <div>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>{ev.candidateName}</div>
-                  <div style={{ fontSize: 13, color: "#64748b" }}>{ev.missionTitle} — {ev.missionCompany}</div>
-                  <div style={{ fontSize: 11, color: "#64748b" }}>{new Date(ev.createdAt).toLocaleDateString("fr-CA")}</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)" }}>{ev.candidateName}</div>
+                  <div style={{ fontSize: 13, color: "var(--muted)" }}>{ev.missionTitle} — {ev.missionCompany}</div>
+                  <div style={{ fontSize: 11, color: "var(--muted)" }}>{new Date(ev.createdAt).toLocaleDateString("fr-CA")}</div>
                 </div>
               </div>
               <button className="btn btn-danger" style={{ padding: "6px 10px", fontSize: 11 }} onClick={async () => (await confirm("Cette suppression est définitive. Voulez-vous continuer ?", { title: "Supprimer définitivement", confirmLabel: "Supprimer" })) && deleteEvaluation(ev.id)}>Suppr.</button>
             </div>
 
-            {ev.summary && <div style={{ fontSize: 13, color: "#374151", marginBottom: 14, lineHeight: 1.6, fontStyle: "italic", background: "#f8fafc", borderRadius: 8, padding: 12 }}>{ev.summary}</div>}
+            {ev.summary && <div style={{ fontSize: 13, color: "var(--ink-2)", marginBottom: 14, lineHeight: 1.6, fontStyle: "italic", background: "var(--surface-2)", borderRadius: 8, padding: 12 }}>{ev.summary}</div>}
 
             <div className="resp-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
               <div>
-                <div style={{ fontSize: 11, fontWeight: 700, color: "#059669", marginBottom: 6 }}>POINTS POSITIFS</div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: "var(--c-green)", marginBottom: 6 }}>POINTS POSITIFS</div>
                 {positives.map((p, i) => (
-                  <div key={i} style={{ fontSize: 12, color: "#374151", marginBottom: 4, paddingLeft: 10, borderLeft: "2px solid #a7f3d0" }}>{p}</div>
+                  <div key={i} style={{ fontSize: 12, color: "var(--ink-2)", marginBottom: 4, paddingLeft: 10, borderLeft: "2px solid #a7f3d0" }}>{p}</div>
                 ))}
-                {positives.length === 0 && <div style={{ fontSize: 11, color: "#64748b" }}>—</div>}
+                {positives.length === 0 && <div style={{ fontSize: 11, color: "var(--muted)" }}>—</div>}
               </div>
               <div>
-                <div style={{ fontSize: 11, fontWeight: 700, color: "#dc2626", marginBottom: 6 }}>POINTS NÉGATIFS</div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: "var(--c-red)", marginBottom: 6 }}>POINTS NÉGATIFS</div>
                 {negatives.map((n, i) => (
-                  <div key={i} style={{ fontSize: 12, color: "#374151", marginBottom: 4, paddingLeft: 10, borderLeft: "2px solid #fecaca" }}>{n}</div>
+                  <div key={i} style={{ fontSize: 12, color: "var(--ink-2)", marginBottom: 4, paddingLeft: 10, borderLeft: "2px solid #fecaca" }}>{n}</div>
                 ))}
-                {negatives.length === 0 && <div style={{ fontSize: 11, color: "#64748b" }}>—</div>}
+                {negatives.length === 0 && <div style={{ fontSize: 11, color: "var(--muted)" }}>—</div>}
               </div>
               <div>
-                <div style={{ fontSize: 11, fontWeight: 700, color: "#d97706", marginBottom: 6 }}>À ÉCLAIRCIR</div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: "var(--c-amber)", marginBottom: 6 }}>À ÉCLAIRCIR</div>
                 {clarifs.map((cl, i) => (
-                  <div key={i} style={{ fontSize: 12, color: "#374151", marginBottom: 4, paddingLeft: 10, borderLeft: "2px solid #fde68a" }}>{cl}</div>
+                  <div key={i} style={{ fontSize: 12, color: "var(--ink-2)", marginBottom: 4, paddingLeft: 10, borderLeft: "2px solid #fde68a" }}>{cl}</div>
                 ))}
-                {clarifs.length === 0 && <div style={{ fontSize: 11, color: "#64748b" }}>—</div>}
+                {clarifs.length === 0 && <div style={{ fontSize: 11, color: "var(--muted)" }}>—</div>}
               </div>
             </div>
           </div>

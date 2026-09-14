@@ -3,7 +3,7 @@ import ProgressBar from "../common/ProgressBar";
 import { useConfirm } from "../common/ConfirmDialog";
 
 const pct = (actual, target) => target > 0 ? Math.min(Math.round((actual / target) * 100), 999) : 0;
-const pctColor = (p) => p >= 100 ? "#059669" : p >= 50 ? "#2563eb" : "#d97706";
+const pctColor = (p) => p >= 100 ? "var(--c-green)" : p >= 50 ? "var(--c-blue)" : "var(--c-amber)";
 
 export default function ObjectiveCard({ obj, actuals, userCA, periodLabel, onEdit, onDelete, isEditing, editForm, setEditForm, onSaveEdit, onCancelEdit, clients }) {
   const confirm = useConfirm();
@@ -20,8 +20,8 @@ export default function ObjectiveCard({ obj, actuals, userCA, periodLabel, onEdi
             {obj.userName?.[0] || "?"}
           </div>
           <div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>{obj.userName}</div>
-            <div style={{ fontSize: 11, color: "#64748b" }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)" }}>{obj.userName}</div>
+            <div style={{ fontSize: 11, color: "var(--muted)" }}>
               {periodLabel}
               {userCA ? ` — CA: ${fmtCAD(userCA.ca)}` : ""}
             </div>
@@ -39,20 +39,20 @@ export default function ObjectiveCard({ obj, actuals, userCA, periodLabel, onEdi
         <div>
           <div className="resp-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 10 }}>
             <div>
-              <label style={{ fontSize: 10, fontWeight: 600, color: "#64748b", display: "block", marginBottom: 3 }}>Nouveaux clients</label>
+              <label style={{ fontSize: 10, fontWeight: 600, color: "var(--muted)", display: "block", marginBottom: 3 }}>Nouveaux clients</label>
               <input className="input" type="number" style={{ fontSize: 12, padding: "6px 8px" }} value={editForm.targetNewClients || ""} onChange={e => setEditForm(p => ({ ...p, targetNewClients: e.target.value }))} />
             </div>
             <div>
-              <label style={{ fontSize: 10, fontWeight: 600, color: "#64748b", display: "block", marginBottom: 3 }}>CA ($)</label>
+              <label style={{ fontSize: 10, fontWeight: 600, color: "var(--muted)", display: "block", marginBottom: 3 }}>CA ($)</label>
               <input className="input" type="number" style={{ fontSize: 12, padding: "6px 8px" }} value={editForm.targetCA || ""} onChange={e => setEditForm(p => ({ ...p, targetCA: e.target.value }))} />
             </div>
             <div>
-              <label style={{ fontSize: 10, fontWeight: 600, color: "#64748b", display: "block", marginBottom: 3 }}>Total ($)</label>
+              <label style={{ fontSize: 10, fontWeight: 600, color: "var(--muted)", display: "block", marginBottom: 3 }}>Total ($)</label>
               <input className="input" type="number" style={{ fontSize: 12, padding: "6px 8px" }} value={editForm.targetTotal || ""} onChange={e => setEditForm(p => ({ ...p, targetTotal: e.target.value }))} />
             </div>
           </div>
           <div style={{ marginBottom: 10 }}>
-            <label style={{ fontSize: 10, fontWeight: 600, color: "#64748b", display: "block", marginBottom: 3 }}>Notes</label>
+            <label style={{ fontSize: 10, fontWeight: 600, color: "var(--muted)", display: "block", marginBottom: 3 }}>Notes</label>
             <input className="input" style={{ fontSize: 12, padding: "6px 8px" }} value={editForm.notes || ""} onChange={e => setEditForm(p => ({ ...p, notes: e.target.value }))} placeholder="Commentaire..." />
           </div>
           <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
@@ -65,27 +65,27 @@ export default function ObjectiveCard({ obj, actuals, userCA, periodLabel, onEdi
           {/* Nouveaux clients */}
           <div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-              <span style={{ fontSize: 12, color: "#64748b" }}>Nouveaux clients</span>
+              <span style={{ fontSize: 12, color: "var(--muted)" }}>Nouveaux clients</span>
               <span style={{ fontSize: 12, fontWeight: 700, color: pctColor(pctClients) }}>{actuals.newClients} / {obj.targetNewClients} ({pctClients}%)</span>
             </div>
             <ProgressBar value={actuals.newClients} max={obj.targetNewClients} />
-            <div style={{ fontSize: 10, color: "#64748b", marginTop: 2 }}>sur {clients} clients actuels</div>
+            <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 2 }}>sur {clients} clients actuels</div>
           </div>
 
           {/* CA en cours */}
           <div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-              <span style={{ fontSize: 12, color: "#64748b" }}>CA en cours</span>
+              <span style={{ fontSize: 12, color: "var(--muted)" }}>CA en cours</span>
               <span style={{ fontSize: 12, fontWeight: 700, color: pctColor(pctCA) }}>{fmtCAD(actuals.caRealized)} / {fmtCAD(obj.targetCA)} ({pctCA}%)</span>
             </div>
             <ProgressBar value={actuals.caRealized} max={obj.targetCA} />
-            <div style={{ fontSize: 10, color: "#64748b", marginTop: 2 }}>{actuals.missionsCount} poste{actuals.missionsCount > 1 ? "s" : ""} gagné{actuals.missionsCount > 1 ? "s" : ""}</div>
+            <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 2 }}>{actuals.missionsCount} poste{actuals.missionsCount > 1 ? "s" : ""} gagné{actuals.missionsCount > 1 ? "s" : ""}</div>
           </div>
 
           {/* Objectif total */}
           <div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-              <span style={{ fontSize: 12, fontWeight: 600, color: "#0f172a" }}>Objectif total</span>
+              <span style={{ fontSize: 12, fontWeight: 600, color: "var(--ink)" }}>Objectif total</span>
               <span style={{ fontSize: 13, fontWeight: 800, color: pctColor(pctTotal) }}>{fmtCAD(actuals.totalRealized)} / {fmtCAD(obj.targetTotal)} ({pctTotal}%)</span>
             </div>
             <ProgressBar value={actuals.totalRealized} max={obj.targetTotal} height={8} />
@@ -93,7 +93,7 @@ export default function ObjectiveCard({ obj, actuals, userCA, periodLabel, onEdi
 
           {/* Notes */}
           {obj.notes && (
-            <div style={{ fontSize: 11, color: "#64748b", fontStyle: "italic", padding: "6px 10px", background: "#f8fafc", borderRadius: 6, borderLeft: "3px solid #e2e8f0" }}>
+            <div style={{ fontSize: 11, color: "var(--muted)", fontStyle: "italic", padding: "6px 10px", background: "var(--surface-2)", borderRadius: 6, borderLeft: "3px solid var(--line)" }}>
               {obj.notes}
             </div>
           )}

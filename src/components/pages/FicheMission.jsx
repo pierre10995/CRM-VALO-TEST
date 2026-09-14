@@ -107,97 +107,97 @@ export default function FicheMission({ mission: m, onClose, onEdit, onDelete, on
     <div className="card" role="dialog" aria-modal="true" aria-label={`Fiche du poste : ${m.title}`} style={{ width: 580, maxHeight: "90vh", overflowY: "auto", padding: 28 }}>
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 20 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div style={{ width: 50, height: 50, background: "linear-gradient(135deg, #dbeafe, #93c5fd)", borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, fontWeight: 800, color: "#2563eb" }}>{m.title[0]}</div>
+          <div style={{ width: 50, height: 50, background: "linear-gradient(135deg, #dbeafe, #93c5fd)", borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, fontWeight: 800, color: "var(--c-blue)" }}>{m.title[0]}</div>
           <div>
-            <h2 style={{ fontSize: 18, fontWeight: 700, color: "#0f172a" }}>{m.title}</h2>
-            <p style={{ fontSize: 13, color: "#64748b" }}>{m.company} — {m.location || "N/A"}</p>
+            <h2 style={{ fontSize: 18, fontWeight: 700, color: "var(--ink)" }}>{m.title}</h2>
+            <p style={{ fontSize: 13, color: "var(--muted)" }}>{m.company} — {m.location || "N/A"}</p>
           </div>
         </div>
         <button type="button" className="btn btn-ghost" style={{ padding: "6px 8px" }} onClick={onClose} aria-label="Fermer la fiche du poste" title="Fermer">X</button>
       </div>
 
       <div className="resp-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
-        <div style={{ background: "#f8fafc", borderRadius: 10, padding: 12 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", marginBottom: 4 }}>TYPE DE CONTRAT</div>
-          <div style={{ fontSize: 13, color: "#0f172a" }}>{m.contractType}</div>
+        <div style={{ background: "var(--surface-2)", borderRadius: 10, padding: 12 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", marginBottom: 4 }}>TYPE DE CONTRAT</div>
+          <div style={{ fontSize: 13, color: "var(--ink)" }}>{m.contractType}</div>
         </div>
-        <div style={{ background: "#f8fafc", borderRadius: 10, padding: 12 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", marginBottom: 4 }}>SALAIRE</div>
-          <div style={{ fontSize: 13, color: "#0f172a", fontWeight: 600 }}>{m.salaryMin > 0 ? `${fmtCAD(m.salaryMin)} - ${fmtCAD(m.salaryMax)}` : "—"}</div>
+        <div style={{ background: "var(--surface-2)", borderRadius: 10, padding: 12 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", marginBottom: 4 }}>SALAIRE</div>
+          <div style={{ fontSize: 13, color: "var(--ink)", fontWeight: 600 }}>{m.salaryMin > 0 ? `${fmtCAD(m.salaryMin)} - ${fmtCAD(m.salaryMax)}` : "—"}</div>
         </div>
-        <div style={{ background: "#f8fafc", borderRadius: 10, padding: 12 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", marginBottom: 4 }}>COMMISSION VALO</div>
-          <div style={{ fontSize: 13, color: "#0f172a", fontWeight: 600 }}>{m.commission > 0 ? fmtCAD(m.commission) : "—"}</div>
+        <div style={{ background: "var(--surface-2)", borderRadius: 10, padding: 12 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", marginBottom: 4 }}>COMMISSION VALO</div>
+          <div style={{ fontSize: 13, color: "var(--ink)", fontWeight: 600 }}>{m.commission > 0 ? fmtCAD(m.commission) : "—"}</div>
         </div>
-        <div style={{ background: "#f8fafc", borderRadius: 10, padding: 12 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", marginBottom: 4 }}>COMMISSION RECRUTEURS</div>
-          <div style={{ fontSize: 13, color: "#0f172a", fontWeight: 600 }}>{m.recruiterCommission > 0 ? fmtCAD(m.recruiterCommission) : "—"}</div>
+        <div style={{ background: "var(--surface-2)", borderRadius: 10, padding: 12 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", marginBottom: 4 }}>COMMISSION RECRUTEURS</div>
+          <div style={{ fontSize: 13, color: "var(--ink)", fontWeight: 600 }}>{m.recruiterCommission > 0 ? fmtCAD(m.recruiterCommission) : "—"}</div>
         </div>
-        <div style={{ background: "#f8fafc", borderRadius: 10, padding: 12 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", marginBottom: 4 }}>STATUT</div>
-          <div style={{ fontSize: 13, color: "#0f172a" }}>{m.status}</div>
+        <div style={{ background: "var(--surface-2)", borderRadius: 10, padding: 12 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", marginBottom: 4 }}>STATUT</div>
+          <div style={{ fontSize: 13, color: "var(--ink)" }}>{m.status}</div>
         </div>
         {m.workMode && (
-          <div style={{ background: "#f8fafc", borderRadius: 10, padding: 12 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", marginBottom: 4 }}>MODE DE TRAVAIL</div>
-            <div style={{ fontSize: 13, color: "#0f172a" }}>{m.workMode}</div>
+          <div style={{ background: "var(--surface-2)", borderRadius: 10, padding: 12 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", marginBottom: 4 }}>MODE DE TRAVAIL</div>
+            <div style={{ fontSize: 13, color: "var(--ink)" }}>{m.workMode}</div>
           </div>
         )}
       </div>
 
       {m.description && (
-        <div style={{ background: "#f8fafc", borderRadius: 10, padding: 12, marginBottom: 12 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", marginBottom: 4 }}>DESCRIPTION</div>
-          <div style={{ fontSize: 13, color: "#374151", lineHeight: 1.5 }}>{m.description}</div>
+        <div style={{ background: "var(--surface-2)", borderRadius: 10, padding: 12, marginBottom: 12 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", marginBottom: 4 }}>DESCRIPTION</div>
+          <div style={{ fontSize: 13, color: "var(--ink-2)", lineHeight: 1.5 }}>{m.description}</div>
         </div>
       )}
       {m.requirements && (
-        <div style={{ background: "#f8fafc", borderRadius: 10, padding: 12, marginBottom: 20 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", marginBottom: 4 }}>PRE-REQUIS</div>
-          <div style={{ fontSize: 13, color: "#374151", lineHeight: 1.5 }}>{m.requirements}</div>
+        <div style={{ background: "var(--surface-2)", borderRadius: 10, padding: 12, marginBottom: 20 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", marginBottom: 4 }}>PRE-REQUIS</div>
+          <div style={{ fontSize: 13, color: "var(--ink-2)", lineHeight: 1.5 }}>{m.requirements}</div>
         </div>
       )}
 
       <div style={{ marginBottom: 20 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>Document de l'offre (PDF)</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)" }}>Document de l'offre (PDF)</div>
           <button className="btn btn-primary" style={{ padding: "6px 14px", fontSize: 12 }} onClick={handleUpload} disabled={uploading}>
             {uploading ? "Envoi..." : "+ Importer PDF"}
           </button>
         </div>
-        {files.length === 0 && <p style={{ fontSize: 12, color: "#64748b" }}>Aucun document importé</p>}
+        {files.length === 0 && <p style={{ fontSize: 12, color: "var(--muted)" }}>Aucun document importé</p>}
         {files.map(f => (
-          <div key={f.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "#f8fafc", borderRadius: 8, marginBottom: 6 }}>
-            <span style={{ fontSize: 13, color: "#0f172a", flex: 1 }}>{f.file_name}</span>
-            <span style={{ fontSize: 11, color: "#64748b" }}>{new Date(f.created_at).toLocaleDateString("fr-CA")}</span>
+          <div key={f.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "var(--surface-2)", borderRadius: 8, marginBottom: 6 }}>
+            <span style={{ fontSize: 13, color: "var(--ink)", flex: 1 }}>{f.file_name}</span>
+            <span style={{ fontSize: 11, color: "var(--muted)" }}>{new Date(f.created_at).toLocaleDateString("fr-CA")}</span>
             <button className="btn btn-primary" style={{ padding: "4px 10px", fontSize: 11 }} onClick={() => previewFile(f.id, f.file_name)}>Voir</button>
             <button className="btn btn-ghost" style={{ padding: "4px 10px", fontSize: 11 }} onClick={() => downloadFile(f.id, f.file_name)}>Télécharger</button>
             <button className="btn btn-danger" style={{ padding: "4px 10px", fontSize: 11 }} onClick={async () => (await confirm("Cette suppression est définitive. Voulez-vous continuer ?", { title: "Supprimer définitivement", confirmLabel: "Supprimer" })) && deleteFile(f.id)}>Suppr.</button>
           </div>
         ))}
-        <p style={{ fontSize: 11, color: "#64748b", marginTop: 6, fontStyle: "italic" }}>Ce document sera utilisé par l'IA lors de l'évaluation des candidats.</p>
+        <p style={{ fontSize: 11, color: "var(--muted)", marginTop: 6, fontStyle: "italic" }}>Ce document sera utilisé par l'IA lors de l'évaluation des candidats.</p>
       </div>
 
       <div style={{ marginBottom: 20 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>Candidatures ({mCandidatures.length})</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)" }}>Candidatures ({mCandidatures.length})</div>
           {onAddCandidature && (
             <button className="btn btn-primary" style={{ padding: "6px 14px", fontSize: 12 }} onClick={() => onAddCandidature(m.id)}>
               + Proposer un candidat
             </button>
           )}
         </div>
-        {mCandidatures.length === 0 && <p style={{ fontSize: 12, color: "#64748b" }}>Aucune candidature — proposez un candidat pour ce poste</p>}
+        {mCandidatures.length === 0 && <p style={{ fontSize: 12, color: "var(--muted)" }}>Aucune candidature — proposez un candidat pour ce poste</p>}
         {mCandidatures.map(cd => (
           <div
             key={cd.id}
             onClick={goToContact ? () => goToContact(cd.candidateId) : undefined}
             className={goToContact ? "row-hover" : undefined}
-            style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "#f8fafc", borderRadius: 8, marginBottom: 6, cursor: goToContact ? "pointer" : "default" }}
+            style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "var(--surface-2)", borderRadius: 8, marginBottom: 6, cursor: goToContact ? "pointer" : "default" }}
             title={goToContact ? "Voir la fiche candidat" : undefined}
           >
-            <span style={{ fontSize: 13, color: "#0f172a", flex: 1 }}>{cd.candidateName}</span>
-            <span className="tag" style={{ background: cd.stage === "Placé" ? "#d1fae5" : cd.stage === "Refusé" ? "#fee2e2" : "#dbeafe", color: cd.stage === "Placé" ? "#059669" : cd.stage === "Refusé" ? "#dc2626" : "#2563eb" }}>{cd.stage}</span>
+            <span style={{ fontSize: 13, color: "var(--ink)", flex: 1 }}>{cd.candidateName}</span>
+            <span className="tag" style={{ background: cd.stage === "Placé" ? "var(--tint-green)" : cd.stage === "Refusé" ? "var(--tint-red)" : "var(--tint-blue)", color: cd.stage === "Placé" ? "var(--c-green)" : cd.stage === "Refusé" ? "var(--c-red)" : "var(--c-blue)" }}>{cd.stage}</span>
           </div>
         ))}
       </div>
@@ -205,25 +205,25 @@ export default function FicheMission({ mission: m, onClose, onEdit, onDelete, on
       {/* Matching IA */}
       <div style={{ marginBottom: 20 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>Candidats suggérés par l'IA</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)" }}>Candidats suggérés par l'IA</div>
           <button className="btn btn-primary" style={{ padding: "6px 14px", fontSize: 12 }} onClick={findSuggestions} disabled={loadingSuggestions}>
             {loadingSuggestions ? "Analyse en cours..." : "Trouver des candidats"}
           </button>
         </div>
-        {suggestions.length === 0 && !loadingSuggestions && <p style={{ fontSize: 12, color: "#64748b" }}>Cliquez pour lancer le matching IA</p>}
+        {suggestions.length === 0 && !loadingSuggestions && <p style={{ fontSize: 12, color: "var(--muted)" }}>Cliquez pour lancer le matching IA</p>}
         {suggestions.map((s, i) => {
-          const scoreColor = s.score >= 70 ? "#059669" : s.score >= 40 ? "#d97706" : "#dc2626";
+          const scoreColor = s.score >= 70 ? "var(--c-green)" : s.score >= 40 ? "var(--c-amber)" : "var(--c-red)";
           const alreadyProposed = mCandidatures.some(cd => cd.candidateId === s.id);
           return (
-            <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "#f8fafc", borderRadius: 8, marginBottom: 6 }}>
-              <div style={{ width: 32, height: 32, borderRadius: "50%", background: s.score >= 70 ? "#ecfdf5" : s.score >= 40 ? "#fffbeb" : "#fef2f2", border: `2px solid ${scoreColor}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 800, color: scoreColor }}>{s.score}</div>
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "var(--surface-2)", borderRadius: 8, marginBottom: 6 }}>
+              <div style={{ width: 32, height: 32, borderRadius: "50%", background: s.score >= 70 ? "var(--tint-green-soft)" : s.score >= 40 ? "var(--tint-amber-soft)" : "var(--tint-red-soft)", border: `2px solid ${scoreColor}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 800, color: scoreColor }}>{s.score}</div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: "#0f172a" }}>{s.name}</div>
-                <div style={{ fontSize: 11, color: "#64748b" }}>{s.reason}</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: "var(--ink)" }}>{s.name}</div>
+                <div style={{ fontSize: 11, color: "var(--muted)" }}>{s.reason}</div>
               </div>
               {onAddCandidature && (
                 alreadyProposed
-                  ? <span style={{ fontSize: 11, color: "#64748b", whiteSpace: "nowrap" }}>Déjà proposé</span>
+                  ? <span style={{ fontSize: 11, color: "var(--muted)", whiteSpace: "nowrap" }}>Déjà proposé</span>
                   : <button className="btn btn-ghost" style={{ padding: "4px 10px", fontSize: 11, whiteSpace: "nowrap" }} onClick={() => onAddCandidature(m.id, s.id)}>+ Proposer</button>
               )}
             </div>
@@ -242,9 +242,9 @@ export default function FicheMission({ mission: m, onClose, onEdit, onDelete, on
       {/* PDF Preview Modal */}
       {previewUrl && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={closePreview}>
-          <div style={{ background: "#fff", borderRadius: 12, width: "80vw", height: "85vh", display: "flex", flexDirection: "column", overflow: "hidden" }} onClick={e => e.stopPropagation()}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 20px", borderBottom: "1px solid #e2e8f0" }}>
-              <span style={{ fontSize: 14, fontWeight: 600, color: "#0f172a" }}>{previewName}</span>
+          <div style={{ background: "var(--surface)", borderRadius: 12, width: "80vw", height: "85vh", display: "flex", flexDirection: "column", overflow: "hidden" }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 20px", borderBottom: "1px solid var(--line)" }}>
+              <span style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)" }}>{previewName}</span>
               <button className="btn btn-ghost" style={{ padding: "4px 10px", fontSize: 12 }} onClick={closePreview}>Fermer</button>
             </div>
             <iframe src={previewUrl} style={{ flex: 1, border: "none" }} title="Prévisualisation PDF" />

@@ -6,13 +6,13 @@ export const ALL_STAGES = ["En attente", "Proposition partenaire", ...STAGES, "A
 
 // Presets de couleur des statuts de validation (partagés par la page et le formulaire)
 export const COLOR_PRESETS = [
-  { bg: "#d1fae5", color: "#059669", name: "Vert" },
-  { bg: "#fef3c7", color: "#d97706", name: "Orange" },
-  { bg: "#e0e7ff", color: "#4f46e5", name: "Indigo" },
-  { bg: "#fee2e2", color: "#dc2626", name: "Rouge" },
-  { bg: "#fce7f3", color: "#be185d", name: "Rose" },
-  { bg: "#dbeafe", color: "#2563eb", name: "Bleu" },
-  { bg: "#f1f5f9", color: "#64748b", name: "Gris" },
+  { bg: "var(--tint-green)", color: "var(--c-green)", name: "Vert" },
+  { bg: "var(--tint-amber)", color: "var(--c-amber)", name: "Orange" },
+  { bg: "var(--tint-violet)", color: "var(--c-indigo)", name: "Indigo" },
+  { bg: "var(--tint-red)", color: "var(--c-red)", name: "Rouge" },
+  { bg: "var(--tint-pink)", color: "var(--c-pink)", name: "Rose" },
+  { bg: "var(--tint-blue)", color: "var(--c-blue)", name: "Bleu" },
+  { bg: "var(--surface-3)", color: "var(--muted)", name: "Gris" },
 ];
 export const ACTIVITY_TYPES = ["Appel", "Email", "Réunion", "Note"];
 export const CONTRACT_TYPES = ["CDI", "CDD", "Contrat", "Freelance", "Stage"];
@@ -23,9 +23,9 @@ export const PRIORITIES = ["Basse", "Normale", "Haute", "Urgente"];
 export const fmtCAD = (n) => Number(n || 0).toLocaleString("fr-CA") + " $ CAD";
 
 export const VALIDATION_COLORS = {
-  "Validé": { bg: "#d1fae5", color: "#059669" },
-  "À moitié Validé": { bg: "#fef3c7", color: "#d97706" },
-  "Doute": { bg: "#e0e7ff", color: "#4f46e5" },
-  "Refusé par VALO": { bg: "#fee2e2", color: "#dc2626" },
-  "Refusé par le client": { bg: "#fce7f3", color: "#be185d" },
+  "Validé": { bg: "var(--tint-green)", color: "var(--c-green)" },
+  "À moitié Validé": { bg: "var(--tint-amber)", color: "var(--c-amber)" },
+  "Doute": { bg: "var(--tint-violet)", color: "var(--c-indigo)" },
+  "Refusé par VALO": { bg: "var(--tint-red)", color: "var(--c-red)" },
+  "Refusé par le client": { bg: "var(--tint-pink)", color: "var(--c-pink)" },
 };

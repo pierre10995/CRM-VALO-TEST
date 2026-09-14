@@ -2,12 +2,12 @@ import { useState, useEffect } from "react";
 import api from "../../services/api";
 
 const ACTION_STYLES = {
-  "Création": { bg: "#d1fae5", color: "#059669" },
-  "Créer": { bg: "#d1fae5", color: "#059669" },
-  "Modification": { bg: "#dbeafe", color: "#2563eb" },
-  "Modifier": { bg: "#dbeafe", color: "#2563eb" },
-  "Suppression": { bg: "#fee2e2", color: "#dc2626" },
-  "Supprimer": { bg: "#fee2e2", color: "#dc2626" },
+  "Création": { bg: "var(--tint-green)", color: "var(--c-green)" },
+  "Créer": { bg: "var(--tint-green)", color: "var(--c-green)" },
+  "Modification": { bg: "var(--tint-blue)", color: "var(--c-blue)" },
+  "Modifier": { bg: "var(--tint-blue)", color: "var(--c-blue)" },
+  "Suppression": { bg: "var(--tint-red)", color: "var(--c-red)" },
+  "Supprimer": { bg: "var(--tint-red)", color: "var(--c-red)" },
 };
 
 export default function AuditHistory({ entityType, entityId }) {
@@ -27,15 +27,15 @@ export default function AuditHistory({ entityType, entityId }) {
 
   return (
     <div style={{ marginTop: 20 }}>
-      <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 10 }}>
+      <div style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 10 }}>
         Historique ({logs.length})
       </div>
       <div style={{ position: "relative", paddingLeft: 18 }}>
         {/* Timeline line */}
-        <div style={{ position: "absolute", left: 5, top: 6, bottom: 6, width: 2, background: "#e2e8f0", borderRadius: 1 }} />
+        <div style={{ position: "absolute", left: 5, top: 6, bottom: 6, width: 2, background: "var(--line)", borderRadius: 1 }} />
 
         {displayed.map((log, i) => {
-          const as = ACTION_STYLES[log.action] || { bg: "#f1f5f9", color: "#64748b" };
+          const as = ACTION_STYLES[log.action] || { bg: "var(--surface-3)", color: "var(--muted)" };
           const date = new Date(log.createdAt);
           return (
             <div key={log.id} style={{ position: "relative", paddingBottom: i < displayed.length - 1 ? 14 : 0 }}>
@@ -52,13 +52,13 @@ export default function AuditHistory({ entityType, entityId }) {
                 }}>
                   {log.action}
                 </span>
-                <span style={{ fontSize: 11.5, color: "#475569", fontWeight: 500 }}>{log.userName}</span>
-                <span style={{ fontSize: 10.5, color: "#64748b", marginLeft: "auto" }}>
+                <span style={{ fontSize: 11.5, color: "var(--ink-soft)", fontWeight: 500 }}>{log.userName}</span>
+                <span style={{ fontSize: 10.5, color: "var(--muted)", marginLeft: "auto" }}>
                   {date.toLocaleDateString("fr-CA")} {date.toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" })}
                 </span>
               </div>
               {log.details && (
-                <div style={{ fontSize: 11, color: "#64748b", marginTop: 3, lineHeight: 1.4 }}>
+                <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 3, lineHeight: 1.4 }}>
                   {log.details}
                 </div>
               )}
@@ -71,7 +71,7 @@ export default function AuditHistory({ entityType, entityId }) {
           onClick={() => setExpanded(!expanded)}
           style={{
             background: "none", border: "none", cursor: "pointer", fontSize: 11.5,
-            color: "#2563eb", fontWeight: 600, marginTop: 10, fontFamily: "inherit",
+            color: "var(--c-blue)", fontWeight: 600, marginTop: 10, fontFamily: "inherit",
             padding: "4px 0",
           }}
         >

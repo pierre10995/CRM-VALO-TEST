@@ -11,7 +11,7 @@ export default function Pagination({ page, pageSize, total, onChange }) {
 
   return (
     <nav aria-label="Pagination" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "14px 4px", flexWrap: "wrap" }}>
-      <span style={{ fontSize: 12.5, color: "#64748b" }}>
+      <span style={{ fontSize: 12.5, color: "var(--muted)" }}>
         {from}–{to} sur {total}
       </span>
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -25,7 +25,7 @@ export default function Pagination({ page, pageSize, total, onChange }) {
         >
           Précédent
         </button>
-        <span aria-live="polite" style={{ fontSize: 12.5, color: "#0f172a", fontWeight: 600 }}>
+        <span aria-live="polite" style={{ fontSize: 12.5, color: "var(--ink)", fontWeight: 600 }}>
           Page {page} / {totalPages}
         </span>
         <button

@@ -75,10 +75,10 @@ export default function BulkCvUpload({ onComplete }) {
 
   return (
     <div className="card" style={{ marginBottom: 20, padding: 20 }}>
-      <div style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", marginBottom: 12 }}>
+      <div style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", marginBottom: 12 }}>
         Import en masse de CV
       </div>
-      <p style={{ fontSize: 12.5, color: "#64748b", marginBottom: 16 }}>
+      <p style={{ fontSize: 12.5, color: "var(--muted)", marginBottom: 16 }}>
         Glissez-déposez vos CV (PDF) pour créer automatiquement les fiches candidats. Le nom, email et téléphone seront extraits de chaque CV.
       </p>
 
@@ -94,7 +94,7 @@ export default function BulkCvUpload({ onComplete }) {
           padding: "36px 20px",
           textAlign: "center",
           cursor: uploading ? "wait" : "pointer",
-          background: dragging ? "#eff6ff" : "#f8fafc",
+          background: dragging ? "var(--tint-blue-soft)" : "var(--surface-2)",
           transition: "all 0.2s",
         }}
       >
@@ -104,7 +104,7 @@ export default function BulkCvUpload({ onComplete }) {
             <div style={{ fontSize: 13, color: "#3b82f6", fontWeight: 600 }}>
               Traitement en cours... {progress?.current}/{progress?.total} CV
             </div>
-            <div style={{ width: "60%", height: 6, background: "#e2e8f0", borderRadius: 3, margin: "12px auto 0" }}>
+            <div style={{ width: "60%", height: 6, background: "var(--line)", borderRadius: 3, margin: "12px auto 0" }}>
               <div style={{
                 width: `${(progress?.current / progress?.total) * 100}%`,
                 height: "100%",
@@ -117,10 +117,10 @@ export default function BulkCvUpload({ onComplete }) {
         ) : (
           <div>
             <div style={{ fontSize: 32, marginBottom: 8, opacity: 0.5 }}>PDF</div>
-            <div style={{ fontSize: 13.5, fontWeight: 600, color: "#374151" }}>
+            <div style={{ fontSize: 13.5, fontWeight: 600, color: "var(--ink-2)" }}>
               Glissez vos CV ici ou cliquez pour sélectionner
             </div>
-            <div style={{ fontSize: 12, color: "#64748b", marginTop: 4 }}>
+            <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>
               Fichiers PDF uniquement — plusieurs fichiers acceptés
             </div>
           </div>
@@ -138,14 +138,14 @@ export default function BulkCvUpload({ onComplete }) {
 
       {/* Results */}
       {results && (
-        <div style={{ marginTop: 16, padding: 14, background: "#f0fdf4", borderRadius: 10, border: "1px solid #bbf7d0" }}>
+        <div style={{ marginTop: 16, padding: 14, background: "var(--tint-green-soft)", borderRadius: 10, border: "1px solid #bbf7d0" }}>
           <div style={{ fontSize: 13.5, fontWeight: 700, color: "#166534", marginBottom: 8 }}>
             Import terminé
           </div>
           <div style={{ display: "flex", gap: 16, fontSize: 12.5 }}>
-            <span style={{ color: "#059669" }}>{results.created} créé{results.created > 1 ? "s" : ""}</span>
-            {results.duplicates > 0 && <span style={{ color: "#d97706" }}>{results.duplicates} doublon{results.duplicates > 1 ? "s" : ""}</span>}
-            {results.errors > 0 && <span style={{ color: "#dc2626" }}>{results.errors} erreur{results.errors > 1 ? "s" : ""}</span>}
+            <span style={{ color: "var(--c-green)" }}>{results.created} créé{results.created > 1 ? "s" : ""}</span>
+            {results.duplicates > 0 && <span style={{ color: "var(--c-amber)" }}>{results.duplicates} doublon{results.duplicates > 1 ? "s" : ""}</span>}
+            {results.errors > 0 && <span style={{ color: "var(--c-red)" }}>{results.errors} erreur{results.errors > 1 ? "s" : ""}</span>}
           </div>
           {results.results.length > 0 && (
             <div style={{ marginTop: 10, maxHeight: 200, overflowY: "auto" }}>
@@ -156,10 +156,10 @@ export default function BulkCvUpload({ onComplete }) {
                     background: r.status === "created" ? "#22c55e" : r.status === "duplicate" ? "#f59e0b" : "#ef4444",
                     flexShrink: 0,
                   }} />
-                  <span style={{ color: "#374151", fontWeight: 500 }}>{r.fileName}</span>
-                  {r.status === "created" && <span style={{ color: "#059669" }}>{r.contact?.name}</span>}
-                  {r.status === "duplicate" && <span style={{ color: "#d97706" }}>Doublon ({r.email})</span>}
-                  {r.status === "error" && <span style={{ color: "#dc2626" }}>{r.error}</span>}
+                  <span style={{ color: "var(--ink-2)", fontWeight: 500 }}>{r.fileName}</span>
+                  {r.status === "created" && <span style={{ color: "var(--c-green)" }}>{r.contact?.name}</span>}
+                  {r.status === "duplicate" && <span style={{ color: "var(--c-amber)" }}>Doublon ({r.email})</span>}
+                  {r.status === "error" && <span style={{ color: "var(--c-red)" }}>{r.error}</span>}
                 </div>
               ))}
             </div>

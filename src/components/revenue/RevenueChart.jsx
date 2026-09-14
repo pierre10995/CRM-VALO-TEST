@@ -7,7 +7,7 @@ export default function RevenueChart({ chartData }) {
 
   return (
     <div className="card" style={{ marginBottom: 24 }}>
-      <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", marginBottom: 16 }}>Évolution du chiffre d'affaires</div>
+      <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)", marginBottom: 16 }}>Évolution du chiffre d'affaires</div>
       <svg viewBox={`0 0 ${Math.max(chartData.length * 160, 400)} 220`} style={{ width: "100%", height: 220 }}>
         {[0, 0.25, 0.5, 0.75, 1].map((p, i) => (
           <g key={i}>
@@ -23,7 +23,7 @@ export default function RevenueChart({ chartData }) {
             <g key={d.label}>
               <rect x={x} y={180 - targetH} width="40" height={targetH} rx="4" fill="#e2e8f0" opacity="0.5" />
               <rect x={x} y={180 - barH} width="40" height={barH} rx="4" fill={d.ca >= d.target ? "url(#greenGrad)" : "url(#blueGrad)"} />
-              <text x={x + 20} y={175 - barH} textAnchor="middle" fontSize="11" fontWeight="700" fill={d.ca >= d.target ? "#059669" : "#2563eb"}>{fmtCAD(d.ca).replace(" $ CAD", "")}</text>
+              <text x={x + 20} y={175 - barH} textAnchor="middle" fontSize="11" fontWeight="700" fill={d.ca >= d.target ? "var(--c-green)" : "var(--c-blue)"}>{fmtCAD(d.ca).replace(" $ CAD", "")}</text>
               <text x={x + 20} y={198} textAnchor="middle" fontSize="11" fontWeight="600" fill="#374151">{d.label}</text>
               <text x={x + 20} y={212} textAnchor="middle" fontSize="9" fill="#64748b">Obj: {fmtCAD(d.target).replace(" $ CAD", "")}</text>
             </g>
@@ -48,11 +48,11 @@ export default function RevenueChart({ chartData }) {
         </defs>
       </svg>
       <div style={{ display: "flex", gap: 20, justifyContent: "center", marginTop: 8 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "#64748b" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "var(--muted)" }}>
           <div style={{ width: 12, height: 12, borderRadius: 2, background: "linear-gradient(#3b82f6, #93c5fd)" }} /> CA réalisé
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "#64748b" }}>
-          <div style={{ width: 12, height: 12, borderRadius: 2, background: "#e2e8f0" }} /> Objectif
+        <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "var(--muted)" }}>
+          <div style={{ width: 12, height: 12, borderRadius: 2, background: "var(--line)" }} /> Objectif
         </div>
       </div>
     </div>

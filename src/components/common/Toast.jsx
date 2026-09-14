@@ -3,10 +3,10 @@ import { useState, useEffect, useCallback, useMemo, useRef, createContext, useCo
 const ToastContext = createContext(null);
 
 const TOAST_STYLES = {
-  success: { bg: "#ecfdf5", border: "#a7f3d0", color: "#065f46", icon: "M9 12l2 2 4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" },
-  error: { bg: "#fef2f2", border: "#fecaca", color: "#991b1b", icon: "M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" },
-  info: { bg: "#eff6ff", border: "#bfdbfe", color: "#1e40af", icon: "M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" },
-  warning: { bg: "#fffbeb", border: "#fde68a", color: "#92400e", icon: "M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" },
+  success: { bg: "var(--tint-green-soft)", border: "var(--c-green)", color: "var(--text-success)", icon: "M9 12l2 2 4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" },
+  error: { bg: "var(--tint-red-soft)", border: "var(--c-red)", color: "var(--text-danger)", icon: "M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" },
+  info: { bg: "var(--tint-blue-soft)", border: "var(--c-blue)", color: "var(--text-info)", icon: "M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" },
+  warning: { bg: "var(--tint-amber-soft)", border: "var(--c-amber)", color: "var(--text-warning)", icon: "M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" },
 };
 
 export function ToastProvider({ children }) {

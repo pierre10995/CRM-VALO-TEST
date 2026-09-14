@@ -35,8 +35,8 @@ export default function AdminPage({ currentUser, loadAll }) {
   if (!isAdmin) {
     return (
       <div style={{ padding: 40, textAlign: "center" }}>
-        <h2 style={{ fontSize: 20, fontWeight: 700, color: "#0f172a", marginBottom: 8 }}>Acc\u00e8s restreint</h2>
-        <p style={{ color: "#64748b" }}>Seul l'administrateur peut acc\u00e9der \u00e0 cette page.</p>
+        <h2 style={{ fontSize: 20, fontWeight: 700, color: "var(--ink)", marginBottom: 8 }}>Acc\u00e8s restreint</h2>
+        <p style={{ color: "var(--muted)" }}>Seul l'administrateur peut acc\u00e9der \u00e0 cette page.</p>
       </div>
     );
   }
@@ -163,7 +163,7 @@ export default function AdminPage({ currentUser, loadAll }) {
     borderRadius: 8,
     cursor: "pointer",
     background: tab === t ? "#1d4ed8" : "transparent",
-    color: tab === t ? "white" : "#64748b",
+    color: tab === t ? "white" : "var(--muted)",
     border: "none",
   });
 
@@ -171,12 +171,12 @@ export default function AdminPage({ currentUser, loadAll }) {
     <div>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
         <div>
-          <h1 style={{ fontSize: 26, fontWeight: 800, color: "#0f172a" }}>Administration</h1>
-          <p style={{ fontSize: 13.5, color: "#64748b", marginTop: 3 }}>Gestion des comptes utilisateurs et partenaires</p>
+          <h1 style={{ fontSize: 26, fontWeight: 800, color: "var(--ink)" }}>Administration</h1>
+          <p style={{ fontSize: 13.5, color: "var(--muted)", marginTop: 3 }}>Gestion des comptes utilisateurs et partenaires</p>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
           <button className="btn btn-primary" onClick={() => resetForm("user")}>+ Interne</button>
-          {isSuperAdmin && <button className="btn btn-primary" style={{ background: "#7c3aed" }} onClick={() => resetForm("partner")}>+ Recruteur externe</button>}
+          {isSuperAdmin && <button className="btn btn-primary" style={{ background: "var(--c-violet)" }} onClick={() => resetForm("partner")}>+ Recruteur externe</button>}
         </div>
       </div>
 
@@ -184,7 +184,7 @@ export default function AdminPage({ currentUser, loadAll }) {
       {showForm && (
         <div className="card" style={{ marginBottom: 20, padding: 20 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-            <h3 style={{ fontSize: 15, fontWeight: 700, color: "#0f172a" }}>
+            <h3 style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)" }}>
               {formType === "user"
                 ? (editingId ? "Modifier l'employ\u00e9" : "Nouvel employ\u00e9")
                 : "Nouveau recruteur externe"}
@@ -196,15 +196,15 @@ export default function AdminPage({ currentUser, loadAll }) {
             {formType === "user" ? (
               <>
                 <div style={{ flex: 1, minWidth: 180 }}>
-                  <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", marginBottom: 4, display: "block" }}>Nom complet *</label>
+                  <label style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", marginBottom: 4, display: "block" }}>Nom complet *</label>
                   <input className="input" value={form.fullName || ""} onChange={e => f("fullName", e.target.value)} placeholder="Prénom Nom" />
                 </div>
                 <div style={{ flex: 1, minWidth: 180 }}>
-                  <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", marginBottom: 4, display: "block" }}>Email (identifiant) *</label>
+                  <label style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", marginBottom: 4, display: "block" }}>Email (identifiant) *</label>
                   <input className="input" type="email" value={form.login || ""} onChange={e => f("login", e.target.value)} placeholder="prenom@valo-inno.com" />
                 </div>
                 <div style={{ flex: 1, minWidth: 180 }}>
-                  <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", marginBottom: 4, display: "block" }}>
+                  <label style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", marginBottom: 4, display: "block" }}>
                     {editingId ? "Nouveau mot de passe (laisser vide pour ne pas changer)" : "Mot de passe *"}
                   </label>
                   <input className="input" type="password" value={form.password || ""} onChange={e => f("password", e.target.value)} placeholder="Min. 12 car. (maj+min+chiffre)" onKeyDown={e => e.key === "Enter" && handleSave()} />
@@ -213,31 +213,31 @@ export default function AdminPage({ currentUser, loadAll }) {
             ) : (
               <>
                 <div style={{ flex: 1, minWidth: 180 }}>
-                  <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", marginBottom: 4, display: "block" }}>Nom complet *</label>
+                  <label style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", marginBottom: 4, display: "block" }}>Nom complet *</label>
                   <input className="input" value={form.name || ""} onChange={e => f("name", e.target.value)} placeholder="Prénom Nom" />
                 </div>
                 <div style={{ flex: 1, minWidth: 180 }}>
-                  <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", marginBottom: 4, display: "block" }}>Email *</label>
+                  <label style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", marginBottom: 4, display: "block" }}>Email *</label>
                   <input className="input" type="email" value={form.email || ""} onChange={e => f("email", e.target.value)} placeholder="email@example.com" />
                 </div>
                 <div style={{ flex: 1, minWidth: 180 }}>
-                  <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", marginBottom: 4, display: "block" }}>Mot de passe *</label>
+                  <label style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", marginBottom: 4, display: "block" }}>Mot de passe *</label>
                   <input className="input" type="password" value={form.password || ""} onChange={e => f("password", e.target.value)} placeholder="Min. 12 car. (maj+min+chiffre)" onKeyDown={e => e.key === "Enter" && handleSave()} />
                 </div>
                 <div style={{ flex: 1, minWidth: 180 }}>
-                  <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", marginBottom: 4, display: "block" }}>Entreprise</label>
+                  <label style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", marginBottom: 4, display: "block" }}>Entreprise</label>
                   <input className="input" value={form.company || ""} onChange={e => f("company", e.target.value)} placeholder="Nom de l'entreprise" />
                 </div>
                 <div style={{ flex: 1, minWidth: 140 }}>
-                  <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", marginBottom: 4, display: "block" }}>T\u00e9l\u00e9phone</label>
+                  <label style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", marginBottom: 4, display: "block" }}>T\u00e9l\u00e9phone</label>
                   <input className="input" value={form.phone || ""} onChange={e => f("phone", e.target.value)} placeholder="(514) 555-0000" />
                 </div>
               </>
             )}
           </div>
 
-          {error && <div style={{ marginTop: 10, fontSize: 12.5, color: "#dc2626", fontWeight: 500 }}>{error}</div>}
-          {success && <div style={{ marginTop: 10, fontSize: 12.5, color: "#059669", fontWeight: 500 }}>{success}</div>}
+          {error && <div style={{ marginTop: 10, fontSize: 12.5, color: "var(--c-red)", fontWeight: 500 }}>{error}</div>}
+          {success && <div style={{ marginTop: 10, fontSize: 12.5, color: "var(--c-green)", fontWeight: 500 }}>{success}</div>}
 
           <div style={{ marginTop: 14, display: "flex", justifyContent: "flex-end" }}>
             <button className="btn btn-primary" onClick={handleSave}>
@@ -250,7 +250,7 @@ export default function AdminPage({ currentUser, loadAll }) {
       )}
 
       {/* Tabs */}
-      <div style={{ display: "flex", gap: 4, marginBottom: 20, background: "#f1f5f9", borderRadius: 10, padding: 4, width: "fit-content" }}>
+      <div style={{ display: "flex", gap: 4, marginBottom: 20, background: "var(--surface-3)", borderRadius: 10, padding: 4, width: "fit-content" }}>
         <button style={tabStyle("users")} onClick={() => setTab("users")}>Employés Internes ({users.length})</button>
         {isSuperAdmin && <button style={tabStyle("partners")} onClick={() => setTab("partners")}>Recruteurs externes ({partners.length})</button>}
         {isSuperAdmin && <button style={tabStyle("audit")} onClick={() => setTab("audit")}>Journal d'audit</button>}
@@ -260,39 +260,39 @@ export default function AdminPage({ currentUser, loadAll }) {
       {tab === "users" && (
         <div className="card" style={{ padding: 0, overflow: "hidden" }}>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead><tr style={{ borderBottom: "1px solid #e2e8f0" }}>
+            <thead><tr style={{ borderBottom: "1px solid var(--line)" }}>
               <th style={thStyle}>Nom</th>
               <th style={thStyle}>Email</th>
               <th style={thStyle}>Rôle</th>
               <th style={{ ...thStyle, textAlign: "right" }}>Actions</th>
             </tr></thead>
             <tbody>
-              {users.length === 0 && <tr><td colSpan={4} style={{ padding: 40, textAlign: "center", color: "#64748b" }}>Aucun utilisateur</td></tr>}
+              {users.length === 0 && <tr><td colSpan={4} style={{ padding: 40, textAlign: "center", color: "var(--muted)" }}>Aucun utilisateur</td></tr>}
               {users.map(u => (
-                <tr key={u.id} className="row-hover" style={{ borderBottom: "1px solid #eef2f7" }}>
+                <tr key={u.id} className="row-hover" style={{ borderBottom: "1px solid var(--line-soft)" }}>
                   <td style={tdStyle}>
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                       <div style={{ width: 32, height: 32, background: "linear-gradient(135deg, #dbeafe, #bfdbfe)", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "#1d4ed8" }}>{u.fullName?.[0] || "?"}</div>
                       <div>
-                        <div style={{ fontSize: 13.5, fontWeight: 600, color: "#0f172a" }}>{u.fullName}</div>
-                        {userTitle(u) && <div style={{ fontSize: 11.5, fontWeight: 600, color: "#2563eb" }}>{userTitle(u)}</div>}
+                        <div style={{ fontSize: 13.5, fontWeight: 600, color: "var(--ink)" }}>{u.fullName}</div>
+                        {userTitle(u) && <div style={{ fontSize: 11.5, fontWeight: 600, color: "var(--c-blue)" }}>{userTitle(u)}</div>}
                       </div>
                     </div>
                   </td>
-                  <td style={{ ...tdStyle, color: "#64748b" }}>{u.login}</td>
+                  <td style={{ ...tdStyle, color: "var(--muted)" }}>{u.login}</td>
                   <td style={tdStyle}>
                     {isSuperAdmin && u.login !== currentUser?.login ? (
                       <select
                         value={u.userRole || "user"}
                         onChange={e => handleChangeRole(u, e.target.value)}
-                        style={{ padding: "4px 8px", borderRadius: 6, border: "1.5px solid #e2e8f0", fontSize: 12, fontWeight: 600, color: ROLE_COLORS[u.userRole] || "#64748b", background: "white", cursor: "pointer" }}
+                        style={{ padding: "4px 8px", borderRadius: 6, border: "1.5px solid var(--line)", fontSize: 12, fontWeight: 600, color: ROLE_COLORS[u.userRole] || "var(--muted)", background: "var(--surface)", cursor: "pointer" }}
                       >
                         <option value="user">Utilisateur</option>
                         <option value="admin">Admin</option>
                         <option value="superadmin">Super Admin</option>
                       </select>
                     ) : (
-                      <span className="tag" style={{ background: ROLE_BG[u.userRole] || "#f1f5f9", color: ROLE_COLORS[u.userRole] || "#64748b", fontSize: 11 }}>
+                      <span className="tag" style={{ background: ROLE_BG[u.userRole] || "var(--surface-3)", color: ROLE_COLORS[u.userRole] || "var(--muted)", fontSize: 11 }}>
                         {ROLE_LABELS[u.userRole] || "Utilisateur"}
                       </span>
                     )}
@@ -301,7 +301,7 @@ export default function AdminPage({ currentUser, loadAll }) {
                     <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
                       <button className="btn btn-ghost" style={{ fontSize: 12, padding: "4px 10px" }} onClick={() => startEditUser(u)}>Modifier</button>
                       {isSuperAdmin && u.login !== currentUser?.login && (
-                        <button className="btn btn-ghost" style={{ fontSize: 12, padding: "4px 10px", color: "#dc2626" }} onClick={() => handleDeleteUser(u)}>Supprimer</button>
+                        <button className="btn btn-ghost" style={{ fontSize: 12, padding: "4px 10px", color: "var(--c-red)" }} onClick={() => handleDeleteUser(u)}>Supprimer</button>
                       )}
                     </div>
                   </td>
@@ -316,7 +316,7 @@ export default function AdminPage({ currentUser, loadAll }) {
       {tab === "partners" && isSuperAdmin && (
         <div className="card" style={{ padding: 0, overflow: "hidden" }}>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead><tr style={{ borderBottom: "1px solid #e2e8f0" }}>
+            <thead><tr style={{ borderBottom: "1px solid var(--line)" }}>
               <th style={thStyle}>Nom</th>
               <th style={thStyle}>Email</th>
               <th style={thStyle}>Entreprise</th>
@@ -324,22 +324,22 @@ export default function AdminPage({ currentUser, loadAll }) {
               <th style={{ ...thStyle, textAlign: "right" }}>Actions</th>
             </tr></thead>
             <tbody>
-              {partners.length === 0 && <tr><td colSpan={5} style={{ padding: 40, textAlign: "center", color: "#64748b" }}>Aucun partenaire</td></tr>}
+              {partners.length === 0 && <tr><td colSpan={5} style={{ padding: 40, textAlign: "center", color: "var(--muted)" }}>Aucun partenaire</td></tr>}
               {partners.map(p => (
-                <tr key={p.id} className="row-hover" style={{ borderBottom: "1px solid #eef2f7" }}>
+                <tr key={p.id} className="row-hover" style={{ borderBottom: "1px solid var(--line-soft)" }}>
                   <td style={tdStyle}>
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <div style={{ width: 32, height: 32, background: "linear-gradient(135deg, #ede9fe, #ddd6fe)", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "#7c3aed" }}>{p.name?.[0] || "?"}</div>
-                      <span style={{ fontSize: 13.5, fontWeight: 600, color: "#0f172a" }}>{p.name}</span>
+                      <div style={{ width: 32, height: 32, background: "linear-gradient(135deg, #ede9fe, #ddd6fe)", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "var(--c-violet)" }}>{p.name?.[0] || "?"}</div>
+                      <span style={{ fontSize: 13.5, fontWeight: 600, color: "var(--ink)" }}>{p.name}</span>
                     </div>
                   </td>
-                  <td style={{ ...tdStyle, color: "#64748b" }}>{p.email}</td>
-                  <td style={{ ...tdStyle, color: "#374151" }}>{p.company || "—"}</td>
-                  <td style={{ ...tdStyle, color: "#374151" }}>{p.phone || "—"}</td>
+                  <td style={{ ...tdStyle, color: "var(--muted)" }}>{p.email}</td>
+                  <td style={{ ...tdStyle, color: "var(--ink-2)" }}>{p.company || "—"}</td>
+                  <td style={{ ...tdStyle, color: "var(--ink-2)" }}>{p.phone || "—"}</td>
                   <td style={{ ...tdStyle, textAlign: "right" }}>
                     <button
                       className="btn btn-ghost"
-                      style={{ color: "#dc2626", fontSize: 12, padding: "4px 10px" }}
+                      style={{ color: "var(--c-red)", fontSize: 12, padding: "4px 10px" }}
                       onClick={() => handleDeletePartner(p)}
                     >
                       Supprimer
@@ -356,7 +356,7 @@ export default function AdminPage({ currentUser, loadAll }) {
       {tab === "audit" && isSuperAdmin && (
         <div className="card" style={{ padding: 0, overflow: "hidden" }}>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead><tr style={{ borderBottom: "1px solid #e2e8f0" }}>
+            <thead><tr style={{ borderBottom: "1px solid var(--line)" }}>
               <th style={thStyle}>Date</th>
               <th style={thStyle}>Utilisateur</th>
               <th style={thStyle}>Action</th>
@@ -364,16 +364,16 @@ export default function AdminPage({ currentUser, loadAll }) {
               <th style={thStyle}>Détails</th>
             </tr></thead>
             <tbody>
-              {auditLog.length === 0 && <tr><td colSpan={5} style={{ padding: 40, textAlign: "center", color: "#64748b" }}>Aucune entrée</td></tr>}
+              {auditLog.length === 0 && <tr><td colSpan={5} style={{ padding: 40, textAlign: "center", color: "var(--muted)" }}>Aucune entrée</td></tr>}
               {auditLog.map(entry => (
-                <tr key={entry.id} style={{ borderBottom: "1px solid #eef2f7" }}>
-                  <td style={{ ...tdStyle, fontSize: 12, color: "#64748b", whiteSpace: "nowrap" }}>{new Date(entry.createdAt).toLocaleString("fr-CA")}</td>
-                  <td style={{ ...tdStyle, fontWeight: 600, color: "#0f172a" }}>{entry.userName}</td>
+                <tr key={entry.id} style={{ borderBottom: "1px solid var(--line-soft)" }}>
+                  <td style={{ ...tdStyle, fontSize: 12, color: "var(--muted)", whiteSpace: "nowrap" }}>{new Date(entry.createdAt).toLocaleString("fr-CA")}</td>
+                  <td style={{ ...tdStyle, fontWeight: 600, color: "var(--ink)" }}>{entry.userName}</td>
                   <td style={tdStyle}>
-                    <span className="tag" style={{ background: /suppr|delete/i.test(entry.action) ? "#fee2e2" : /cr[ée]/i.test(entry.action) ? "#d1fae5" : "#dbeafe", color: /suppr|delete/i.test(entry.action) ? "#dc2626" : /cr[ée]/i.test(entry.action) ? "#059669" : "#2563eb", fontSize: 10 }}>{entry.action}</span>
+                    <span className="tag" style={{ background: /suppr|delete/i.test(entry.action) ? "var(--tint-red)" : /cr[ée]/i.test(entry.action) ? "var(--tint-green)" : "var(--tint-blue)", color: /suppr|delete/i.test(entry.action) ? "var(--c-red)" : /cr[ée]/i.test(entry.action) ? "var(--c-green)" : "var(--c-blue)", fontSize: 10 }}>{entry.action}</span>
                   </td>
-                  <td style={{ ...tdStyle, color: "#374151" }}>{entry.entityType} #{entry.entityId}</td>
-                  <td style={{ ...tdStyle, color: "#64748b", fontSize: 12, maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{entry.details || "—"}</td>
+                  <td style={{ ...tdStyle, color: "var(--ink-2)" }}>{entry.entityType} #{entry.entityId}</td>
+                  <td style={{ ...tdStyle, color: "var(--muted)", fontSize: 12, maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{entry.details || "—"}</td>
                 </tr>
               ))}
             </tbody>
@@ -385,7 +385,7 @@ export default function AdminPage({ currentUser, loadAll }) {
 }
 
 const ROLE_LABELS = { user: "Utilisateur", admin: "Admin", superadmin: "Super Admin" };
-const ROLE_COLORS = { user: "#64748b", admin: "#2563eb", superadmin: "#7c3aed" };
-const ROLE_BG = { user: "#f1f5f9", admin: "#dbeafe", superadmin: "#ede9fe" };
-const thStyle = { padding: "14px 20px", textAlign: "left", fontSize: 11.5, fontWeight: 700, color: "#64748b", textTransform: "uppercase" };
+const ROLE_COLORS = { user: "var(--muted)", admin: "var(--c-blue)", superadmin: "var(--c-violet)" };
+const ROLE_BG = { user: "var(--surface-3)", admin: "var(--tint-blue)", superadmin: "var(--tint-violet)" };
+const thStyle = { padding: "14px 20px", textAlign: "left", fontSize: 11.5, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase" };
 const tdStyle = { padding: "14px 20px", fontSize: 13.5 };

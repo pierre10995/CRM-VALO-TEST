@@ -97,13 +97,13 @@ export default function PartnerSubmitForm({ missionId, missionTitle, onClose, on
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }} onClick={e => { if (e.target === e.currentTarget) handleClose(); }}>
-      <div style={{ background: "white", borderRadius: 18, padding: 28, width: "100%", maxWidth: 520, maxHeight: "90vh", overflow: "auto", boxShadow: "0 20px 60px rgba(0,0,0,0.15)" }}>
+      <div style={{ background: "var(--surface)", borderRadius: 18, padding: 28, width: "100%", maxWidth: 520, maxHeight: "90vh", overflow: "auto", boxShadow: "0 20px 60px rgba(0,0,0,0.15)" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
           <div>
-            <h3 style={{ fontSize: 17, fontWeight: 700, color: "#0f172a", margin: 0 }}>Proposer un candidat</h3>
-            <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>pour {missionTitle}</div>
+            <h3 style={{ fontSize: 17, fontWeight: 700, color: "var(--ink)", margin: 0 }}>Proposer un candidat</h3>
+            <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>pour {missionTitle}</div>
           </div>
-          <button onClick={handleClose} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "#64748b" }}>x</button>
+          <button onClick={handleClose} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "var(--muted)" }}>x</button>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -111,7 +111,7 @@ export default function PartnerSubmitForm({ missionId, missionTitle, onClose, on
 
           {/* Email with check */}
           <div>
-            <label style={{ fontSize: 12.5, fontWeight: 600, color: "#374151", display: "block", marginBottom: 6 }}>Email du candidat *</label>
+            <label style={{ fontSize: 12.5, fontWeight: 600, color: "var(--ink-2)", display: "block", marginBottom: 6 }}>Email du candidat *</label>
             <div style={{ display: "flex", gap: 8 }}>
               <input
                 type="email"
@@ -120,7 +120,7 @@ export default function PartnerSubmitForm({ missionId, missionTitle, onClose, on
                 placeholder="candidat@email.com"
                 style={{
                   flex: 1, padding: "10px 14px",
-                  border: `1.5px solid ${emailCheck === "known" ? "#fca5a5" : emailCheck === "available" ? "#86efac" : "#e2e8f0"}`,
+                  border: `1.5px solid ${emailCheck === "known" ? "#fca5a5" : emailCheck === "available" ? "#86efac" : "var(--line)"}`,
                   borderRadius: 12, fontSize: 13, fontFamily: "inherit", outline: "none",
                 }}
               />
@@ -130,7 +130,7 @@ export default function PartnerSubmitForm({ missionId, missionTitle, onClose, on
                 disabled={emailCheck === "checking" || !form.email.trim()}
                 style={{
                   padding: "10px 16px", background: "#f0f9ff", border: "1.5px solid #93c5fd", borderRadius: 12,
-                  fontSize: 12.5, fontWeight: 600, color: "#2563eb", cursor: "pointer", fontFamily: "inherit",
+                  fontSize: 12.5, fontWeight: 600, color: "var(--c-blue)", cursor: "pointer", fontFamily: "inherit",
                   whiteSpace: "nowrap", opacity: (!form.email.trim() || emailCheck === "checking") ? 0.5 : 1,
                 }}
               >
@@ -138,12 +138,12 @@ export default function PartnerSubmitForm({ missionId, missionTitle, onClose, on
               </button>
             </div>
             {emailCheck === "known" && (
-              <div style={{ marginTop: 6, padding: "8px 12px", background: "#fee2e2", borderRadius: 8, fontSize: 12.5, color: "#dc2626", fontWeight: 500 }}>
+              <div style={{ marginTop: 6, padding: "8px 12px", background: "var(--tint-red)", borderRadius: 8, fontSize: 12.5, color: "var(--c-red)", fontWeight: 500 }}>
                 Ce candidat est déjà connu de notre entreprise. Vous ne pouvez pas le soumettre.
               </div>
             )}
             {emailCheck === "available" && (
-              <div style={{ marginTop: 6, padding: "8px 12px", background: "#f0fdf4", borderRadius: 8, fontSize: 12.5, color: "#059669", fontWeight: 500 }}>
+              <div style={{ marginTop: 6, padding: "8px 12px", background: "var(--tint-green-soft)", borderRadius: 8, fontSize: 12.5, color: "var(--c-green)", fontWeight: 500 }}>
                 Ce candidat n'est pas encore dans notre base. Vous pouvez le soumettre.
               </div>
             )}
@@ -152,43 +152,43 @@ export default function PartnerSubmitForm({ missionId, missionTitle, onClose, on
           <Field label="Téléphone" value={form.phone} onChange={v => setForm(f => ({ ...f, phone: v }))} placeholder="(514) 555-1234" />
 
           <div>
-            <label style={{ fontSize: 12.5, fontWeight: 600, color: "#374151", display: "block", marginBottom: 6 }}>Résumé / Notes</label>
+            <label style={{ fontSize: 12.5, fontWeight: 600, color: "var(--ink-2)", display: "block", marginBottom: 6 }}>Résumé / Notes</label>
             <textarea
               value={form.summary}
               onChange={e => setForm(f => ({ ...f, summary: e.target.value }))}
               placeholder="Résumé du profil, motivations, points forts..."
               rows={4}
-              style={{ width: "100%", padding: "10px 14px", border: "1.5px solid #e2e8f0", borderRadius: 12, fontSize: 13, fontFamily: "inherit", resize: "vertical", outline: "none" }}
+              style={{ width: "100%", padding: "10px 14px", border: "1.5px solid var(--line)", borderRadius: 12, fontSize: 13, fontFamily: "inherit", resize: "vertical", outline: "none" }}
             />
           </div>
 
           <div>
-            <label style={{ fontSize: 12.5, fontWeight: 600, color: "#374151", display: "block", marginBottom: 6 }}>CV (PDF) *</label>
+            <label style={{ fontSize: 12.5, fontWeight: 600, color: "var(--ink-2)", display: "block", marginBottom: 6 }}>CV (PDF) *</label>
             <div style={{
-              border: "2px dashed #e2e8f0", borderRadius: 12, padding: "16px", textAlign: "center",
-              background: file ? "#f0fdf4" : "#fafbfd", cursor: "pointer", position: "relative",
+              border: "2px dashed var(--line)", borderRadius: 12, padding: "16px", textAlign: "center",
+              background: file ? "var(--tint-green-soft)" : "#fafbfd", cursor: "pointer", position: "relative",
             }}
               onClick={() => document.getElementById("partner-cv-input").click()}
             >
               <input id="partner-cv-input" type="file" accept="application/pdf" onChange={handleFileChange} style={{ display: "none" }} />
               {file ? (
-                <div style={{ fontSize: 13, color: "#059669", fontWeight: 500 }}>{file.name}</div>
+                <div style={{ fontSize: 13, color: "var(--c-green)", fontWeight: 500 }}>{file.name}</div>
               ) : (
-                <div style={{ fontSize: 13, color: "#64748b" }}>Cliquez pour sélectionner un fichier PDF</div>
+                <div style={{ fontSize: 13, color: "var(--muted)" }}>Cliquez pour sélectionner un fichier PDF</div>
               )}
             </div>
           </div>
 
           {error && (
-            <div style={{ padding: "10px 14px", background: "#fee2e2", borderRadius: 10, fontSize: 13, color: "#dc2626", fontWeight: 500 }}>{error}</div>
+            <div style={{ padding: "10px 14px", background: "var(--tint-red)", borderRadius: 10, fontSize: 13, color: "var(--c-red)", fontWeight: 500 }}>{error}</div>
           )}
 
           <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
-            <button onClick={handleClose} style={{ flex: 1, padding: 12, background: "#f1f5f9", color: "#475569", border: "none", borderRadius: 12, fontSize: 13.5, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+            <button onClick={handleClose} style={{ flex: 1, padding: 12, background: "var(--surface-3)", color: "var(--ink-soft)", border: "none", borderRadius: 12, fontSize: 13.5, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
               Annuler
             </button>
             <button onClick={handleSubmit} disabled={loading || emailBlocked} style={{
-              flex: 2, padding: 12, background: emailBlocked ? "#e2e8f0" : "linear-gradient(135deg, #059669, #10b981)", color: emailBlocked ? "#64748b" : "white",
+              flex: 2, padding: 12, background: emailBlocked ? "var(--line)" : "linear-gradient(135deg, #059669, #10b981)", color: emailBlocked ? "var(--muted)" : "white",
               border: "none", borderRadius: 12, fontSize: 13.5, fontWeight: 700, cursor: emailBlocked ? "not-allowed" : "pointer",
               fontFamily: "inherit", boxShadow: emailBlocked ? "none" : "0 4px 12px rgba(16,185,129,0.3)", opacity: loading ? 0.7 : 1,
             }}>
@@ -204,13 +204,13 @@ export default function PartnerSubmitForm({ missionId, missionTitle, onClose, on
 function Field({ label, value, onChange, placeholder, type = "text" }) {
   return (
     <div>
-      <label style={{ fontSize: 12.5, fontWeight: 600, color: "#374151", display: "block", marginBottom: 6 }}>{label}</label>
+      <label style={{ fontSize: 12.5, fontWeight: 600, color: "var(--ink-2)", display: "block", marginBottom: 6 }}>{label}</label>
       <input
         type={type}
         value={value}
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
-        style={{ width: "100%", padding: "10px 14px", border: "1.5px solid #e2e8f0", borderRadius: 12, fontSize: 13, fontFamily: "inherit", outline: "none" }}
+        style={{ width: "100%", padding: "10px 14px", border: "1.5px solid var(--line)", borderRadius: 12, fontSize: 13, fontFamily: "inherit", outline: "none" }}
       />
     </div>
   );

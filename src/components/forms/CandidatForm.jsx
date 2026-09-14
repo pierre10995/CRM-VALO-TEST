@@ -120,18 +120,18 @@ export default function CandidatForm({ form, setForm, onSave, onCancel, sectors 
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       {/* CV Upload Section */}
       <div style={{ background: "#f0f9ff", borderRadius: 10, padding: 14, border: "1px dashed #93c5fd" }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: "#2563eb", marginBottom: 8 }}>Importer un CV (PDF)</div>
+        <div style={{ fontSize: 13, fontWeight: 700, color: "var(--c-blue)", marginBottom: 8 }}>Importer un CV (PDF)</div>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <input ref={fileRef} type="file" accept=".pdf" onChange={handleCvUpload} style={{ display: "none" }} />
           <button type="button" className="btn btn-primary" style={{ padding: "8px 16px", fontSize: 12 }} onClick={() => fileRef.current?.click()} disabled={parsing}>
             {parsing ? "Analyse en cours..." : cvFileName ? "Changer le CV" : "Choisir un CV"}
           </button>
           {cvFileName && (
-            <span style={{ fontSize: 12, color: "#059669", fontWeight: 500 }}>{cvFileName}</span>
+            <span style={{ fontSize: 12, color: "var(--c-green)", fontWeight: 500 }}>{cvFileName}</span>
           )}
         </div>
         {!form.id && (
-          <p style={{ fontSize: 11, color: "#64748b", marginTop: 6 }}>Le nom, email et téléphone seront extraits automatiquement du CV</p>
+          <p style={{ fontSize: 11, color: "var(--muted)", marginTop: 6 }}>Le nom, email et téléphone seront extraits automatiquement du CV</p>
         )}
       </div>
 
@@ -140,7 +140,7 @@ export default function CandidatForm({ form, setForm, onSave, onCancel, sectors 
         <Field label="Email"><input className="input" type="email" value={form.email || ""} onChange={e => f("email", e.target.value)} onBlur={checkDuplicate} placeholder="email@exemple.ca" /></Field>
       </div>
       {duplicates.length > 0 && (
-        <div style={{ padding: "8px 12px", background: "#fef3c7", borderRadius: 8, border: "1px solid #fde68a", fontSize: 12, color: "#92400e" }}>
+        <div style={{ padding: "8px 12px", background: "var(--tint-amber)", borderRadius: 8, border: "1px solid #fde68a", fontSize: 12, color: "#92400e" }}>
           <strong>Doublon potentiel :</strong> {duplicates.map(d => `${d.name} (${d.email || d.phone})`).join(", ")}
         </div>
       )}
@@ -180,8 +180,8 @@ export default function CandidatForm({ form, setForm, onSave, onCancel, sectors 
       </Field>
 
       {showStatusMgr && (
-        <div style={{ background: "#f8fafc", borderRadius: 10, padding: 14, border: "1px solid #e2e8f0" }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: "#0f172a", marginBottom: 10 }}>Gérer les statuts</div>
+        <div style={{ background: "var(--surface-2)", borderRadius: 10, padding: 14, border: "1px solid var(--line)" }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "var(--ink)", marginBottom: 10 }}>Gérer les statuts</div>
 
           {/* Liste des statuts existants */}
           <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 12 }}>
@@ -189,7 +189,7 @@ export default function CandidatForm({ form, setForm, onSave, onCancel, sectors 
               <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", borderRadius: 8, background: s.bg }}>
                 {editingId === s.id ? (
                   <>
-                    <input className="input" style={{ flex: 1, fontSize: 12, padding: "4px 8px", background: "white" }} value={editLabel} onChange={e => setEditLabel(e.target.value)} onKeyDown={e => { if (e.key === "Enter") saveEditStatus(s); if (e.key === "Escape") setEditingId(null); }} autoFocus />
+                    <input className="input" style={{ flex: 1, fontSize: 12, padding: "4px 8px", background: "var(--surface)" }} value={editLabel} onChange={e => setEditLabel(e.target.value)} onKeyDown={e => { if (e.key === "Enter") saveEditStatus(s); if (e.key === "Escape") setEditingId(null); }} autoFocus />
                     <button type="button" className="btn btn-primary" style={{ padding: "3px 8px", fontSize: 10 }} onClick={() => saveEditStatus(s)}>OK</button>
                     <button type="button" className="btn btn-ghost" style={{ padding: "3px 8px", fontSize: 10 }} onClick={() => setEditingId(null)}>X</button>
                   </>
@@ -202,17 +202,17 @@ export default function CandidatForm({ form, setForm, onSave, onCancel, sectors 
                 )}
               </div>
             ))}
-            {validationStatuses.length === 0 && <span style={{ fontSize: 12, color: "#64748b" }}>Aucun statut défini</span>}
+            {validationStatuses.length === 0 && <span style={{ fontSize: 12, color: "var(--muted)" }}>Aucun statut défini</span>}
           </div>
 
           {/* Ajout */}
           <div style={{ display: "flex", gap: 8, alignItems: "end" }}>
             <div style={{ flex: 1 }}>
-              <label style={{ fontSize: 10, fontWeight: 600, color: "#64748b", marginBottom: 3, display: "block" }}>Nouveau statut</label>
+              <label style={{ fontSize: 10, fontWeight: 600, color: "var(--muted)", marginBottom: 3, display: "block" }}>Nouveau statut</label>
               <input className="input" style={{ fontSize: 12, padding: "6px 8px" }} value={newLabel} onChange={e => setNewLabel(e.target.value)} placeholder="Ex: En attente..." onKeyDown={e => e.key === "Enter" && addStatus()} />
             </div>
             <div>
-              <label style={{ fontSize: 10, fontWeight: 600, color: "#64748b", marginBottom: 3, display: "block" }}>Couleur</label>
+              <label style={{ fontSize: 10, fontWeight: 600, color: "var(--muted)", marginBottom: 3, display: "block" }}>Couleur</label>
               <div style={{ display: "flex", gap: 3 }}>
                 {COLOR_PRESETS.map((cp, i) => (
                   <button type="button" key={i} onClick={() => setNewColorIdx(i)} style={{

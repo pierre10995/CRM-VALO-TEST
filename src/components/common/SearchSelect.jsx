@@ -89,10 +89,10 @@ export default function SearchSelect({ value, onChange, options, placeholder = "
           onKeyDown={onKeyDown}
           placeholder={selected ? selected.label : placeholder}
           autoComplete="off"
-          style={{ border: "none", outline: "none", flex: 1, fontSize: "inherit", fontFamily: "inherit", background: "transparent", padding: 0, minWidth: 0, color: "#0f172a" }}
+          style={{ border: "none", outline: "none", flex: 1, fontSize: "inherit", fontFamily: "inherit", background: "transparent", padding: 0, minWidth: 0, color: "var(--ink)" }}
         />
         {selected && (
-          <button type="button" onClick={clear} aria-label="Effacer la sélection" title="Effacer" style={{ background: "none", border: "none", cursor: "pointer", color: "#64748b", fontSize: 18, lineHeight: 1, padding: "0 4px", flexShrink: 0 }}>&times;</button>
+          <button type="button" onClick={clear} aria-label="Effacer la sélection" title="Effacer" style={{ background: "none", border: "none", cursor: "pointer", color: "var(--muted)", fontSize: 18, lineHeight: 1, padding: "0 4px", flexShrink: 0 }}>&times;</button>
         )}
         <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
           <polyline points="6 9 12 15 18 9" />
@@ -105,12 +105,12 @@ export default function SearchSelect({ value, onChange, options, placeholder = "
           role="listbox"
           style={{
             position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, zIndex: 1000, listStyle: "none", margin: 0, padding: 0,
-            background: "white", borderRadius: 10, boxShadow: "0 8px 30px rgba(0,0,0,0.15)",
-            border: "1px solid #e2e8f0", maxHeight: 220, overflowY: "auto",
+            background: "var(--surface)", borderRadius: 10, boxShadow: "0 8px 30px rgba(0,0,0,0.15)",
+            border: "1px solid var(--line)", maxHeight: 220, overflowY: "auto",
           }}
         >
           {filtered.length === 0 && (
-            <li role="option" aria-disabled="true" aria-selected="false" style={{ padding: "12px 14px", fontSize: 12.5, color: "#64748b", textAlign: "center" }}>Aucun résultat</li>
+            <li role="option" aria-disabled="true" aria-selected="false" style={{ padding: "12px 14px", fontSize: 12.5, color: "var(--muted)", textAlign: "center" }}>Aucun résultat</li>
           )}
           {filtered.map((opt, i) => {
             const isSel = String(opt.value) === String(value);
@@ -126,15 +126,15 @@ export default function SearchSelect({ value, onChange, options, placeholder = "
                 onMouseEnter={() => setActive(i)}
                 style={{
                   padding: "8px 12px", cursor: "pointer", fontSize: 13,
-                  background: isSel ? "#eff6ff" : isActive ? "#f8fafc" : "transparent",
-                  borderBottom: "1px solid #eef2f7",
+                  background: isSel ? "var(--tint-blue-soft)" : isActive ? "var(--surface-2)" : "transparent",
+                  borderBottom: "1px solid var(--line-soft)",
                   outline: isActive ? "2px solid #2563eb" : "none", outlineOffset: -2,
                 }}
               >
                 {renderOption ? renderOption(opt) : (
                   <>
-                    <div style={{ fontWeight: 500, color: "#0f172a" }}>{opt.label}</div>
-                    {opt.sub && <div style={{ fontSize: 11, color: "#64748b", marginTop: 1 }}>{opt.sub}</div>}
+                    <div style={{ fontWeight: 500, color: "var(--ink)" }}>{opt.label}</div>
+                    {opt.sub && <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 1 }}>{opt.sub}</div>}
                   </>
                 )}
               </li>

@@ -27,6 +27,9 @@ async function safeDDL(client, sql, label) {
 async function initDB() {
   const client = await pool.connect();
   try {
+    // Verrou consultatif : si plusieurs instances démarrent en parallèle
+    // (scale-out, redéploiement), une seule exécute le DDL à la fois.
+    await client.query("SELECT pg_advisory_lock(727001)");
     await client.query(`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
@@ -508,6 +511,7 @@ async function initDB() {
     }
 
   } finally {
+    try { await client.query("SELECT pg_advisory_unlock(727001)"); } catch { /* connexion déjà fermée */ }
     client.release();
   }
 }
