@@ -292,7 +292,7 @@ function CRMInner() {
   }
 
   return (
-    <div style={{ display: "flex", height: "100vh", fontFamily: "'Sora', sans-serif", background: "#f0f4ff", overflow: "hidden" }}>
+    <div style={{ display: "flex", height: "100vh", fontFamily: "'Sora', sans-serif", background: "linear-gradient(160deg, #f6f8fe 0%, #eef2fb 55%, #e9eef9 100%)", overflow: "hidden" }}>
       <style>{GLOBAL_STYLES}</style>
 
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} currentUser={currentUser} onLogout={handleLogout} setDetailId={setDetailId} setSearch={setSearch} setFilterStatus={setFilterStatus} contacts={contacts} missions={missions} />

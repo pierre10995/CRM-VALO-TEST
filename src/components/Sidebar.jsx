@@ -87,7 +87,7 @@ export default function Sidebar({ activeTab, setActiveTab, currentUser, onLogout
   };
 
   return (
-    <aside className="app-sidebar" style={{ width: 220, background: "white", padding: "24px 12px", display: "flex", flexDirection: "column", gap: 4, boxShadow: "1px 0 0 #e2e8f0", flexShrink: 0 }}>
+    <aside className="app-sidebar" style={{ width: 220, background: "rgba(255,255,255,0.85)", backdropFilter: "blur(12px)", padding: "24px 12px", display: "flex", flexDirection: "column", gap: 4, boxShadow: "1px 0 0 #eef2f7, 6px 0 28px rgba(15,23,42,0.04)", flexShrink: 0 }}>
       <div style={{ padding: "0 6px 20px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <img src="/logo-valo.svg" alt="VALO" style={{ width: 36, height: 36, borderRadius: 8, objectFit: "cover" }} />
