@@ -7,19 +7,25 @@ import { validate } from "../validators/validate.js";
 import { validationStatusSchema, cvSummarySchema, userCreateSchema, userUpdateSchema } from "../validators/schemas.js";
 import { asyncHandler, AppError } from "../helpers/errors.js";
 import { logger } from "../helpers/logger.js";
-import { adminOnly, superAdminOnly } from "../middleware.js";
+import { adminOnly, superAdminOnly, aiLimiter } from "../middleware.js";
+import { supabaseAdmin } from "../supabase.js";
+import { logAudit, AUDIT_ACTIONS } from "../helpers/audit.js";
 
 const router = Router();
 
 // ─── Dashboard stats ─────────────────────────────────────────────────────────
 
 router.get("/stats", adminOnly, asyncHandler(async (req, res) => {
-  const contacts = await pool.query("SELECT status, COUNT(*) as count FROM contacts GROUP BY status");
-  const missions = await pool.query("SELECT status, COUNT(*) as count FROM missions GROUP BY status");
-  const revenue = await pool.query("SELECT COALESCE(SUM(revenue),0) as total FROM contacts WHERE status='Client'");
-  const placements = await pool.query("SELECT COUNT(*) as count FROM candidatures WHERE stage='Placé'");
-  const pending = await pool.query("SELECT COUNT(*) as count FROM activities WHERE completed=false");
-  const commissions = await pool.query("SELECT COALESCE(SUM(m.commission),0) as total FROM candidatures cd JOIN missions m ON cd.mission_id=m.id WHERE cd.stage='Placé'");
+  // Requêtes en parallèle ; le CA suit la même règle que le front
+  // (src/utils/revenue.js) : somme des commissions des missions « Gagné ».
+  const [contacts, missions, revenue, placements, pending, commissions] = await Promise.all([
+    pool.query("SELECT status, COUNT(*) as count FROM contacts GROUP BY status"),
+    pool.query("SELECT status, COUNT(*) as count FROM missions GROUP BY status"),
+    pool.query("SELECT COALESCE(SUM(revenue),0) as total FROM contacts WHERE status='Client'"),
+    pool.query("SELECT COUNT(*) as count FROM candidatures WHERE stage='Placé'"),
+    pool.query("SELECT COUNT(*) as count FROM activities WHERE completed=false"),
+    pool.query("SELECT COALESCE(SUM(commission),0) as total FROM missions WHERE status='Gagné'"),
+  ]);
   res.json({
     contacts: contacts.rows,
     missions: missions.rows,
@@ -59,7 +65,6 @@ router.get("/users", asyncHandler(async (req, res) => {
 
 router.post("/users", adminOnly, validate(userCreateSchema), asyncHandler(async (req, res) => {
   const { fullName, login, password } = req.body;
-  const { supabaseAdmin } = await import("../supabase.js");
 
   // Créer l'utilisateur dans Supabase Auth
   const { data: authUser, error: authErr } = await supabaseAdmin.auth.admin.createUser({
@@ -92,11 +97,17 @@ router.post("/users", adminOnly, validate(userCreateSchema), asyncHandler(async 
 
 router.put("/users/:id", adminOnly, validate(userUpdateSchema), asyncHandler(async (req, res) => {
   const { fullName, login, password } = req.body;
-  const { supabaseAdmin } = await import("../supabase.js");
 
-  const { rows: current } = await pool.query("SELECT id, auth_id, login FROM users WHERE id = $1", [req.params.id]);
+  const { rows: current } = await pool.query("SELECT id, auth_id, login, role FROM users WHERE id = $1", [req.params.id]);
   if (current.length === 0) throw new AppError(404, "Utilisateur non trouvé");
   const user = current[0];
+
+  // Un admin ne peut pas modifier (email/mot de passe) un compte super admin :
+  // sinon il pourrait en prendre le contrôle.
+  const isSelf = String(user.id) === String(req.user?.id);
+  if (user.role === "superadmin" && req.user?.userRole !== "superadmin" && !isSelf) {
+    throw new AppError(403, "Seul un super administrateur peut modifier ce compte");
+  }
 
   const emailChanged = login.trim().toLowerCase() !== user.login.toLowerCase();
   if (emailChanged) {
@@ -142,7 +153,6 @@ router.put("/users/:id/role", superAdminOnly, asyncHandler(async (req, res) => {
 }));
 
 router.delete("/users/:id", superAdminOnly, asyncHandler(async (req, res) => {
-  const { supabaseAdmin } = await import("../supabase.js");
   const { rows } = await pool.query("SELECT id, auth_id, login FROM users WHERE id = $1", [req.params.id]);
   if (rows.length === 0) throw new AppError(404, "Utilisateur non trouvé");
   const user = rows[0];
@@ -153,22 +163,24 @@ router.delete("/users/:id", superAdminOnly, asyncHandler(async (req, res) => {
     await supabaseAdmin.auth.admin.deleteUser(user.auth_id).catch(() => {});
   }
   await pool.query("DELETE FROM users WHERE id = $1", [user.id]);
-  await pool.query(
-    "INSERT INTO audit_log (user_name, action, entity_type, entity_id, details) VALUES ($1,$2,$3,$4,$5)",
-    [req.user?.login || "Système", "DELETE", "user", user.id, `Suppression de ${user.login}`]
-  );
+  await logAudit(req, AUDIT_ACTIONS.DELETE, "user", user.id, `Suppression de ${user.login}`);
   res.json({ ok: true });
 }));
 
 // ─── Audit log ──────────────────────────────────────────────────────────────
 
-router.get("/audit-log", superAdminOnly, asyncHandler(async (req, res) => {
+// Historique d'une entité (fiches) : accessible aux admins.
+// Journal complet (page Administration) : super admin uniquement.
+router.get("/audit-log", adminOnly, asyncHandler(async (req, res) => {
   const { entityType, entityId } = req.query;
   let q = "SELECT * FROM audit_log";
   const params = [];
   if (entityType && entityId) {
+    if (!/^\d+$/.test(String(entityId))) throw new AppError(400, "entityId invalide");
     q += " WHERE LOWER(entity_type) = LOWER($1) AND entity_id = $2";
-    params.push(entityType, entityId);
+    params.push(String(entityType).slice(0, 30), Number(entityId));
+  } else if (req.user?.userRole !== "superadmin") {
+    throw new AppError(403, "Accès réservé au super administrateur");
   }
   q += " ORDER BY created_at DESC LIMIT 200";
   const { rows } = await pool.query(q, params);
@@ -177,16 +189,6 @@ router.get("/audit-log", superAdminOnly, asyncHandler(async (req, res) => {
     entityType: r.entity_type, entityId: r.entity_id,
     details: r.details || "", createdAt: r.created_at,
   })));
-}));
-
-router.post("/audit-log", asyncHandler(async (req, res) => {
-  const { action, entityType, entityId, details } = req.body;
-  const userName = req.user?.login || "Système";
-  await pool.query(
-    "INSERT INTO audit_log (user_name, action, entity_type, entity_id, details) VALUES ($1,$2,$3,$4,$5)",
-    [userName, action, entityType, entityId || null, details || ""]
-  );
-  res.status(201).json({ ok: true });
 }));
 
 // ─── Tags CRUD ──────────────────────────────────────────────────────────────
@@ -336,7 +338,7 @@ router.get("/auto-reminders", asyncHandler(async (req, res) => {
 
 // ─── CV Summary (AI) ─────────────────────────────────────────────────────────
 
-router.post("/cv-summary/generate", validate(cvSummarySchema), asyncHandler(async (req, res) => {
+router.post("/cv-summary/generate", aiLimiter, validate(cvSummarySchema), asyncHandler(async (req, res) => {
   const { candidateId } = req.body;
 
   if (!config.anthropic.apiKey) throw new AppError(400, "Clé API Anthropic manquante");

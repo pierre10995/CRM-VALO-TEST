@@ -103,7 +103,7 @@ export default function PartnerSubmitForm({ missionId, missionTitle, onClose, on
             <h3 style={{ fontSize: 17, fontWeight: 700, color: "#0f172a", margin: 0 }}>Proposer un candidat</h3>
             <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>pour {missionTitle}</div>
           </div>
-          <button onClick={handleClose} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "#94a3b8" }}>x</button>
+          <button onClick={handleClose} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "#64748b" }}>x</button>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -174,7 +174,7 @@ export default function PartnerSubmitForm({ missionId, missionTitle, onClose, on
               {file ? (
                 <div style={{ fontSize: 13, color: "#059669", fontWeight: 500 }}>{file.name}</div>
               ) : (
-                <div style={{ fontSize: 13, color: "#94a3b8" }}>Cliquez pour sélectionner un fichier PDF</div>
+                <div style={{ fontSize: 13, color: "#64748b" }}>Cliquez pour sélectionner un fichier PDF</div>
               )}
             </div>
           </div>
@@ -188,7 +188,7 @@ export default function PartnerSubmitForm({ missionId, missionTitle, onClose, on
               Annuler
             </button>
             <button onClick={handleSubmit} disabled={loading || emailBlocked} style={{
-              flex: 2, padding: 12, background: emailBlocked ? "#e2e8f0" : "linear-gradient(135deg, #059669, #10b981)", color: emailBlocked ? "#94a3b8" : "white",
+              flex: 2, padding: 12, background: emailBlocked ? "#e2e8f0" : "linear-gradient(135deg, #059669, #10b981)", color: emailBlocked ? "#64748b" : "white",
               border: "none", borderRadius: 12, fontSize: 13.5, fontWeight: 700, cursor: emailBlocked ? "not-allowed" : "pointer",
               fontFamily: "inherit", boxShadow: emailBlocked ? "none" : "0 4px 12px rgba(16,185,129,0.3)", opacity: loading ? 0.7 : 1,
             }}>

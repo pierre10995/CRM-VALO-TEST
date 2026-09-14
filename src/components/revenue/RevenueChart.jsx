@@ -12,7 +12,7 @@ export default function RevenueChart({ chartData }) {
         {[0, 0.25, 0.5, 0.75, 1].map((p, i) => (
           <g key={i}>
             <line x1="60" y1={180 - p * 160} x2={60 + chartData.length * 140} y2={180 - p * 160} stroke="#f1f5f9" strokeWidth="1" />
-            <text x="55" y={184 - p * 160} textAnchor="end" fontSize="10" fill="#94a3b8">{fmtCAD(chartMax * p).replace(" $ CAD", "")}</text>
+            <text x="55" y={184 - p * 160} textAnchor="end" fontSize="10" fill="#64748b">{fmtCAD(chartMax * p).replace(" $ CAD", "")}</text>
           </g>
         ))}
         {chartData.map((d, i) => {
@@ -25,7 +25,7 @@ export default function RevenueChart({ chartData }) {
               <rect x={x} y={180 - barH} width="40" height={barH} rx="4" fill={d.ca >= d.target ? "url(#greenGrad)" : "url(#blueGrad)"} />
               <text x={x + 20} y={175 - barH} textAnchor="middle" fontSize="11" fontWeight="700" fill={d.ca >= d.target ? "#059669" : "#2563eb"}>{fmtCAD(d.ca).replace(" $ CAD", "")}</text>
               <text x={x + 20} y={198} textAnchor="middle" fontSize="11" fontWeight="600" fill="#374151">{d.label}</text>
-              <text x={x + 20} y={212} textAnchor="middle" fontSize="9" fill="#94a3b8">Obj: {fmtCAD(d.target).replace(" $ CAD", "")}</text>
+              <text x={x + 20} y={212} textAnchor="middle" fontSize="9" fill="#64748b">Obj: {fmtCAD(d.target).replace(" $ CAD", "")}</text>
             </g>
           );
         })}

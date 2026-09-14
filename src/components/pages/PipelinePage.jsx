@@ -15,7 +15,7 @@ export default function PipelinePage({ candidatures, candidates, missions, users
   const partnerCol = { key: "Proposition partenaire", label: "Proposition partenaire", color: "#059669", bg: "#f0fdf4", border: "#a7f3d0" };
   const stageConfig = [
     { key: "Présélectionné", label: "Présélectionné", color: "#3b82f6", bg: "#eff6ff", border: "#bfdbfe" },
-    { key: "Soumis", label: "Soumis", color: "#94a3b8", bg: "#f8fafc", border: "#e2e8f0" },
+    { key: "Soumis", label: "Soumis", color: "#64748b", bg: "#f8fafc", border: "#e2e8f0" },
     { key: "Entretien", label: "Entretien", color: "#f59e0b", bg: "#fffbeb", border: "#fde68a" },
     { key: "Finaliste", label: "Finaliste", color: "#8b5cf6", bg: "#f5f3ff", border: "#ddd6fe" },
     { key: "Placé", label: "Placé", color: "#10b981", bg: "#ecfdf5", border: "#a7f3d0" },
@@ -90,6 +90,10 @@ export default function PipelinePage({ candidatures, candidates, missions, users
       <div
         key={cd.id}
         draggable
+        role="button"
+        tabIndex={0}
+        aria-label={`${cd.candidateName} — ${cd.missionTitle} (${cd.stage}). Entrée pour ouvrir.`}
+        onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); onEdit(cd); } }}
         onDragStart={e => handleDragStart(e, cd)}
         onDragEnd={handleDragEnd}
         style={{
@@ -102,24 +106,31 @@ export default function PipelinePage({ candidatures, candidates, missions, users
       >
         <div style={{ fontSize: 12.5, fontWeight: 600, color: "#0f172a", marginBottom: 2 }}>{cd.candidateName}</div>
         <div style={{ fontSize: 11, color: "#64748b", marginBottom: 4 }}>{cd.missionTitle}</div>
-        <div style={{ fontSize: 11, color: "#94a3b8" }}>{cd.missionCompany}</div>
+        <div style={{ fontSize: 11, color: "#64748b" }}>{cd.missionCompany}</div>
         {cd.partnerName && (
           <span style={{ display: "inline-block", marginTop: 4, padding: "1px 7px", background: "#d1fae5", borderRadius: 6, fontSize: 10, fontWeight: 600, color: "#059669" }}>
             {cd.partnerName}
           </span>
         )}
-        {cd.rating > 0 && <div style={{ marginTop: 4, fontSize: 11, color: "#f59e0b" }}>{"★".repeat(cd.rating)}</div>}
-        {actions.length > 0 && (
-          <div style={{ display: "flex", gap: 3, marginTop: 6 }} onClick={e => e.stopPropagation()}>
-            {actions.map(stage => (
-              <button key={stage} onClick={() => quickMove(cd, stage)} style={{
-                padding: "2px 6px", fontSize: 9, fontWeight: 600, borderRadius: 4, border: "none", cursor: "pointer",
-                background: stage === "Refusé" ? "#fee2e2" : "#f0fdf4",
-                color: stage === "Refusé" ? "#dc2626" : "#059669",
-              }}>{stage === "Refusé" ? "✕" : "→"} {stage}</button>
-            ))}
-          </div>
-        )}
+        {cd.rating > 0 && <div style={{ marginTop: 4, fontSize: 11, color: "#f59e0b" }} aria-label={`Note ${cd.rating} sur 5`} role="img">{"★".repeat(cd.rating)}</div>}
+        {/* Alternative clavier au glisser-déposer : changer d'étape via un select */}
+        <div style={{ display: "flex", gap: 4, marginTop: 6, alignItems: "center", flexWrap: "wrap" }} onClick={e => e.stopPropagation()} onKeyDown={e => e.stopPropagation()}>
+          {actions.map(stage => (
+            <button key={stage} type="button" onClick={() => quickMove(cd, stage)} aria-label={`Passer ${cd.candidateName} à l'étape ${stage}`} style={{
+              padding: "4px 8px", minHeight: 24, fontSize: 11, fontWeight: 600, borderRadius: 6, border: "none", cursor: "pointer",
+              background: stage === "Refusé" ? "#fee2e2" : "#f0fdf4",
+              color: stage === "Refusé" ? "#dc2626" : "#059669",
+            }}>{stage === "Refusé" ? "✕" : "→"} {stage}</button>
+          ))}
+          <select
+            aria-label={`Changer l'étape de ${cd.candidateName}`}
+            value={cd.stage}
+            onChange={e => { if (e.target.value !== cd.stage) quickMove(cd, e.target.value); }}
+            style={{ marginLeft: "auto", fontSize: 11, padding: "3px 6px", borderRadius: 6, border: "1px solid #e2e8f0", background: "#fff", color: "#475569", fontFamily: "inherit", minHeight: 24 }}
+          >
+            {allCols.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
+          </select>
+        </div>
       </div>
     );
   };
@@ -216,7 +227,7 @@ export default function PipelinePage({ candidatures, candidates, missions, users
                 <span style={{ background: col.color, color: "white", borderRadius: 20, padding: "1px 8px", fontSize: 11, fontWeight: 700 }}>{items.length}</span>
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 8, minHeight: 60 }}>
-                {items.length === 0 && !isOver && <div style={{ padding: "16px 0", textAlign: "center", fontSize: 11, color: "#94a3b8" }}>Vide</div>}
+                {items.length === 0 && !isOver && <div style={{ padding: "16px 0", textAlign: "center", fontSize: 11, color: "#64748b" }}>Vide</div>}
                 {isOver && items.length === 0 && <div style={{ padding: "16px 0", textAlign: "center", fontSize: 11, color: col.color, fontWeight: 600 }}>Déposer ici</div>}
                 {items.map(cd => renderCard(cd, col))}
               </div>

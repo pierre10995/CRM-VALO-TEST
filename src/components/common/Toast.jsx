@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, createContext, useContext } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef, createContext, useContext } from "react";
 
 const ToastContext = createContext(null);
 
@@ -11,9 +11,15 @@ const TOAST_STYLES = {
 
 export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([]);
+  const lastRef = useRef({ message: "", at: 0 });
 
   const addToast = useCallback((message, type = "success", duration = 3500) => {
-    const id = Date.now() + Math.random();
+    // Dédoublonnage : le même message émis deux fois en < 1,5 s (ex. erreur
+    // globale api:error + toast de l'appelant) n'est affiché qu'une fois.
+    const now = Date.now();
+    if (lastRef.current.message === message && now - lastRef.current.at < 1500) return;
+    lastRef.current = { message, at: now };
+    const id = now + Math.random();
     setToasts(prev => [...prev, { id, message, type, removing: false }]);
     setTimeout(() => {
       setToasts(prev => prev.map(t => t.id === id ? { ...t, removing: true } : t));
@@ -21,26 +27,25 @@ export function ToastProvider({ children }) {
     }, duration);
   }, []);
 
-  const toast = useCallback({
+  const toastApi = useMemo(() => ({
     success: (msg) => addToast(msg, "success"),
     error: (msg) => addToast(msg, "error", 5000),
     info: (msg) => addToast(msg, "info"),
     warning: (msg) => addToast(msg, "warning", 4000),
-  }, [addToast]);
+  }), [addToast]);
 
-  // Reassign methods after creation since useCallback doesn't support object syntax
-  const toastApi = {
-    success: (msg) => addToast(msg, "success"),
-    error: (msg) => addToast(msg, "error", 5000),
-    info: (msg) => addToast(msg, "info"),
-    warning: (msg) => addToast(msg, "warning", 4000),
-  };
+  // Toute réponse API non-OK (post/put/del) remonte ici : plus d'échec silencieux.
+  useEffect(() => {
+    const onApiError = (e) => addToast(e.detail?.message || "Une erreur est survenue", "error", 5000);
+    window.addEventListener("api:error", onApiError);
+    return () => window.removeEventListener("api:error", onApiError);
+  }, [addToast]);
 
   return (
     <ToastContext.Provider value={toastApi}>
       {children}
-      {/* Toast container */}
-      <div style={{
+      {/* Toast container — annoncé aux lecteurs d'écran */}
+      <div role="status" aria-live="polite" aria-atomic="false" style={{
         position: "fixed", top: 20, right: 20, zIndex: 99999,
         display: "flex", flexDirection: "column", gap: 8, pointerEvents: "none",
       }}>
@@ -49,6 +54,7 @@ export function ToastProvider({ children }) {
           return (
             <div
               key={t.id}
+              role={t.type === "error" ? "alert" : undefined}
               style={{
                 display: "flex", alignItems: "center", gap: 10,
                 padding: "12px 18px", borderRadius: 12,

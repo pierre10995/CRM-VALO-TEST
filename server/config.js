@@ -22,6 +22,29 @@ if (!isTest && (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_
   process.exit(1);
 }
 
+// --- Base de données ---
+if (!isTest && !process.env.DATABASE_URL) {
+  console.error("FATAL: DATABASE_URL est requis.");
+  process.exit(1);
+}
+
+// --- Fonctionnalités optionnelles : avertir clairement au démarrage ---
+if (!isTest) {
+  if (!process.env.ANTHROPIC_API_KEY) console.warn("WARN: ANTHROPIC_API_KEY absent — fonctions IA (import CV, matching, évaluation) désactivées.");
+  if (!process.env.RESEND_API_KEY) console.warn("WARN: RESEND_API_KEY absent — emails (reset mot de passe, notifications) désactivés.");
+}
+
+// TLS PostgreSQL : par défaut le certificat n'est pas vérifié (compatibilité
+// Railway/Supabase). Mettre DB_SSL_STRICT=true (+ DB_CA_CERT si nécessaire)
+// pour exiger un certificat valide.
+function dbSsl() {
+  if (!isProduction) return false;
+  if (process.env.DB_SSL_STRICT === "true") {
+    return process.env.DB_CA_CERT ? { rejectUnauthorized: true, ca: process.env.DB_CA_CERT } : { rejectUnauthorized: true };
+  }
+  return { rejectUnauthorized: false };
+}
+
 export const config = {
   env: process.env.NODE_ENV || "development",
   isProduction,
@@ -35,7 +58,8 @@ export const config = {
 
   db: {
     connectionString: process.env.DATABASE_URL,
-    ssl: isProduction ? { rejectUnauthorized: false } : false,
+    ssl: dbSsl(),
+    poolMax: parseInt(process.env.PG_POOL_MAX, 10) || 10,
   },
 
   cors: {

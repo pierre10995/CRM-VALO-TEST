@@ -53,7 +53,7 @@ export default function AuditHistory({ entityType, entityId }) {
                   {log.action}
                 </span>
                 <span style={{ fontSize: 11.5, color: "#475569", fontWeight: 500 }}>{log.userName}</span>
-                <span style={{ fontSize: 10.5, color: "#94a3b8", marginLeft: "auto" }}>
+                <span style={{ fontSize: 10.5, color: "#64748b", marginLeft: "auto" }}>
                   {date.toLocaleDateString("fr-CA")} {date.toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" })}
                 </span>
               </div>

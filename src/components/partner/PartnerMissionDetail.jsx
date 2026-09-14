@@ -11,7 +11,7 @@ const STAGE_COLORS = {
   "Finaliste": { bg: "#ede9fe", color: "#7c3aed" },
   "Placé": { bg: "#d1fae5", color: "#059669" },
   "Refusé": { bg: "#fee2e2", color: "#dc2626" },
-  "Archivé": { bg: "#f1f5f9", color: "#94a3b8" },
+  "Archivé": { bg: "#f1f5f9", color: "#64748b" },
 };
 
 export default function PartnerMissionDetail({ mission, candidatures, onBack, onSubmitted }) {
@@ -64,13 +64,13 @@ export default function PartnerMissionDetail({ mission, candidatures, onBack, on
         </div>
         {mission.description && (
           <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid #f1f5f9" }}>
-            <div style={{ fontSize: 11, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", marginBottom: 4 }}>Description</div>
+            <div style={{ fontSize: 11, fontWeight: 600, color: "#64748b", textTransform: "uppercase", marginBottom: 4 }}>Description</div>
             <div style={{ fontSize: 13, color: "#475569", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{mission.description}</div>
           </div>
         )}
         {mission.requirements && (
           <div style={{ marginTop: 12 }}>
-            <div style={{ fontSize: 11, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", marginBottom: 4 }}>Prerequis</div>
+            <div style={{ fontSize: 11, fontWeight: 600, color: "#64748b", textTransform: "uppercase", marginBottom: 4 }}>Prerequis</div>
             <div style={{ fontSize: 13, color: "#475569", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{mission.requirements}</div>
           </div>
         )}
@@ -93,7 +93,7 @@ export default function PartnerMissionDetail({ mission, candidatures, onBack, on
                 <div style={{ width: 36, height: 36, borderRadius: 8, background: "#fee2e2", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "#dc2626" }}>PDF</div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 13, fontWeight: 600 }}>{f.file_name}</div>
-                  <div style={{ fontSize: 11, color: "#94a3b8" }}>{new Date(f.created_at).toLocaleDateString("fr-CA")}</div>
+                  <div style={{ fontSize: 11, color: "#64748b" }}>{new Date(f.created_at).toLocaleDateString("fr-CA")}</div>
                 </div>
                 <span style={{ fontSize: 12, color: "#3b82f6", fontWeight: 600 }}>Ouvrir</span>
               </a>
@@ -108,7 +108,7 @@ export default function PartnerMissionDetail({ mission, candidatures, onBack, on
           Vos candidats soumis ({candidatures.length})
         </h3>
         {candidatures.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "24px 0", color: "#94a3b8", fontSize: 13 }}>
+          <div style={{ textAlign: "center", padding: "24px 0", color: "#64748b", fontSize: 13 }}>
             Aucun candidat soumis pour cette mission.
           </div>
         ) : (
@@ -132,13 +132,13 @@ export default function PartnerMissionDetail({ mission, candidatures, onBack, on
                     </div>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: 13, fontWeight: 600, color: "#0f172a" }}>{cd.candidateName}</div>
-                      <div style={{ fontSize: 11, color: "#94a3b8" }}>
+                      <div style={{ fontSize: 11, color: "#64748b" }}>
                         {cd.candidateEmail}{cd.candidatePhone ? ` — ${cd.candidatePhone}` : ""}
                       </div>
                     </div>
                     <span style={{ padding: "3px 10px", borderRadius: 8, fontSize: 11, fontWeight: 600, background: sc.bg, color: sc.color }}>{cd.stage}</span>
-                    <div style={{ fontSize: 11, color: "#94a3b8" }}>{new Date(cd.createdAt).toLocaleDateString("fr-CA")}</div>
-                    <span style={{ fontSize: 14, color: "#94a3b8", transform: isExpanded ? "rotate(180deg)" : "none", transition: "transform 0.2s" }}>v</span>
+                    <div style={{ fontSize: 11, color: "#64748b" }}>{new Date(cd.createdAt).toLocaleDateString("fr-CA")}</div>
+                    <span style={{ fontSize: 14, color: "#64748b", transform: isExpanded ? "rotate(180deg)" : "none", transition: "transform 0.2s" }}>v</span>
                   </div>
                   {isExpanded && (
                     <div style={{ border: "1px solid #86efac", borderTop: "none", borderRadius: "0 0 10px 10px", padding: 14, background: "white" }}>
@@ -188,7 +188,7 @@ function CommentThread({ candidatureId }) {
     <div>
       <div style={{ fontSize: 12, fontWeight: 700, color: "#0f172a", marginBottom: 8 }}>Echanges ({comments.length})</div>
       {comments.length === 0 && (
-        <div style={{ fontSize: 12, color: "#94a3b8", marginBottom: 8 }}>Aucun commentaire. Posez une question ou partagez des informations.</div>
+        <div style={{ fontSize: 12, color: "#64748b", marginBottom: 8 }}>Aucun commentaire. Posez une question ou partagez des informations.</div>
       )}
       <div style={{ maxHeight: 200, overflowY: "auto", marginBottom: 8 }}>
         {comments.map(c => (
@@ -201,7 +201,7 @@ function CommentThread({ candidatureId }) {
               <span style={{ fontSize: 11, fontWeight: 700, color: c.authorType === "internal" ? "#2563eb" : "#059669" }}>
                 {c.authorType === "internal" ? `${c.authorName} (VALO)` : c.authorName}
               </span>
-              <span style={{ fontSize: 10, color: "#94a3b8" }}>{new Date(c.createdAt).toLocaleDateString("fr-CA", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</span>
+              <span style={{ fontSize: 10, color: "#64748b" }}>{new Date(c.createdAt).toLocaleDateString("fr-CA", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</span>
             </div>
             <div style={{ fontSize: 12.5, color: "#374151", lineHeight: 1.5, whiteSpace: "pre-wrap" }}>{c.message}</div>
           </div>
@@ -227,7 +227,7 @@ function CommentThread({ candidatureId }) {
 function InfoItem({ label, value }) {
   return (
     <div>
-      <div style={{ fontSize: 11, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase" }}>{label}</div>
+      <div style={{ fontSize: 11, fontWeight: 600, color: "#64748b", textTransform: "uppercase" }}>{label}</div>
       <div style={{ fontSize: 14, fontWeight: 500, color: "#0f172a", marginTop: 2 }}>{value}</div>
     </div>
   );

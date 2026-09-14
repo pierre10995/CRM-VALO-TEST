@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { fmtCAD } from "../../utils/constants";
 import Pagination from "../common/Pagination";
 import { useConfirm } from "../common/ConfirmDialog";
@@ -10,15 +10,16 @@ export default function ClientsPage({ contacts, missions, candidatures, users, s
   const confirm = useConfirm();
   const [filterOwner, setFilterOwner] = usePersistedState("clients.filterOwner", "");
   const [page, setPage] = useState(1);
-  // Compute total commissions from placed candidates per company
-  const companyRevenue = {};
-  (candidatures || []).filter(cd => cd.stage === "Placé").forEach(cd => {
-    const mission = (missions || []).find(m => m.id === cd.missionId);
-    if (mission && mission.company) {
-      const key = mission.company.toLowerCase();
-      companyRevenue[key] = (companyRevenue[key] || 0) + (mission.commission || 0);
-    }
-  });
+  // CA par entreprise : même règle que le Dashboard / page CA
+  // (missions « Gagné »), mémorisé, index par id (plus de find() en boucle).
+  const companyRevenue = useMemo(() => {
+    const acc = {};
+    (missions || []).filter(m => m.status === "Gagné" && m.company).forEach(m => {
+      const key = m.company.toLowerCase();
+      acc[key] = (acc[key] || 0) + (m.commission || 0);
+    });
+    return acc;
+  }, [missions]);
   const getRevenue = (c) => companyRevenue[c.company?.toLowerCase()] || 0;
 
   const filtered = contacts.filter(c => {
@@ -61,7 +62,7 @@ export default function ClientsPage({ contacts, missions, candidatures, users, s
             ))}
           </tr></thead>
           <tbody>
-            {filtered.length === 0 && <tr><td colSpan={5} style={{ padding: 40, textAlign: "center", color: "#94a3b8" }}>Aucune entreprise</td></tr>}
+            {filtered.length === 0 && <tr><td colSpan={5} style={{ padding: 40, textAlign: "center", color: "#64748b" }}>Aucune entreprise</td></tr>}
             {paged.map(c => (
               <tr key={c.id} className="row-hover" style={{ borderBottom: "1px solid #eef2f7" }} onClick={() => onDetail(c.id)}>
                 <td style={{ padding: "14px 20px" }}>
@@ -69,13 +70,13 @@ export default function ClientsPage({ contacts, missions, candidatures, users, s
                     <div style={{ width: 34, height: 34, background: "#dbeafe", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: "#1d4ed8" }}>{(c.company || c.name)[0]}</div>
                     <div>
                       <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>{c.company}</div>
-                      {c.name && <div style={{ fontSize: 12, color: "#94a3b8" }}>{c.name}{c.email ? ` · ${c.email}` : ""}</div>}
+                      {c.name && <div style={{ fontSize: 12, color: "#64748b" }}>{c.name}{c.email ? ` · ${c.email}` : ""}</div>}
                     </div>
                   </div>
                 </td>
                 <td style={{ padding: "14px 20px" }}><span style={{ fontSize: 12, color: "#64748b", background: "#f1f5f9", padding: "3px 9px", borderRadius: 6 }}>{c.sector}</span></td>
                 <td style={{ padding: "14px 20px" }}><span className="tag" style={{ background: c.status === "Client" ? "#d1fae5" : "#dbeafe", color: c.status === "Client" ? "#059669" : "#2563eb" }}>{c.status}</span></td>
-                <td style={{ padding: "14px 20px", fontSize: 13.5, fontWeight: 700, color: getRevenue(c) > 0 ? "#0f172a" : "#cbd5e1" }}>{getRevenue(c) > 0 ? fmtCAD(getRevenue(c)) : "—"}</td>
+                <td style={{ padding: "14px 20px", fontSize: 13.5, fontWeight: 700, color: getRevenue(c) > 0 ? "#0f172a" : "#64748b" }}>{getRevenue(c) > 0 ? fmtCAD(getRevenue(c)) : "—"}</td>
                 <td style={{ padding: "14px 20px" }} onClick={e => e.stopPropagation()}>
                   <div style={{ display: "flex", gap: 6 }}>
                     <button className="btn btn-ghost" style={{ padding: "6px 10px", fontSize: 12 }} onClick={() => onEdit(c)}>Modifier</button>
@@ -106,7 +107,7 @@ export default function ClientsPage({ contacts, missions, candidatures, users, s
               {detail.city && <div style={{ fontSize: 13.5, color: "#374151" }}>Ville: {detail.city}</div>}
               <div style={{ fontSize: 13.5, color: "#374151" }}>Secteur: {detail.sector}</div>
               {getRevenue(detail) > 0 && <div style={{ fontSize: 15, fontWeight: 700, color: "#059669", marginTop: 8 }}>CA (placements): {fmtCAD(getRevenue(detail))}</div>}
-              {detail.notes && <div style={{ background: "#f8fafc", borderRadius: 10, padding: "10px 12px", marginTop: 8 }}><p style={{ fontSize: 12, fontWeight: 600, color: "#94a3b8", marginBottom: 4 }}>NOTES</p><p style={{ fontSize: 13, color: "#374151", lineHeight: 1.5 }}>{detail.notes}</p></div>}
+              {detail.notes && <div style={{ background: "#f8fafc", borderRadius: 10, padding: "10px 12px", marginTop: 8 }}><p style={{ fontSize: 12, fontWeight: 600, color: "#64748b", marginBottom: 4 }}>NOTES</p><p style={{ fontSize: 13, color: "#374151", lineHeight: 1.5 }}>{detail.notes}</p></div>}
             </div>
             <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
               <button className="btn btn-ghost" style={{ flex: 1, justifyContent: "center" }} onClick={() => { onEdit(detail); setDetailId(null); }}>Modifier</button>

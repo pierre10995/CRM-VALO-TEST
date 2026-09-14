@@ -29,6 +29,19 @@ export function fmtMission(r) {
   };
 }
 
+// Vue partenaire (tiers externe) : liste blanche sans données financières
+// (commissions), sans identité du client ni du recruteur assigné.
+export function fmtMissionForPartner(r) {
+  return {
+    id: r.id, title: r.title, company: r.company,
+    location: r.location || "", contractType: r.contract_type || "CDI",
+    salaryMin: Number(r.salary_min) || 0, salaryMax: Number(r.salary_max) || 0,
+    description: r.description || "", requirements: r.requirements || "",
+    status: r.status, workMode: r.work_mode || "", deadline: r.deadline,
+    createdAt: r.created_at, partnerNotes: r.partner_notes || "",
+  };
+}
+
 export function fmtCandidature(r) {
   return {
     id: r.id, candidateId: r.candidate_id, missionId: r.mission_id,

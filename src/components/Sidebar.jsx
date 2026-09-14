@@ -93,7 +93,7 @@ export default function Sidebar({ activeTab, setActiveTab, currentUser, onLogout
           <img src="/logo-valo.svg" alt="VALO" style={{ width: 36, height: 36, borderRadius: 8, objectFit: "cover" }} />
           <div className="sidebar-text">
             <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>VALO Recrutement</div>
-            <div style={{ fontSize: 10.5, color: "#94a3b8" }}>CRM v2.0</div>
+            <div style={{ fontSize: 10.5, color: "#64748b" }}>CRM v2.0</div>
           </div>
         </div>
       </div>
@@ -101,7 +101,7 @@ export default function Sidebar({ activeTab, setActiveTab, currentUser, onLogout
       {/* Global search */}
       <div className="sidebar-text" style={{ padding: "0 4px 12px", position: "relative" }}>
         <div style={{ position: "relative" }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)" }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)" }}>
             <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
           <input
@@ -111,6 +111,7 @@ export default function Sidebar({ activeTab, setActiveTab, currentUser, onLogout
             onChange={e => { setGlobalQuery(e.target.value); setShowResults(true); }}
             onFocus={() => setShowResults(true)}
             placeholder="Rechercher..."
+            aria-label="Recherche globale (contacts, candidats, postes)"
             style={{ paddingLeft: 32, fontSize: 12.5, padding: "8px 10px 8px 32px" }}
           />
         </div>
@@ -140,7 +141,7 @@ export default function Sidebar({ activeTab, setActiveTab, currentUser, onLogout
                 </span>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 12.5, fontWeight: 600, color: "#0f172a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{r.name}</div>
-                  <div style={{ fontSize: 10.5, color: "#94a3b8", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{r.detail}</div>
+                  <div style={{ fontSize: 10.5, color: "#64748b", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{r.detail}</div>
                 </div>
               </div>
             ))}
@@ -156,7 +157,7 @@ export default function Sidebar({ activeTab, setActiveTab, currentUser, onLogout
             position: "absolute", top: "100%", left: 4, right: 4, zIndex: 999,
             background: "white", borderRadius: 12, boxShadow: "0 8px 30px rgba(0,0,0,0.15)",
             border: "1px solid #e2e8f0", padding: "14px 12px", textAlign: "center",
-            fontSize: 12, color: "#94a3b8", marginTop: 4,
+            fontSize: 12, color: "#64748b", marginTop: 4,
           }}>
             Aucun résultat
           </div>
@@ -164,12 +165,22 @@ export default function Sidebar({ activeTab, setActiveTab, currentUser, onLogout
       </div>
 
       <div className="sidebar-text" style={{ fontSize: 10, fontWeight: 700, color: "#64748b", padding: "0 8px 6px", letterSpacing: "0.08em", textTransform: "uppercase" }}>Navigation</div>
-      {visibleItems.map(item => (
-        <div key={item.id} className={`nav-item ${activeTab === item.id ? "active" : ""}`} title={item.label} onClick={() => { setActiveTab(item.id); setDetailId(null); setSearch(""); setFilterStatus("Tous"); }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d={item.icon}/></svg>
-          <span className="sidebar-text">{item.label}</span>
-        </div>
-      ))}
+      <nav aria-label="Navigation principale" style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+        {visibleItems.map(item => (
+          <button
+            key={item.id}
+            type="button"
+            className={`nav-item ${activeTab === item.id ? "active" : ""}`}
+            title={item.label}
+            aria-label={item.label}
+            aria-current={activeTab === item.id ? "page" : undefined}
+            onClick={() => { setActiveTab(item.id); setDetailId(null); setSearch(""); setFilterStatus("Tous"); }}
+          >
+            <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d={item.icon}/></svg>
+            <span className="sidebar-text">{item.label}</span>
+          </button>
+        ))}
+      </nav>
       <div className="sidebar-text" style={{ marginTop: "auto" }}>
         <div style={{ padding: "12px 8px", borderTop: "1px solid #f1f5f9" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
@@ -177,7 +188,7 @@ export default function Sidebar({ activeTab, setActiveTab, currentUser, onLogout
             <div>
               <div style={{ fontSize: 12.5, fontWeight: 600, color: "#0f172a" }}>{currentUser?.fullName || "Utilisateur"}</div>
               {userTitle(currentUser) && <div style={{ fontSize: 10.5, fontWeight: 600, color: "#2563eb" }}>{userTitle(currentUser)}</div>}
-              <div style={{ fontSize: 10.5, color: "#94a3b8" }}>{currentUser?.login || ""}</div>
+              <div style={{ fontSize: 10.5, color: "#64748b" }}>{currentUser?.login || ""}</div>
             </div>
           </div>
           <button className="btn btn-ghost" style={{ width: "100%", justifyContent: "center", fontSize: 12.5, padding: "7px 12px" }} onClick={onLogout}>Déconnexion</button>

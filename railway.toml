@@ -1,7 +1,14 @@
 [build]
 builder = "nixpacks"
-buildCommand = "npm install --include=dev && npm run build"
+# npm install (et non npm ci) : Nixpacks monte un volume de cache dans
+# node_modules/.cache que `npm ci` tente de supprimer → EBUSY. `npm install`
+# respecte package-lock.json tant que package.json n'a pas changé.
+# Les tests bloquent le déploiement s'ils échouent.
+buildCommand = "npm install --include=dev --no-audit --no-fund && npm test && npm run build"
 
 [deploy]
 startCommand = "npm run start"
+healthcheckPath = "/health"
+healthcheckTimeout = 120
 restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 5

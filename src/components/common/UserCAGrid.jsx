@@ -18,7 +18,7 @@ export default function UserCAGrid({ caByUser, label = "" }) {
               <div style={{ fontSize: 13, fontWeight: 600, color: "#0f172a" }}>{u.fullName}</div>
             </div>
             <div style={{ fontSize: 20, fontWeight: 800, color: "#059669" }}>{fmtCAD(u.ca)}</div>
-            <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>{u.count} poste{u.count > 1 ? "s" : ""} gagné{u.count > 1 ? "s" : ""}</div>
+            <div style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>{u.count} poste{u.count > 1 ? "s" : ""} gagné{u.count > 1 ? "s" : ""}</div>
           </div>
         ))}
       </div>

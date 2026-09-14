@@ -10,7 +10,7 @@ export const GLOBAL_STYLES = `
   --ink: #0f172a;
   --ink-soft: #475569;
   --muted: #64748b;
-  --faint: #94a3b8;
+  --faint: #64748b; /* 4,76:1 sur blanc — conforme WCAG AA pour le texte */
   --line: #e8ecf3;
   --line-soft: #eef2f8;
   --surface: #ffffff;
@@ -80,8 +80,21 @@ body {
 .input:focus { border-color: var(--brand); background: #fff; box-shadow: var(--ring); }
 
 /* ─── Focus accessibilité ────────────────────────────────────────────────── */
-:focus-visible { outline: none; }
-.btn:focus-visible, .nav-item:focus-visible { box-shadow: var(--ring); }
+/* Indicateur de focus visible partout (WCAG 2.4.7), affiné pour .btn/.input */
+:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.btn:focus-visible, .nav-item:focus-visible, .input:focus-visible { outline: none; box-shadow: var(--ring); }
+[role="button"]:focus-visible, tr[tabindex]:focus-visible { outline: 2px solid var(--brand); outline-offset: -2px; }
+
+/* Éléments de navigation rendus par des <button> natifs */
+button.nav-item { width: 100%; border: none; background: transparent; font-family: inherit; text-align: left; }
+
+/* Texte réservé aux lecteurs d'écran */
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+
+/* Respect de la préférence « réduire les animations » */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after { animation: none !important; transition: none !important; }
+}
 
 /* ─── Tags ───────────────────────────────────────────────────────────────── */
 .tag { display: inline-flex; align-items: center; gap: 4px; padding: 3px 11px; border-radius: 999px; font-size: 11.5px; font-weight: 600; letter-spacing: 0.01em; }

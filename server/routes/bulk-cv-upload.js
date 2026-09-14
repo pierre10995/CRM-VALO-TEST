@@ -4,12 +4,24 @@ import { config } from "../config.js";
 import { fmtContact } from "../formatters.js";
 import { asyncHandler, AppError } from "../helpers/errors.js";
 import { logger } from "../helpers/logger.js";
+import { sanitizeFileName } from "../helpers/sanitize.js";
+import { validate } from "../validators/validate.js";
+import { bulkCvUploadSchema } from "../validators/schemas.js";
 import pdfParse from "pdf-parse/lib/pdf-parse.js";
 import Anthropic from "@anthropic-ai/sdk";
+import { z } from "zod";
 
 const router = Router();
 
-function extractNameFromFileName(fileName) {
+// La sortie du modèle est validée avant toute écriture en base : le texte du
+// CV (parfois fourni par un partenaire externe) ne doit pas piloter le schéma.
+const str = (max) => z.preprocess((v) => (v == null ? "" : Array.isArray(v) ? v.join(", ") : String(v)), z.string().max(max));
+export const llmInfoSchema = z.object({
+  name: str(100), email: str(100), phone: str(50), city: str(100),
+  target_position: str(200), skills: str(2000), linkedin: str(200),
+}).partial();
+
+export function extractNameFromFileName(fileName) {
   const base = fileName.replace(/\.pdf$/i, "").trim();
   const match = base.match(/VALO\s*[-–]\s*(.+?)\s*(?:[-–]\s*CV)?$/i);
   if (match) return match[1].trim();
@@ -44,19 +56,20 @@ Réponds avec ce format exact:
   });
 
   const text2 = message.content[0].text.trim();
+  let raw = null;
   try {
-    return JSON.parse(text2);
+    raw = JSON.parse(text2);
   } catch {
     const m = text2.match(/\{[\s\S]*\}/);
-    return m ? JSON.parse(m[0]) : null;
+    try { raw = m ? JSON.parse(m[0]) : null; } catch { raw = null; }
   }
+  if (!raw || typeof raw !== "object") return null;
+  const parsed = llmInfoSchema.safeParse(raw);
+  return parsed.success ? parsed.data : null;
 }
 
-router.post("/bulk-cv-upload", asyncHandler(async (req, res) => {
+router.post("/bulk-cv-upload", validate(bulkCvUploadSchema), asyncHandler(async (req, res) => {
   const { files } = req.body;
-  if (!files || !Array.isArray(files) || files.length === 0) {
-    throw new AppError(400, "Aucun fichier fourni");
-  }
   if (files.length > config.limits.maxBulkFiles) {
     throw new AppError(400, `Maximum ${config.limits.maxBulkFiles} fichiers par import`);
   }
@@ -64,9 +77,18 @@ router.post("/bulk-cv-upload", asyncHandler(async (req, res) => {
   const results = [];
 
   for (const file of files) {
-    const { fileName, fileData } = file;
+    const fileName = sanitizeFileName(file.fileName);
+    const { fileData } = file;
     try {
+      if (fileData.length > config.limits.maxFileSize) {
+        results.push({ fileName, status: "error", error: "Fichier trop volumineux" });
+        continue;
+      }
       const buffer = Buffer.from(fileData, "base64");
+      if (buffer.subarray(0, 5).toString() !== "%PDF-") {
+        results.push({ fileName, status: "error", error: "Le fichier n'est pas un PDF valide" });
+        continue;
+      }
       const pdf = await pdfParse(buffer);
       const text = pdf.text || "";
 

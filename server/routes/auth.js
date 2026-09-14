@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { randomInt } from "crypto";
 import { Resend } from "resend";
 import { pool } from "../db.js";
 import { config } from "../config.js";
@@ -8,6 +9,7 @@ import { validate } from "../validators/validate.js";
 import { loginSchema, forgotPasswordSchema, resetPasswordSchema } from "../validators/schemas.js";
 import { asyncHandler } from "../helpers/errors.js";
 import { logger } from "../helpers/logger.js";
+import { escapeHtml } from "../helpers/sanitize.js";
 
 const router = Router();
 const resend = config.resend.apiKey ? new Resend(config.resend.apiKey) : null;
@@ -58,7 +60,7 @@ router.post("/forgot-password", loginLimiter, validate(forgotPasswordSchema), as
   const user = userRows[0];
 
   // Générer un code à 6 chiffres (100000-999999)
-  const code = String(Math.floor(100000 + Math.random() * 900000));
+  const code = String(randomInt(100000, 1000000)); // générateur cryptographique
   const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
   // Invalider les anciens codes et insérer le nouveau
@@ -77,7 +79,7 @@ router.post("/forgot-password", loginLimiter, validate(forgotPasswordSchema), as
         subject: "Code de réinitialisation de mot de passe — VALO CRM",
         html: `<div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:24px;">
           <h2 style="color:#0f172a;">Réinitialisation de mot de passe</h2>
-          <p>Bonjour ${user.full_name || ""},</p>
+          <p>Bonjour ${escapeHtml(user.full_name || "")},</p>
           <p>Vous avez demandé à réinitialiser votre mot de passe. Voici votre code :</p>
           <div style="background:#f1f5f9;border-radius:12px;padding:20px;text-align:center;margin:20px 0;">
             <div style="font-size:32px;font-weight:800;letter-spacing:0.4em;color:#0f172a;">${code}</div>
@@ -89,7 +91,8 @@ router.post("/forgot-password", loginLimiter, validate(forgotPasswordSchema), as
       logger.error("Erreur envoi email reset password", { error: err.message });
     }
   } else {
-    logger.warn("Resend non configuré - code de reset généré mais non envoyé", { userId: user.id, code });
+    // Ne jamais écrire le code dans les logs.
+    logger.warn("Resend non configuré - code de reset généré mais non envoyé", { userId: user.id });
   }
 
   respondOk();

@@ -4,7 +4,7 @@ export default function PartnerMissionList({ missions, onSelect }) {
       <div style={{ textAlign: "center", padding: 60 }}>
         <div style={{ fontSize: 40, marginBottom: 12 }}>-</div>
         <div style={{ fontSize: 16, fontWeight: 600, color: "#475569" }}>Aucune mission affiliée</div>
-        <div style={{ fontSize: 13, color: "#94a3b8", marginTop: 6 }}>Contactez VALO pour être affilié à des missions.</div>
+        <div style={{ fontSize: 13, color: "#64748b", marginTop: 6 }}>Contactez VALO pour être affilié à des missions.</div>
       </div>
     );
   }
@@ -40,7 +40,7 @@ export default function PartnerMissionList({ missions, onSelect }) {
                 {m.status}
               </span>
             </div>
-            <div style={{ display: "flex", gap: 16, marginTop: 10, fontSize: 12, color: "#94a3b8" }}>
+            <div style={{ display: "flex", gap: 16, marginTop: 10, fontSize: 12, color: "#64748b" }}>
               <span>{m.contractType}</span>
               {m.salaryMin > 0 && <span>{m.salaryMin.toLocaleString()}$ — {m.salaryMax.toLocaleString()}$</span>}
               {m.workMode && <span>{m.workMode}</span>}

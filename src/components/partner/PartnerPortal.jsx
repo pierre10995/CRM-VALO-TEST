@@ -76,7 +76,7 @@ export default function PartnerPortal({ partner, onLogout }) {
         <div style={{ padding: "12px", background: "#f0fdf4", borderRadius: 12, marginBottom: 20 }}>
           <div style={{ fontSize: 13, fontWeight: 600, color: "#0f172a" }}>{partner.name}</div>
           {partner.company && <div style={{ fontSize: 11, color: "#64748b" }}>{partner.company}</div>}
-          <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>{partner.email}</div>
+          <div style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>{partner.email}</div>
         </div>
 
         <div style={{ fontSize: 10, fontWeight: 700, color: "#64748b", padding: "0 4px 8px", letterSpacing: "0.08em", textTransform: "uppercase" }}>Navigation</div>
@@ -108,7 +108,7 @@ export default function PartnerPortal({ partner, onLogout }) {
         {showNotifs ? (
           <NotificationsPanel notifications={notifications} onClose={() => setShowNotifs(false)} />
         ) : loading ? (
-          <div style={{ textAlign: "center", padding: 60, color: "#94a3b8" }}>Chargement...</div>
+          <div style={{ textAlign: "center", padding: 60, color: "#64748b" }}>Chargement...</div>
         ) : selectedMission ? (
           <PartnerMissionDetail
             mission={selectedMission}
@@ -147,7 +147,7 @@ function NotificationsPanel({ notifications, onClose }) {
   const stageColors = {
     "Proposition partenaire": "#059669", "Présélectionné": "#2563eb",
     "Soumis": "#64748b", "Entretien": "#d97706", "Finaliste": "#7c3aed",
-    "Placé": "#059669", "Refusé": "#dc2626", "Archivé": "#94a3b8",
+    "Placé": "#059669", "Refusé": "#dc2626", "Archivé": "#64748b",
   };
 
   return (
@@ -157,7 +157,7 @@ function NotificationsPanel({ notifications, onClose }) {
         <button onClick={onClose} style={{ background: "none", border: "1px solid #e2e8f0", borderRadius: 10, padding: "6px 14px", cursor: "pointer", fontSize: 13, color: "#64748b", fontFamily: "inherit" }}>Fermer</button>
       </div>
       {notifications.length === 0 ? (
-        <div style={{ textAlign: "center", padding: 40, color: "#94a3b8", fontSize: 13 }}>Aucune notification</div>
+        <div style={{ textAlign: "center", padding: 40, color: "#64748b", fontSize: 13 }}>Aucune notification</div>
       ) : (
         <div style={{ display: "grid", gap: 8 }}>
           {notifications.map(n => (
@@ -168,7 +168,7 @@ function NotificationsPanel({ notifications, onClose }) {
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 13, color: "#0f172a", lineHeight: 1.5 }}>{n.message}</div>
-                  <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 4 }}>
+                  <div style={{ fontSize: 11, color: "#64748b", marginTop: 4 }}>
                     {n.missionTitle && <span>{n.missionTitle} — </span>}
                     {new Date(n.createdAt).toLocaleDateString("fr-CA", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
                   </div>

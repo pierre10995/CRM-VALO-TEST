@@ -5,6 +5,7 @@ import { validate } from "../validators/validate.js";
 import { fileUploadSchema } from "../validators/schemas.js";
 import { asyncHandler, AppError } from "../helpers/errors.js";
 import { sanitizeFileName } from "../helpers/sanitize.js";
+import { logAudit, AUDIT_ACTIONS } from "../helpers/audit.js";
 
 const router = Router();
 
@@ -58,7 +59,10 @@ router.get("/:id", asyncHandler(async (req, res) => {
 }));
 
 router.delete("/:id", asyncHandler(async (req, res) => {
-  await pool.query("DELETE FROM files WHERE id=$1", [req.params.id]);
+  const { rows } = await pool.query("DELETE FROM files WHERE id=$1 RETURNING id, file_name, contact_id, mission_id", [req.params.id]);
+  if (rows.length > 0) {
+    await logAudit(req, AUDIT_ACTIONS.DELETE, "fichier", rows[0].id, `${rows[0].file_name} (contact #${rows[0].contact_id ?? "-"}, mission #${rows[0].mission_id ?? "-"})`);
+  }
   res.json({ ok: true });
 }));
 

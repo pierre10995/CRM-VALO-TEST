@@ -4,7 +4,7 @@ import { fmtCAD } from "../../utils/constants";
 import { wonMissionsForFY, sumCommission, findCurrentFY } from "../../utils/revenue";
 import usePersistedState from "../../hooks/usePersistedState";
 
-export default function DashboardPage({ stats, activities, contacts, missions, candidatures, fiscalYears, loaded = true, onNavigate, goToContact, goToMission, onPlanFollowUp, currentUser, isAdmin }) {
+export default function DashboardPage({ activities, contacts, missions, candidatures, fiscalYears, loaded = true, onNavigate, goToContact, goToMission, onPlanFollowUp, currentUser, isAdmin }) {
   const [reminders, setReminders] = useState([]);
   const [dismissedKeys, setDismissedKeys] = useState(() => {
     try { return JSON.parse(localStorage.getItem("crm_dismissed_reminders") || "[]"); } catch { return []; }
@@ -65,6 +65,9 @@ export default function DashboardPage({ stats, activities, contacts, missions, c
     { label: `CA ${fyLabel}`, value: fmtCAD(totalCommissions), color: "#059669", bg: "#ecfdf5", tab: isAdmin ? "revenue" : null },
   ];
 
+  // Rend un élément non-bouton activable au clavier (Entrée / Espace)
+  const keyActivate = (fn) => (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fn(); } };
+
   const goToReminder = (r) => {
     if (r.missionId && goToMission) goToMission(r.missionId);
     else if (r.contactId && goToContact) goToContact(r.contactId);
@@ -87,7 +90,7 @@ export default function DashboardPage({ stats, activities, contacts, missions, c
         </div>
         <div style={{ display: "flex", gap: 4, background: "#f1f5f9", borderRadius: 10, padding: 4 }}>
           {[{ k: "all", l: "Équipe" }, { k: "me", l: "Moi" }].map(o => (
-            <button key={o.k} onClick={() => setScope(o.k)} style={{ padding: "7px 18px", fontSize: 13, fontWeight: 600, borderRadius: 8, border: "none", cursor: "pointer", background: scope === o.k ? "#fff" : "transparent", color: scope === o.k ? "#1d4ed8" : "#64748b", boxShadow: scope === o.k ? "0 1px 3px rgba(15,23,42,0.08)" : "none" }}>{o.l}</button>
+            <button key={o.k} type="button" aria-pressed={scope === o.k} onClick={() => setScope(o.k)} style={{ padding: "7px 18px", fontSize: 13, fontWeight: 600, borderRadius: 8, border: "none", cursor: "pointer", background: scope === o.k ? "#fff" : "transparent", color: scope === o.k ? "#1d4ed8" : "#64748b", boxShadow: scope === o.k ? "0 1px 3px rgba(15,23,42,0.08)" : "none" }}>{o.l}</button>
           ))}
         </div>
       </div>
@@ -98,6 +101,9 @@ export default function DashboardPage({ stats, activities, contacts, missions, c
           <div
             key={i}
             onClick={t.onClick || undefined}
+            role={t.onClick ? "button" : undefined}
+            tabIndex={t.onClick ? 0 : undefined}
+            onKeyDown={t.onClick ? keyActivate(t.onClick) : undefined}
             className={t.onClick ? "row-hover" : undefined}
             style={{ flex: "1 1 150px", display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", borderRadius: 12, background: t.bg, cursor: t.onClick ? "pointer" : "default" }}
           >
@@ -121,6 +127,9 @@ export default function DashboardPage({ stats, activities, contacts, missions, c
               key={i}
               className={clickable ? "card row-hover" : "card"}
               onClick={clickable ? () => onNavigate(kpi.tab) : undefined}
+              role={clickable ? "button" : undefined}
+              tabIndex={clickable ? 0 : undefined}
+              onKeyDown={clickable ? keyActivate(() => onNavigate(kpi.tab)) : undefined}
               style={{ background: kpi.bg, cursor: clickable ? "pointer" : "default" }}
               title={clickable ? "Voir le détail" : undefined}
             >
@@ -145,7 +154,7 @@ export default function DashboardPage({ stats, activities, contacts, missions, c
                   <div style={{ fontSize: 12.5, fontWeight: 600, color: "#0f172a" }}>{s.candidateName}</div>
                   <div style={{ fontSize: 11, color: "#64748b" }}>{s.missionTitle} — {s.missionCompany} | par {s.partnerName}</div>
                 </div>
-                <span style={{ fontSize: 11, color: "#94a3b8" }}>{new Date(s.createdAt).toLocaleDateString("fr-CA")}</span>
+                <span style={{ fontSize: 11, color: "#64748b" }}>{new Date(s.createdAt).toLocaleDateString("fr-CA")}</span>
               </div>
             ))}
           </div>
@@ -159,7 +168,7 @@ export default function DashboardPage({ stats, activities, contacts, missions, c
             {visibleReminders.slice(0, 8).map((r, i) => {
               const clickable = (r.missionId && goToMission) || (r.contactId && goToContact);
               return (
-              <div key={i} onClick={clickable ? () => goToReminder(r) : undefined} className={clickable ? "row-hover" : undefined} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "white", borderRadius: 8, border: "1px solid #fef3c7", cursor: clickable ? "pointer" : "default" }}>
+              <div key={i} onClick={clickable ? () => goToReminder(r) : undefined} role={clickable ? "button" : undefined} tabIndex={clickable ? 0 : undefined} onKeyDown={clickable ? keyActivate(() => goToReminder(r)) : undefined} className={clickable ? "row-hover" : undefined} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "white", borderRadius: 8, border: "1px solid #fef3c7", cursor: clickable ? "pointer" : "default" }}>
                 <div style={{ width: 28, height: 28, borderRadius: 8, flexShrink: 0, background: r.type === "prospect" ? "#dbeafe" : r.type === "candidature" ? "#fef3c7" : "#fee2e2", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: r.type === "prospect" ? "#2563eb" : r.type === "candidature" ? "#d97706" : "#dc2626" }}>
                   {r.type === "prospect" ? "P" : r.type === "candidature" ? "C" : "M"}
                 </div>
@@ -180,7 +189,9 @@ export default function DashboardPage({ stats, activities, contacts, missions, c
                 <button
                   onClick={(e) => { e.stopPropagation(); dismissReminder(r); }}
                   title="Marquer comme fait"
-                  style={{ width: 24, height: 24, borderRadius: 6, border: "1px solid #e2e8f0", background: "#f8fafc", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: "#94a3b8", flexShrink: 0 }}
+                  aria-label="Marquer la relance comme traitée"
+                  type="button"
+                  style={{ width: 28, height: 28, borderRadius: 6, border: "1px solid #e2e8f0", background: "#f8fafc", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: "#64748b", flexShrink: 0 }}
                 >
                   ✓
                 </button>
@@ -193,12 +204,12 @@ export default function DashboardPage({ stats, activities, contacts, missions, c
 
       <div className="card">
         <h3 style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", marginBottom: 18 }}>Activités récentes</h3>
-        {recentActivities.length === 0 && <p style={{ color: "#94a3b8", fontSize: 13 }}>Aucune activité</p>}
+        {recentActivities.length === 0 && <p style={{ color: "#64748b", fontSize: 13 }}>Aucune activité</p>}
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {recentActivities.map(a => {
             const clickable = a.contactId && goToContact;
             return (
-            <div key={a.id} onClick={clickable ? () => goToContact(a.contactId) : undefined} className={clickable ? "row-hover" : undefined} style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 0", borderBottom: "1px solid #e2e8f0", cursor: clickable ? "pointer" : "default" }}>
+            <div key={a.id} onClick={clickable ? () => goToContact(a.contactId) : undefined} role={clickable ? "button" : undefined} tabIndex={clickable ? 0 : undefined} onKeyDown={clickable ? keyActivate(() => goToContact(a.contactId)) : undefined} className={clickable ? "row-hover" : undefined} style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 0", borderBottom: "1px solid #e2e8f0", cursor: clickable ? "pointer" : "default" }}>
               <div style={{ width: 32, height: 32, borderRadius: 8, background: a.completed ? "#d1fae5" : "#dbeafe", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>
                 {a.type === "Appel" ? "T" : a.type === "Email" ? "@" : a.type === "Réunion" ? "R" : "N"}
               </div>

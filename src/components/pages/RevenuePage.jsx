@@ -162,7 +162,7 @@ export default function RevenuePage({ contacts, missions, candidatures, users, f
         />
 
         {fyWithCA.length === 0 && !showAddYear && (
-          <p style={{ fontSize: 13, color: "#94a3b8", textAlign: "center", padding: 20 }}>Aucune année fiscale. Cliquez sur « + Ajouter une année » pour commencer.</p>
+          <p style={{ fontSize: 13, color: "#64748b", textAlign: "center", padding: 20 }}>Aucune année fiscale. Cliquez sur « + Ajouter une année » pour commencer.</p>
         )}
       </div>
 
@@ -210,7 +210,7 @@ export default function RevenuePage({ contacts, missions, candidatures, users, f
                 </div>
               </div>
               <div style={{ fontSize: 26, fontWeight: 800, color: "#059669" }}>{fmtCAD(u.ca)}</div>
-              <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 4 }}>Voir le détail →</div>
+              <div style={{ fontSize: 12, color: "#64748b", marginTop: 4 }}>Voir le détail →</div>
             </div>
           ))}
         </div>
@@ -222,7 +222,7 @@ export default function RevenuePage({ contacts, missions, candidatures, users, f
           {activeOnglet === "total" ? "Postes gagnés" : `Postes gagnés — ${currentLabel}`}
           {activeFY && ` (${activeFY.label})`}
         </h3>
-        {currentMissions.length === 0 && <p style={{ color: "#94a3b8", fontSize: 13 }}>Aucun poste gagné</p>}
+        {currentMissions.length === 0 && <p style={{ color: "#64748b", fontSize: 13 }}>Aucun poste gagné</p>}
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           {currentMissions.map(m => (
             <div key={m.id}>

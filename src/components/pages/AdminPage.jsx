@@ -267,7 +267,7 @@ export default function AdminPage({ currentUser, loadAll }) {
               <th style={{ ...thStyle, textAlign: "right" }}>Actions</th>
             </tr></thead>
             <tbody>
-              {users.length === 0 && <tr><td colSpan={4} style={{ padding: 40, textAlign: "center", color: "#94a3b8" }}>Aucun utilisateur</td></tr>}
+              {users.length === 0 && <tr><td colSpan={4} style={{ padding: 40, textAlign: "center", color: "#64748b" }}>Aucun utilisateur</td></tr>}
               {users.map(u => (
                 <tr key={u.id} className="row-hover" style={{ borderBottom: "1px solid #eef2f7" }}>
                   <td style={tdStyle}>
@@ -324,7 +324,7 @@ export default function AdminPage({ currentUser, loadAll }) {
               <th style={{ ...thStyle, textAlign: "right" }}>Actions</th>
             </tr></thead>
             <tbody>
-              {partners.length === 0 && <tr><td colSpan={5} style={{ padding: 40, textAlign: "center", color: "#94a3b8" }}>Aucun partenaire</td></tr>}
+              {partners.length === 0 && <tr><td colSpan={5} style={{ padding: 40, textAlign: "center", color: "#64748b" }}>Aucun partenaire</td></tr>}
               {partners.map(p => (
                 <tr key={p.id} className="row-hover" style={{ borderBottom: "1px solid #eef2f7" }}>
                   <td style={tdStyle}>
@@ -364,13 +364,13 @@ export default function AdminPage({ currentUser, loadAll }) {
               <th style={thStyle}>Détails</th>
             </tr></thead>
             <tbody>
-              {auditLog.length === 0 && <tr><td colSpan={5} style={{ padding: 40, textAlign: "center", color: "#94a3b8" }}>Aucune entrée</td></tr>}
+              {auditLog.length === 0 && <tr><td colSpan={5} style={{ padding: 40, textAlign: "center", color: "#64748b" }}>Aucune entrée</td></tr>}
               {auditLog.map(entry => (
                 <tr key={entry.id} style={{ borderBottom: "1px solid #eef2f7" }}>
                   <td style={{ ...tdStyle, fontSize: 12, color: "#64748b", whiteSpace: "nowrap" }}>{new Date(entry.createdAt).toLocaleString("fr-CA")}</td>
                   <td style={{ ...tdStyle, fontWeight: 600, color: "#0f172a" }}>{entry.userName}</td>
                   <td style={tdStyle}>
-                    <span className="tag" style={{ background: entry.action === "DELETE" ? "#fee2e2" : "#dbeafe", color: entry.action === "DELETE" ? "#dc2626" : "#2563eb", fontSize: 10 }}>{entry.action}</span>
+                    <span className="tag" style={{ background: /suppr|delete/i.test(entry.action) ? "#fee2e2" : /cr[ée]/i.test(entry.action) ? "#d1fae5" : "#dbeafe", color: /suppr|delete/i.test(entry.action) ? "#dc2626" : /cr[ée]/i.test(entry.action) ? "#059669" : "#2563eb", fontSize: 10 }}>{entry.action}</span>
                   </td>
                   <td style={{ ...tdStyle, color: "#374151" }}>{entry.entityType} #{entry.entityId}</td>
                   <td style={{ ...tdStyle, color: "#64748b", fontSize: 12, maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{entry.details || "—"}</td>

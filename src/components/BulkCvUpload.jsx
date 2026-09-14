@@ -120,7 +120,7 @@ export default function BulkCvUpload({ onComplete }) {
             <div style={{ fontSize: 13.5, fontWeight: 600, color: "#374151" }}>
               Glissez vos CV ici ou cliquez pour sélectionner
             </div>
-            <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 4 }}>
+            <div style={{ fontSize: 12, color: "#64748b", marginTop: 4 }}>
               Fichiers PDF uniquement — plusieurs fichiers acceptés
             </div>
           </div>

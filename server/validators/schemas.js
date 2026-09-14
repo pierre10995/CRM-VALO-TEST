@@ -88,11 +88,24 @@ export const candidatureCreateSchema = z.object({
   interviewDate: optionalDate(),
 });
 
+// Mise à jour partielle : seuls les champs fournis sont modifiés
+// (évite d'écraser notes/rating lors d'un simple changement d'étape).
 export const candidatureUpdateSchema = z.object({
-  stage: z.string().max(30).default("Soumis"),
-  rating: z.coerce.number().int().min(0).max(5).default(0),
-  notes: z.string().max(5000).default(""),
-  interviewDate: optionalDate(),
+  stage: z.string().max(30).optional(),
+  rating: z.coerce.number().int().min(0).max(5).optional(),
+  notes: z.string().max(5000).optional(),
+  interviewDate: z.preprocess(
+    (v) => (typeof v === "string" && v.trim() === "" ? null : v),
+    z.string().nullable().optional()
+  ),
+});
+
+// Import de CV en masse (fichiers PDF encodés en base64)
+export const bulkCvUploadSchema = z.object({
+  files: z.array(z.object({
+    fileName: z.string().min(1).max(200),
+    fileData: z.string().min(1).max(8 * 1024 * 1024),
+  })).min(1).max(50),
 });
 
 // ─── Activities ──────────────────────────────────────────────────────────────

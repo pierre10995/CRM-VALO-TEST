@@ -2,15 +2,7 @@ import { useState } from "react";
 import { STAGES } from "../../utils/constants";
 import Field from "../common/Field";
 import SearchSelect from "../common/SearchSelect";
-
-// Format pour <input type="datetime-local"> : "YYYY-MM-DDTHH:mm".
-function toLocalInput(value) {
-  if (!value) return "";
-  const d = new Date(value);
-  if (isNaN(d.getTime())) return typeof value === "string" ? value.slice(0, 16) : "";
-  const pad = n => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
+import { toLocalInput } from "../../utils/dates";
 
 export default function CandidatureForm({ form, setForm, onSave, onCancel, candidates, missions, saving }) {
   const f = (k, v) => setForm(p => ({ ...p, [k]: v }));

@@ -28,7 +28,7 @@ export default function ProfilePage({ currentUser, contacts, missions, candidatu
   );
 
   const EmptyRow = ({ cols, text }) => (
-    <tr><td colSpan={cols} style={{ padding: 30, textAlign: "center", color: "#94a3b8", fontSize: 13 }}>{text}</td></tr>
+    <tr><td colSpan={cols} style={{ padding: 30, textAlign: "center", color: "#64748b", fontSize: 13 }}>{text}</td></tr>
   );
 
   return (
@@ -65,7 +65,7 @@ export default function ProfilePage({ currentUser, contacts, missions, candidatu
               <tr key={c.id} className="row-hover" onClick={goToContact ? () => goToContact(c.id) : undefined} style={{ borderBottom: "1px solid #eef2f7", cursor: goToContact ? "pointer" : "default" }}>
                 <td style={{ padding: "12px 20px" }}>
                   <div style={{ fontSize: 13.5, fontWeight: 600, color: "#0f172a" }}>{c.name}</div>
-                  {c.email && <div style={{ fontSize: 11.5, color: "#94a3b8" }}>{c.email}</div>}
+                  {c.email && <div style={{ fontSize: 11.5, color: "#64748b" }}>{c.email}</div>}
                 </td>
                 <td style={{ padding: "12px 20px", fontSize: 13, color: "#64748b" }}>{c.city || "—"}</td>
                 <td style={{ padding: "12px 20px", fontSize: 13, color: "#64748b" }}>{c.skills || "—"}</td>
@@ -138,7 +138,7 @@ function Stat({ label, value, color }) {
   return (
     <div style={{ textAlign: "center", minWidth: 70 }}>
       <div style={{ fontSize: 22, fontWeight: 800, color }}>{value}</div>
-      <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 600 }}>{label}</div>
+      <div style={{ fontSize: 11, color: "#64748b", fontWeight: 600 }}>{label}</div>
     </div>
   );
 }

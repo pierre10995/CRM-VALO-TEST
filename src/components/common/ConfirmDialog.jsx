@@ -49,7 +49,7 @@ export function ConfirmProvider({ children }) {
       {children}
       {dialog && (
         <div className="modal-bg" style={{ zIndex: 10000, padding: 16 }} onClick={e => e.target === e.currentTarget && close(false)}>
-          <div className="card" role="alertdialog" aria-modal="true" aria-label={dialog.title} style={{ width: "min(420px, 100%)", padding: 24 }}>
+          <div className="card" role="alertdialog" aria-modal="true" aria-label={dialog.title} aria-describedby="confirm-dialog-message" style={{ width: "min(420px, 100%)", padding: 24 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
               <div style={{
                 width: 38, height: 38, borderRadius: 10, flexShrink: 0,
@@ -62,7 +62,7 @@ export function ConfirmProvider({ children }) {
               </div>
               <h2 style={{ fontSize: 16, fontWeight: 700, color: "#0f172a" }}>{dialog.title}</h2>
             </div>
-            <p style={{ fontSize: 13.5, color: "#475569", lineHeight: 1.5, marginBottom: 20 }}>{dialog.message}</p>
+            <p id="confirm-dialog-message" style={{ fontSize: 13.5, color: "#475569", lineHeight: 1.5, marginBottom: 20 }}>{dialog.message}</p>
             <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
               <button className="btn btn-ghost" onClick={() => close(false)} autoFocus>{dialog.cancelLabel}</button>
               <button
