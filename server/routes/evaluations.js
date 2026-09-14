@@ -109,7 +109,7 @@ ${missionPdfText ? `\n--- DOCUMENT DE L'OFFRE ---\n${missionPdfText}` : ""}
   const anthropic = new Anthropic({ apiKey: config.anthropic.apiKey });
 
   const message = await anthropic.messages.create({
-    model: "claude-sonnet-4-20250514",
+    model: config.anthropic.model,
     max_tokens: 1500,
     messages: [{
       role: "user",
