@@ -6,20 +6,26 @@ const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), selec
  * Modale accessible : rôle dialog, Échap pour fermer, focus placé dans la
  * modale à l'ouverture, piégé (Tab/Shift+Tab) tant qu'elle est ouverte, et
  * rendu à l'élément déclencheur à la fermeture.
+ *
+ * Le placement du focus ne s'exécute qu'UNE fois, au montage : `onClose` est
+ * lu via une ref pour que sa recréation à chaque frappe (le formulaire vit
+ * dans le parent) ne relance pas l'effet — sinon le curseur sauterait au
+ * premier champ à chaque lettre saisie.
  */
 export default function ModalWrapper({ onClose, title, children, width = 520 }) {
   const dialogRef = useRef(null);
-  const previousFocus = useRef(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   useEffect(() => {
-    previousFocus.current = document.activeElement;
+    const previousFocus = document.activeElement;
     const dialog = dialogRef.current;
     // Focus initial : premier champ/bouton, sinon le titre
     const first = dialog?.querySelector(FOCUSABLE);
     (first || dialog)?.focus();
 
     const onKey = (e) => {
-      if (e.key === "Escape") { onClose(); return; }
+      if (e.key === "Escape") { onCloseRef.current(); return; }
       if (e.key !== "Tab" || !dialog) return;
       const items = Array.from(dialog.querySelectorAll(FOCUSABLE)).filter(el => el.offsetParent !== null);
       if (items.length === 0) { e.preventDefault(); return; }
@@ -30,9 +36,9 @@ export default function ModalWrapper({ onClose, title, children, width = 520 }) 
     document.addEventListener("keydown", onKey);
     return () => {
       document.removeEventListener("keydown", onKey);
-      if (previousFocus.current && previousFocus.current.focus) previousFocus.current.focus();
+      if (previousFocus && previousFocus.focus) previousFocus.focus();
     };
-  }, [onClose]);
+  }, []);
 
   return (
     <div className="modal-bg" style={{ padding: 16 }} onClick={e => e.target === e.currentTarget && onClose()}>
